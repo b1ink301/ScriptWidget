@@ -1,0 +1,388 @@
+{
+  "title": "기본 갤러리",
+  "entries": [
+    {
+      "id": "today_events",
+      "name": "오늘 일정",
+      "title": "오늘 일정",
+      "category": "일정·할 일",
+      "description": "오늘 남은 일정을 시간순으로 보여줍니다. 파라미터로 캘린더를 고를 수 있어요.",
+      "script": "today_events.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [
+        "calendar"
+      ],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "reminders",
+      "name": "할 일",
+      "title": "할 일",
+      "category": "일정·할 일",
+      "description": "미완료 할 일 목록. 위젯에서 ○ 를 누르면 완료되고, 앱에서 실행하면 새 할 일을 추가합니다.",
+      "script": "reminders.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [
+        "notification"
+      ],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "month_calendar",
+      "name": "이번 달 달력",
+      "title": "이번 달 달력",
+      "category": "일정·할 일",
+      "description": "오늘을 강조한 이번 달 달력. 일정이 있는 날에 점을 찍습니다.",
+      "script": "month_calendar.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [
+        "calendar"
+      ],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "dday",
+      "name": "D-day",
+      "title": "D-day",
+      "category": "일정·할 일",
+      "description": "파라미터의 날짜까지 남은 날을 보여줍니다. 예) \"2026-12-25 크리스마스\"",
+      "script": "dday.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "battery",
+      "name": "배터리",
+      "title": "배터리",
+      "category": "생활",
+      "description": "배터리 잔량을 링으로 그리고 충전 상태를 보여줍니다.",
+      "script": "battery.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "memo",
+      "name": "메모",
+      "title": "메모",
+      "category": "생활",
+      "description": "앱에서 적은 메모를 위젯에 붙여 둡니다.",
+      "script": "memo.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "habit",
+      "name": "습관 체크",
+      "title": "물 마시기·습관 체크",
+      "category": "생활",
+      "description": "+ 를 누를 때마다 오늘 횟수가 늘어나는 습관 위젯. 예) \"물 8\"",
+      "script": "habit.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "photo_frame",
+      "name": "사진 액자",
+      "title": "사진 액자",
+      "category": "생활",
+      "description": "파일 북마크 \"photo\" 의 사진을 위젯 가득 보여줍니다.",
+      "script": "photo_frame.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "birthdays",
+      "name": "다가오는 생일",
+      "title": "다가오는 생일",
+      "category": "생활",
+      "description": "연락처의 생일을 가까운 순서로 보여줍니다.",
+      "script": "birthdays.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [
+        "contacts"
+      ],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "progress",
+      "name": "진행률",
+      "title": "오늘·이번 주·이번 달·올해 진행률",
+      "category": "정보",
+      "description": "오늘, 이번 주, 이번 달, 올해가 얼마나 지났는지 막대로 보여줍니다.",
+      "script": "progress.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "crypto",
+      "name": "코인 시세",
+      "title": "코인 시세",
+      "category": "정보",
+      "description": "업비트 공개 API로 원화 시세와 변동률을 보여줍니다. 예) \"BTC,ETH,SOL\"",
+      "script": "crypto.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [
+        "network"
+      ],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "rss_news",
+      "name": "RSS 뉴스",
+      "title": "RSS 뉴스",
+      "category": "정보",
+      "description": "RSS 주소의 최신 기사 제목을 보여주고, 탭하면 기사를 엽니다.",
+      "script": "rss_news.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [
+        "network"
+      ],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "quotes",
+      "name": "오늘의 명언",
+      "title": "오늘의 명언",
+      "category": "정보",
+      "description": "날마다 다른 명언을 보여줍니다. 인터넷이 필요 없어요.",
+      "script": "quotes.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "world_clock",
+      "name": "세계 시계",
+      "title": "세계 시계",
+      "category": "정보",
+      "description": "여러 도시의 현재 시각. 예) \"뉴욕=America/New_York,파리=Europe/Paris\"",
+      "script": "world_clock.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "01_hello",
+      "name": "01_hello",
+      "title": "Hello 위젯",
+      "category": "예제",
+      "description": "기본 텍스트와 배경색 예제.",
+      "script": "01_hello.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "02_exchange_rate",
+      "name": "02_exchange_rate",
+      "title": "환율",
+      "category": "예제",
+      "description": "공개 API에서 환율을 불러옵니다. 파라미터로 통화 지정.",
+      "script": "02_exchange_rate.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [
+        "network"
+      ],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "03_image",
+      "name": "03_image",
+      "title": "이미지",
+      "category": "예제",
+      "description": "원격 이미지와 가로 스택 예제.",
+      "script": "03_image.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [
+        "network"
+      ],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "04_error",
+      "name": "04_error",
+      "title": "에러 위젯",
+      "category": "예제",
+      "description": "스크립트 에러가 위젯에 어떻게 보이는지 확인합니다.",
+      "script": "04_error.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "05_async_timers",
+      "name": "05_async_timers",
+      "title": "async·타이머",
+      "category": "예제",
+      "description": "async/await, Promise, setTimeout 동작 예제.",
+      "script": "05_async_timers.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "06_weather",
+      "name": "06_weather",
+      "title": "날씨",
+      "category": "예제",
+      "description": "현재 위치의 날씨 (Open-Meteo, 키 불필요). 오프라인이면 마지막 날씨.",
+      "script": "06_weather.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [
+        "location",
+        "network"
+      ],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "07_showcase",
+      "name": "07_showcase",
+      "title": "쇼케이스",
+      "category": "예제",
+      "description": "SF 심볼, 그리기, 기기 정보 등 여러 기능 모음.",
+      "script": "07_showcase.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "08_settings_ui",
+      "name": "08_settings_ui",
+      "title": "설정 UI",
+      "category": "예제",
+      "description": "앱에서 Alert·UITable로 설정하고 위젯에 반영하는 패턴.",
+      "script": "08_settings_ui.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    },
+    {
+      "id": "09_counter",
+      "name": "09_counter",
+      "title": "카운터",
+      "category": "예제",
+      "description": "위젯 버튼으로 숫자를 올리고 내리는 인터랙티브 예제.",
+      "script": "09_counter.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget"
+    }
+  ]
+}

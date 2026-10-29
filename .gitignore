@@ -1,0 +1,17 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+*/build
+/captures
+.externalNativeBuild
+.cxx
+.kotlin
+
+# Release signing secrets never live in the repo (see README "릴리스 서명")
+*.jks
+*.keystore
+keystore.properties
+scriptwidget.properties

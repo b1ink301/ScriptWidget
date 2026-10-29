@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Exact alarms for refreshAfterDate. USE_EXACT_ALARM is granted at install time but is
+        restricted to alarm/calendar apps on Google Play; this app is distributed outside Play.
+    -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+
+    <application>
+        <receiver
+            android:name=".work.RefreshAlarmReceiver"
+            android:exported="false" />
+    </application>
+</manifest>

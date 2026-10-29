@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Files scripts may hand to other apps (share sheet, mail/SMS attachments). -->
+<paths>
+    <files-path name="images" path="script_images/" />
+    <files-path name="storage" path="script_storage/" />
+</paths>
