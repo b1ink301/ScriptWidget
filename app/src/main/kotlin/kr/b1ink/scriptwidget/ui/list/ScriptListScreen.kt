@@ -235,7 +235,7 @@ fun ScriptListScreen(
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("위젯이 더 정확하게 갱신되도록 설정하세요", style = MaterialTheme.typography.titleSmall)
                             Text(
-                                widgetRecommendations.joinToString(" · ") { it.title() } + " →",
+                                widgetRecommendations.map { it.title() }.joinToString(" · ") + " →",
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }

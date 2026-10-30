@@ -39,17 +39,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kr.b1ink.scriptwidget.R
 import kr.b1ink.scriptwidget.di.AppContainer
 import kr.b1ink.scriptwidget.domain.model.EntryStatus
 import kr.b1ink.scriptwidget.domain.model.GalleryItem
 import kr.b1ink.scriptwidget.domain.model.GallerySection
+import kr.b1ink.scriptwidget.ui.text.AppLanguage
+import kr.b1ink.scriptwidget.ui.text.asString
 
 class GalleryActions(
     val onInstall: (sourceId: String, entryId: String) -> Unit,
@@ -65,8 +70,12 @@ class GalleryActions(
 
 @Composable
 fun GalleryRoute(container: AppContainer, onBack: (() -> Unit)?, onOpen: (String) -> Unit) {
+    val language = AppLanguage.current(LocalContext.current)
     val vm = viewModel {
-        GalleryViewModel(container.builtinCatalog, container::remoteCatalog, container.catalogUrls, container.installedScripts, container.scriptRepositoryForGallery)
+        GalleryViewModel(
+            container.builtinCatalog, container::remoteCatalog, container.catalogUrls, container.installedScripts,
+            container.scriptRepositoryForGallery, language,
+        )
     }
     val state by vm.uiState.collectAsStateWithLifecycle()
     GalleryScreen(
@@ -81,9 +90,25 @@ fun GalleryRoute(container: AppContainer, onBack: (() -> Unit)?, onOpen: (String
 }
 
 private val PERMISSION_LABELS = mapOf(
-    "calendar" to "캘린더", "contacts" to "연락처", "location" to "위치", "network" to "인터넷",
-    "notification" to "알림", "photos" to "사진",
+    "calendar" to R.string.gallery_permission_calendar, "contacts" to R.string.gallery_permission_contacts,
+    "location" to R.string.gallery_permission_location, "network" to R.string.gallery_permission_network,
+    "notification" to R.string.gallery_permission_notification, "photos" to R.string.gallery_permission_photos,
 )
+
+@Composable
+private fun permissionLabels(permissions: Collection<String>, separator: String): String {
+    val labels = permissions.map { p -> PERMISSION_LABELS[p]?.let { stringResource(it) } ?: p }
+    return labels.joinToString(separator)
+}
+
+/** A category as shown: a blank one (or the catalog default) is "Other" in the app language. */
+@Composable
+private fun categoryLabel(category: String): String =
+    if (category.isBlank() || category == DEFAULT_CATEGORY) stringResource(R.string.gallery_category_other) else category
+
+/** The category catalogs give entries that don't name one. */
+private val DEFAULT_CATEGORY = kr.b1ink.scriptwidget.domain.model.CatalogEntry(id = "", name = "", script = "").category
+
 private val SIZE_LABELS = mapOf("small" to "S", "medium" to "M", "large" to "L")
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,15 +117,16 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() ->
     var addingUrl by rememberSaveable { mutableStateOf(false) }
     var removing by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
-    LaunchedEffect(state.message) {
-        state.message?.let { snackbar.showSnackbar(it); actions.onMessageShown() }
+    val message = state.message?.asString()
+    LaunchedEffect(message) {
+        message?.let { snackbar.showSnackbar(it); actions.onMessageShown() }
     }
     Scaffold(
         topBar = {
             TopAppBar(
                 navigationIcon = { onBack?.let { TextButton(onClick = it) { Text("←") } } },
-                title = { Text("갤러리") },
-                actions = { TextButton(onClick = { addingUrl = true }) { Text("+ 카탈로그") } },
+                title = { Text(stringResource(R.string.gallery_title)) },
+                actions = { TextButton(onClick = { addingUrl = true }) { Text(stringResource(R.string.gallery_add_catalog_button)) } },
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -112,16 +138,16 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace.current)) {
             item {
                 Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = state.category == null, onClick = { actions.onCategory(null) }, label = { Text("전체") })
+                    FilterChip(selected = state.category == null, onClick = { actions.onCategory(null) }, label = { Text(stringResource(R.string.gallery_category_all)) })
                     state.categories.forEach { c ->
-                        FilterChip(selected = state.category == c, onClick = { actions.onCategory(c) }, label = { Text(c) })
+                        FilterChip(selected = state.category == c, onClick = { actions.onCategory(c) }, label = { Text(categoryLabel(c)) })
                     }
                 }
             }
             state.visibleSections.forEach { section ->
                 item(key = "header-${section.sourceId}") { SectionHeader(section, onRemove = { removing = section.sourceId }) }
                 items(section.items, key = { "${section.sourceId}/${it.entry.id}" }) { item ->
-                    EntryCard(item, busy = state.busy, actions = actions, sourceId = section.sourceId)
+                    EntryCard(item, state.language, busy = state.busy, actions = actions, sourceId = section.sourceId)
                 }
             }
         }
@@ -130,20 +156,19 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() ->
     state.preview?.let { preview ->
         AlertDialog(
             onDismissRequest = actions.onCancel,
-            title = { Text("'${preview.entry.title}' 설치") },
+            title = { Text(stringResource(R.string.gallery_install_title, preview.entry.textFor(state.language).title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("다른 곳에서 받은 스크립트입니다. 코드를 확인한 뒤 설치하세요.", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.gallery_install_warning), style = MaterialTheme.typography.bodySmall)
                     if (preview.undeclaredPermissions.isNotEmpty()) {
                         Text(
-                            "⚠️ 카탈로그에 표시되지 않았지만 코드가 사용하는 권한: " +
-                                preview.undeclaredPermissions.joinToString(", ") { PERMISSION_LABELS[it] ?: it },
+                            stringResource(R.string.gallery_undeclared_permissions, permissionLabels(preview.undeclaredPermissions, ", ")),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
                     if (preview.entry.permissions.isNotEmpty()) {
-                        Text("필요 권한: " + preview.entry.permissions.joinToString(", ") { PERMISSION_LABELS[it] ?: it }, style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.gallery_required_permissions, permissionLabels(preview.entry.permissions, ", ")), style = MaterialTheme.typography.bodySmall)
                     }
                     Text(
                         preview.code,
@@ -153,8 +178,8 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() ->
                     )
                 }
             },
-            confirmButton = { TextButton(onClick = actions.onConfirm, modifier = Modifier.testTag("install-confirm")) { Text("설치") } },
-            dismissButton = { TextButton(onClick = actions.onCancel) { Text("취소") } },
+            confirmButton = { TextButton(onClick = actions.onConfirm, modifier = Modifier.testTag("install-confirm")) { Text(stringResource(R.string.gallery_install)) } },
+            dismissButton = { TextButton(onClick = actions.onCancel) { Text(stringResource(R.string.gallery_cancel)) } },
         )
     }
 
@@ -163,10 +188,10 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() ->
         var url by remember { mutableStateOf(androidx.compose.ui.text.input.TextFieldValue("https://", androidx.compose.ui.text.TextRange(8))) }
         AlertDialog(
             onDismissRequest = { addingUrl = false },
-            title = { Text("카탈로그 추가") },
+            title = { Text(stringResource(R.string.gallery_add_catalog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("스크립트 목록(index.json)의 주소를 입력하세요. 예) GitHub 저장소의 raw 주소", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.gallery_add_catalog_hint), style = MaterialTheme.typography.bodySmall)
                     OutlinedTextField(
                         value = url, onValueChange = { url = it }, singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
@@ -174,18 +199,18 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() ->
                     )
                 }
             },
-            confirmButton = { TextButton(onClick = { addingUrl = false; actions.onAddUrl(url.text) }) { Text("추가") } },
-            dismissButton = { TextButton(onClick = { addingUrl = false }) { Text("취소") } },
+            confirmButton = { TextButton(onClick = { addingUrl = false; actions.onAddUrl(url.text) }) { Text(stringResource(R.string.gallery_add)) } },
+            dismissButton = { TextButton(onClick = { addingUrl = false }) { Text(stringResource(R.string.gallery_cancel)) } },
         )
     }
 
     removing?.let { url ->
         AlertDialog(
             onDismissRequest = { removing = null },
-            title = { Text("카탈로그를 삭제할까요?") },
-            text = { Text("$url\n\n이 카탈로그에서 설치한 스크립트는 그대로 남습니다.") },
-            confirmButton = { TextButton(onClick = { removing = null; actions.onRemoveUrl(url) }) { Text("삭제") } },
-            dismissButton = { TextButton(onClick = { removing = null }) { Text("취소") } },
+            title = { Text(stringResource(R.string.gallery_remove_catalog_title)) },
+            text = { Text(stringResource(R.string.gallery_remove_catalog_message, url)) },
+            confirmButton = { TextButton(onClick = { removing = null; actions.onRemoveUrl(url) }) { Text(stringResource(R.string.gallery_remove)) } },
+            dismissButton = { TextButton(onClick = { removing = null }) { Text(stringResource(R.string.gallery_cancel)) } },
         )
     }
 }
@@ -195,34 +220,33 @@ private fun SectionHeader(section: GallerySection, onRemove: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(section.title, style = MaterialTheme.typography.titleMedium)
-            section.error?.let { Text("불러오지 못했습니다: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+            section.error?.let { Text(stringResource(R.string.gallery_load_failed, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
         }
-        if (section.removable) TextButton(onClick = onRemove) { Text("삭제") }
+        if (section.removable) TextButton(onClick = onRemove) { Text(stringResource(R.string.gallery_remove)) }
     }
 }
 
 @Composable
-private fun EntryCard(item: GalleryItem, busy: Boolean, actions: GalleryActions, sourceId: String) {
+private fun EntryCard(item: GalleryItem, language: String, busy: Boolean, actions: GalleryActions, sourceId: String) {
     val entry = item.entry
+    val text = entry.textFor(language)
     Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(entry.title, style = MaterialTheme.typography.titleSmall)
-                Text(entry.description, style = MaterialTheme.typography.bodySmall)
-                val meta = buildList {
-                    if (entry.sizes.isNotEmpty()) add("크기 " + entry.sizes.joinToString("·") { SIZE_LABELS[it] ?: it })
-                    if (entry.permissions.isNotEmpty()) add(entry.permissions.joinToString(" · ") { PERMISSION_LABELS[it] ?: it })
-                    entry.author?.let { add(it) }
-                }
+                Text(text.title, style = MaterialTheme.typography.titleSmall)
+                Text(text.description, style = MaterialTheme.typography.bodySmall)
+                val sizes = if (entry.sizes.isNotEmpty()) stringResource(R.string.gallery_sizes, entry.sizes.joinToString("·") { SIZE_LABELS[it] ?: it }) else null
+                val permissions = if (entry.permissions.isNotEmpty()) permissionLabels(entry.permissions, " · ") else null
+                val meta = listOfNotNull(sizes, permissions, entry.author)
                 if (meta.isNotEmpty()) {
                     Text(meta.joinToString("  ·  "), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             val tag = Modifier.testTag("gallery-action-${entry.id}")
             when (val status = item.status) {
-                EntryStatus.NotInstalled -> Button(enabled = !busy, onClick = { actions.onInstall(sourceId, entry.id) }, modifier = tag) { Text("설치") }
-                is EntryStatus.Installed -> OutlinedButton(onClick = { actions.onOpen(status.scriptName) }, modifier = tag) { Text("열기") }
-                is EntryStatus.UpdateAvailable -> FilledTonalButton(enabled = !busy, onClick = { actions.onUpdate(sourceId, entry.id) }, modifier = tag) { Text("업데이트") }
+                EntryStatus.NotInstalled -> Button(enabled = !busy, onClick = { actions.onInstall(sourceId, entry.id) }, modifier = tag) { Text(stringResource(R.string.gallery_install)) }
+                is EntryStatus.Installed -> OutlinedButton(onClick = { actions.onOpen(status.scriptName) }, modifier = tag) { Text(stringResource(R.string.gallery_open)) }
+                is EntryStatus.UpdateAvailable -> FilledTonalButton(enabled = !busy, onClick = { actions.onUpdate(sourceId, entry.id) }, modifier = tag) { Text(stringResource(R.string.gallery_update)) }
             }
         }
     }
