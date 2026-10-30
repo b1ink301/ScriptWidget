@@ -295,11 +295,11 @@ private fun OutlineRow(
     depth: Int,
     selected: Boolean,
     tag: String,
+    modifier: Modifier = Modifier,
     marker: OutlineDrop.Place? = null,
     /** Being dragged; it stays in place (moving it would move the handle's touch coordinates too). */
     lifted: Boolean = false,
     drag: OutlineDrag? = null,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     val accent = MaterialTheme.colorScheme.primary
