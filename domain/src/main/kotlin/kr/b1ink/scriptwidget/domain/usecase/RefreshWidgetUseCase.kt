@@ -27,6 +27,8 @@ class RefreshWidgetUseCase(
     private val clock: Clock,
     private val screen: ScreenState = ScreenState.AlwaysOn,
     private val network: NetworkState = NetworkState.AlwaysConnected,
+    private val settings: kr.b1ink.scriptwidget.domain.scheduler.RefreshSettings =
+        kr.b1ink.scriptwidget.domain.scheduler.RefreshSettings.Default,
 ) {
     /** One run at a time per widget; a background run waiting behind another usually finds nothing to do. */
     private val locks = ConcurrentHashMap<Int, Mutex>()
@@ -41,24 +43,41 @@ class RefreshWidgetUseCase(
             notYetDue(appWidgetId)?.let { return@withLock it }
         }
         if (trigger != RefreshTrigger.Manual) {
+            waitingForScreen(appWidgetId, isScheduled = trigger == RefreshTrigger.Scheduled)?.let { return@withLock it }
             tooSoon(appWidgetId, isScheduled = trigger == RefreshTrigger.Scheduled)?.let { return@withLock it }
             waitingForNetwork(appWidgetId)?.let { return@withLock it }
         }
         val state = computeState(appWidgetId, family, action)
         renderStates.publish(appWidgetId, state)
-        state.tree?.refreshAfter
-            ?.takeIf { state.error == null && it > clock.now() }
-            ?.let { scheduleNext(appWidgetId, requested = it, lastRun = clock.now()) }
+        // Every bound widget keeps one pending refresh: the script's refreshAfterDate, or a catch-up.
+        if (state.scriptName != null) {
+            val requested = state.tree?.refreshAfter?.takeIf { state.error == null }
+                ?: (clock.now() + RefreshPolicy.DEFAULT_INTERVAL_MS)
+            scheduleNext(appWidgetId, requested = requested, lastRun = clock.now())
+        }
         state
     }
 
+    private fun sleepsWhileScreenOff() = !screen.isInteractive() && !settings.refreshWhileScreenOff()
+
     /**
-     * Background runs keep a minimum interval (5 min with the screen on, 15 min off) to save battery.
+     * Screen off: nobody sees the widget, so background runs wait. The retry alarm doesn't wake the
+     * device; it fires when the screen turns on, and the widget refreshes then.
+     */
+    private suspend fun waitingForScreen(appWidgetId: Int, isScheduled: Boolean): RenderState? {
+        if (!sleepsWhileScreenOff()) return null
+        val current = renderStates.get(appWidgetId)?.takeIf { it.updatedAt > 0 } ?: return null
+        if (isScheduled) scheduler.refreshAt(appWidgetId, clock.now() + RefreshPolicy.SCREEN_OFF_RETRY_MS, wakeUp = false)
+        return current
+    }
+
+    /**
+     * Background runs keep a minimum interval (5 min with the screen on, 15 min when allowed with it off).
      * A skipped scheduled run is moved to the earliest allowed time.
      */
     private suspend fun tooSoon(appWidgetId: Int, isScheduled: Boolean): RenderState? {
         val current = renderStates.get(appWidgetId)?.takeIf { it.updatedAt > 0 } ?: return null
-        val minInterval = RefreshPolicy.minInterval(screen.isInteractive())
+        val minInterval = RefreshPolicy.minInterval(screenOn = screen.isInteractive())
         if (clock.now() - current.updatedAt >= minInterval - RefreshPolicy.EARLY_TOLERANCE_MS) return null
         if (isScheduled) {
             scheduleNext(appWidgetId, requested = current.tree?.refreshAfter ?: 0, lastRun = current.updatedAt)
@@ -74,11 +93,14 @@ class RefreshWidgetUseCase(
         return current.takeIf { ScriptRequirements.usesNetwork(script) }
     }
 
-    /** With the screen off the device may be woken (rarely); with it on, alarms wait for it to be awake. */
+    /**
+     * Alarms never wake the device, except when the user lets widgets refresh while the screen is
+     * off: then at most every 15 minutes.
+     */
     private fun scheduleNext(appWidgetId: Int, requested: Long, lastRun: Long) {
-        val screenOn = screen.isInteractive()
-        val at = maxOf(requested, lastRun + RefreshPolicy.minInterval(screenOn))
-        scheduler.refreshAt(appWidgetId, at, wakeUp = !screenOn)
+        val wakeUp = !screen.isInteractive() && settings.refreshWhileScreenOff()
+        val at = maxOf(requested, lastRun + RefreshPolicy.minInterval(screenOn = !wakeUp))
+        scheduler.refreshAt(appWidgetId, at, wakeUp = wakeUp)
     }
 
     /** The current state, if the script asked not to be refreshed yet (`refreshAfterDate`). */

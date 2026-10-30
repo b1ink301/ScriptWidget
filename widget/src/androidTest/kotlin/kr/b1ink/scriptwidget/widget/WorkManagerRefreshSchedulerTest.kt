@@ -65,7 +65,7 @@ class WorkManagerRefreshSchedulerTest {
     }
 
     @Test
-    fun schedulePeriodicEnqueuesEvery15MinutesAndKeepsAnExistingSchedule() {
+    fun schedulePeriodicEnqueuesHourlySafetyNetAndKeepsAnExistingSchedule() {
         scheduler.schedulePeriodic(3)
         val first = infos(WorkManagerRefreshScheduler.periodicName(3)).single()
         scheduler.schedulePeriodic(3)
@@ -73,7 +73,19 @@ class WorkManagerRefreshSchedulerTest {
 
         assertEquals(first.id, second.id)
         assertEquals(WorkInfo.State.ENQUEUED, second.state)
-        assertEquals(TimeUnit.MINUTES.toMillis(15), second.periodicityInfo!!.repeatIntervalMillis)
+        assertEquals(TimeUnit.MINUTES.toMillis(60), second.periodicityInfo!!.repeatIntervalMillis)
+    }
+
+    @Test
+    fun anOlder15MinuteScheduleIsUpdatedToTheHourlySafetyNet() {
+        val old = androidx.work.PeriodicWorkRequestBuilder<kr.b1ink.scriptwidget.widget.work.ScriptUpdateWorker>(15, TimeUnit.MINUTES).build()
+        workManager.enqueueUniquePeriodicWork(
+            WorkManagerRefreshScheduler.periodicName(8), androidx.work.ExistingPeriodicWorkPolicy.KEEP, old,
+        ).result.get()
+
+        scheduler.schedulePeriodic(8)
+
+        assertEquals(TimeUnit.MINUTES.toMillis(60), infos(WorkManagerRefreshScheduler.periodicName(8)).single().periodicityInfo!!.repeatIntervalMillis)
     }
 
     @Test
@@ -81,7 +93,7 @@ class WorkManagerRefreshSchedulerTest {
         scheduler.schedulePeriodic(6)
 
         val info = infos(WorkManagerRefreshScheduler.periodicName(6)).single()
-        assertEquals(TimeUnit.MINUTES.toMillis(15), info.initialDelayMillis)
+        assertEquals(TimeUnit.MINUTES.toMillis(60), info.initialDelayMillis)
         assertEquals(emptyList(), ranFor)
     }
 

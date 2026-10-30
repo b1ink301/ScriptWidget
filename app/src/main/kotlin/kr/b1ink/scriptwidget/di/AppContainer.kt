@@ -210,6 +210,11 @@ class AppContainer(
             .also { if (it.isNotEmpty()) apiCatalogCache = it }
     }
     val runScriptByName by lazy { kr.b1ink.scriptwidget.domain.usecase.RunScriptByNameUseCase(scriptRepository, runScript) }
+    /** Whether widgets keep refreshing while the screen is off (settings tab). */
+    val refreshSettings by lazy {
+        kr.b1ink.scriptwidget.settings.BackgroundRefreshSettings(appContext.getSharedPreferences("refresh_settings", android.content.Context.MODE_PRIVATE))
+    }
+
     val automationSettings by lazy {
         kr.b1ink.scriptwidget.automation.AutomationSettings(appContext.getSharedPreferences("automation", Context.MODE_PRIVATE))
     }
@@ -218,6 +223,7 @@ class AppContainer(
             bindingRepository, scriptRepository, runScript, renderStates, scheduler, Clock.System,
             kr.b1ink.scriptwidget.widget.work.PowerManagerScreenState(appContext),
             kr.b1ink.scriptwidget.widget.work.ConnectivityNetworkState(appContext),
+            refreshSettings,
         )
     }
     val getWidgetBinding = GetWidgetBindingUseCase(bindingRepository)

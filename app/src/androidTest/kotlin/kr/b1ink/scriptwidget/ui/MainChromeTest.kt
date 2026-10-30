@@ -70,6 +70,7 @@ class MainChromeTest {
         compose.setContent {
             SettingsScreen(
                 versionName = "1.2.3",
+                refreshWhileScreenOff = false,
                 actions = SettingsActions(
                     onPermissions = { calls += "permissions" },
                     onBookmarks = { calls += "bookmarks" },
@@ -78,10 +79,12 @@ class MainChromeTest {
                     onRestore = { calls += "restore" },
                     onCatalogs = { calls += "catalogs" },
                     onOpenUrl = { calls += "url:$it" },
+                    onRefreshWhileScreenOff = { calls += "screenOff:$it" },
                 ),
             )
         }
 
+        compose.onNodeWithTag("screen-off-refresh").performClick()
         listOf("권한", "파일 북마크", "스크립트 가져오기", "전체 백업", "백업에서 복원", "카탈로그 관리").forEach {
             compose.onNodeWithText(it).performClick()
         }
@@ -89,7 +92,7 @@ class MainChromeTest {
         compose.onNodeWithText("GitHub", substring = true).performClick()
 
         assertEquals(
-            listOf("permissions", "bookmarks", "import", "backup", "restore", "catalogs", "url:https://github.com/b1ink301/ScriptWidget"),
+            listOf("screenOff:true", "permissions", "bookmarks", "import", "backup", "restore", "catalogs", "url:https://github.com/b1ink301/ScriptWidget"),
             calls,
         )
     }

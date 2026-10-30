@@ -13,11 +13,13 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace
 
@@ -29,6 +31,7 @@ class SettingsActions(
     val onRestore: () -> Unit,
     val onCatalogs: () -> Unit,
     val onOpenUrl: (String) -> Unit,
+    val onRefreshWhileScreenOff: (Boolean) -> Unit = {},
 )
 
 const val REPOSITORY_URL = "https://github.com/b1ink301/ScriptWidget"
@@ -36,7 +39,7 @@ const val REPOSITORY_URL = "https://github.com/b1ink301/ScriptWidget"
 /** Everything used now and then: permissions, files, backups, catalogs and about. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(versionName: String, actions: SettingsActions) {
+fun SettingsScreen(versionName: String, actions: SettingsActions, refreshWhileScreenOff: Boolean = false) {
     Scaffold(topBar = { TopAppBar(title = { Text("설정") }) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -44,6 +47,14 @@ fun SettingsScreen(versionName: String, actions: SettingsActions) {
         ) {
             group("권한·위젯") {
                 Row("🔐", "권한", "알림·위치·캘린더·배터리 최적화, 자동화 앱에서 실행", actions.onPermissions)
+                ToggleRow(
+                    "🌙", "화면이 꺼져 있어도 갱신",
+                    if (refreshWhileScreenOff) "15분마다 폰을 깨워 갱신합니다 (배터리 사용 증가)"
+                    else "꺼짐: 화면이 켜질 때 바로 갱신합니다 (배터리 절약)",
+                    checked = refreshWhileScreenOff,
+                    onChange = actions.onRefreshWhileScreenOff,
+                    tag = "screen-off-refresh",
+                )
             }
             group("파일") {
                 Row("🔖", "파일 북마크", "스크립트가 bookmarkedPath()로 읽는 파일", actions.onBookmarks)
@@ -75,6 +86,18 @@ private fun androidx.compose.foundation.lazy.LazyListScope.group(title: String, 
 }
 
 object GroupScope {
+    @Composable
+    fun ToggleRow(emoji: String, title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit, tag: String) {
+        ListItem(
+            modifier = Modifier.padding(bottom = 2.dp).testTag(tag).clickable { onChange(!checked) },
+            colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            leadingContent = { Text(emoji, style = MaterialTheme.typography.titleMedium) },
+            headlineContent = { Text(title) },
+            supportingContent = { Text(subtitle, style = MaterialTheme.typography.bodySmall) },
+            trailingContent = { Switch(checked = checked, onCheckedChange = onChange) },
+        )
+    }
+
     @Composable
     fun Row(emoji: String, title: String, subtitle: String, onClick: () -> Unit) {
         ListItem(

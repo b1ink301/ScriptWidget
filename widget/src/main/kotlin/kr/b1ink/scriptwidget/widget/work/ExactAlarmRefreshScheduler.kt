@@ -29,8 +29,11 @@ class ExactAlarmRefreshScheduler(
     private val context = context.applicationContext
 
     override fun refreshAt(appWidgetId: Int, epochMillis: Long, wakeUp: Boolean) {
-        delegate.refreshAt(appWidgetId, epochMillis, wakeUp)
-        if (epochMillis <= clock.now() || !canScheduleExact()) return
+        val exact = canScheduleExact()
+        // A non-waking refresh relies on the alarm alone: a WorkManager job could run (and wake the
+        // device) while the screen is off. Without exact alarms, WorkManager is the only option.
+        if (wakeUp || !exact || epochMillis <= clock.now()) delegate.refreshAt(appWidgetId, epochMillis, wakeUp)
+        if (epochMillis <= clock.now() || !exact) return
         try {
             val operation = RefreshAlarmReceiver.pendingIntent(context, appWidgetId)
             // A non-wakeup alarm doesn't turn the CPU on: it fires once the device is awake (e.g. screen on).

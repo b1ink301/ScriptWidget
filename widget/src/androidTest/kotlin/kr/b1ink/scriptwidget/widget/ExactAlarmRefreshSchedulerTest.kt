@@ -61,6 +61,14 @@ class ExactAlarmRefreshSchedulerTest {
         scheduler().refreshAt(36, clock.millis + 60_000, wakeUp = false)
 
         assertEquals("RTC", alarmType(36))
+        // No WorkManager fallback: a job could run (and wake the device) while the screen is off.
+        assertEquals(emptyList(), delegate.refreshAt)
+    }
+
+    @Test
+    fun withoutExactAlarmPermissionNonWakingRefreshesStillUseWorkManager() {
+        scheduler(exactAllowed = false).refreshAt(36, clock.millis + 60_000, wakeUp = false)
+
         assertEquals(listOf(36 to clock.millis + 60_000), delegate.refreshAt)
     }
 

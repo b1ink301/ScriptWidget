@@ -159,8 +159,11 @@ class MainActivity : ComponentActivity() {
             MainTab.Gallery -> kr.b1ink.scriptwidget.ui.gallery.GalleryRoute(container = container, onBack = null, onOpen = open)
             MainTab.History -> kr.b1ink.scriptwidget.ui.history.RunHistoryRoute(container = container)
             MainTab.Help -> kr.b1ink.scriptwidget.ui.api.ApiReferenceRoute(container = container)
-            MainTab.Settings -> SettingsScreen(
+            MainTab.Settings -> {
+              var screenOff by remember { mutableStateOf(container.refreshSettings.refreshWhileScreenOff()) }
+              SettingsScreen(
                 versionName = versionName(),
+                refreshWhileScreenOff = screenOff,
                 actions = SettingsActions(
                     onPermissions = { onNav(nav.show(Overlay.Permissions)) },
                     onBookmarks = { onNav(nav.show(Overlay.Bookmarks)) },
@@ -169,8 +172,13 @@ class MainActivity : ComponentActivity() {
                     onRestore = { onNav(nav.request(ListAction.Restore)) },
                     onCatalogs = { onNav(nav.select(MainTab.Gallery)) },
                     onOpenUrl = { url -> runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } },
+                    onRefreshWhileScreenOff = { enabled ->
+                        container.refreshSettings.setRefreshWhileScreenOff(enabled)
+                        screenOff = enabled
+                    },
                 ),
-            )
+              )
+            }
         }
     }
 

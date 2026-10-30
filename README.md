@@ -9,7 +9,7 @@ iOS [Scriptable](https://scriptable.app/)처럼 **JavaScript로 안드로이드 
 - 저장소: https://github.com/b1ink301/ScriptWidget · 라이선스: [GPL-3.0](LICENSE)
 - 배포: GitHub 릴리스 (Google Play 아님 → [배포 정책과 권한](#배포-정책과-권한))
 - JS 엔진: [QuickJS](https://github.com/dokar3/quickjs-kt) (`io.github.dokar3:quickjs-kt`) · 위젯: Jetpack Glance · 앱 UI: Jetpack Compose
-- 백그라운드 갱신: WorkManager(15분 주기) + 정확한 알람(`refreshAfterDate`), 배터리를 위해 최소 간격 화면 켜짐 5분·꺼짐 15분
+- 백그라운드 갱신: 정확한 알람(`refreshAfterDate`, 없으면 15분 뒤 따라잡기) + WorkManager(60분 안전망). **화면이 꺼져 있으면 실행하지 않고 화면이 켜질 때 바로 갱신**(배터리 절약)
 
 ## 주요 기능
 
@@ -72,14 +72,14 @@ sequenceDiagram
 
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
-| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL) | `domain/src/test` | 118 |
+| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL) | `domain/src/test` | 123 |
 | data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업 | `data/src/test` | 246 |
 | widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
 | app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동) | `app/src/test` | 116 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
-| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션) | `widget/src/androidTest` | 55 |
-| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정) | `app/src/androidTest` | 43 |
-| **합계** | | | **658** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션) | `widget/src/androidTest` | 57 |
+| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정) | `app/src/androidTest` | 44 |
+| **합계** | | | **666** (+ 호환성 측정 하네스 1, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -116,7 +116,7 @@ export ANDROID_SERIAL=emulator-5554
 | **갤러리** | 샘플·카탈로그 설치·열기·업데이트, **+ 카탈로그** |
 | **기록** | 실행 기록 |
 | **도움말** | API 도움말 |
-| **설정** | 권한(자동화 앱 실행 포함), 파일 북마크, 가져오기, 전체 백업·복원, 카탈로그 관리, 버전·GitHub·라이선스 |
+| **설정** | 권한(자동화 앱 실행 포함), **화면이 꺼져 있어도 갱신**(기본 꺼짐), 파일 북마크, 가져오기, 전체 백업·복원, 카탈로그 관리, 버전·GitHub·라이선스 |
 
 ## 빌드 & 실행
 
@@ -241,14 +241,26 @@ export ANDROID_SERIAL=emulator-5554
 `prelude.js`는 `data/src/main/resources/prelude/` 아래 기능별 파일로 나뉘어 있고, `index.txt` 순서대로 합쳐집니다.
 
 ### 동작 메모
-- **refreshAfterDate**: 지정 시각에 1회 갱신을 예약하고, 그 전의 **주기 갱신은 건너뜀**. 탭·편집·바인딩 같은 수동 갱신은 즉시 실행.
+- **refreshAfterDate**: 지정 시각에 1회 갱신을 예약하고, 그 전의 **주기 갱신은 건너뜀**. 스크립트가 정하지 않으면 마지막 실행 15분 뒤로 "따라잡기" 갱신을 예약. 탭·편집·바인딩 같은 수동 갱신은 항상 즉시 실행.
 - **Location (위젯)**: 위젯은 백그라운드에서 실행됨. **백그라운드 위치(항상 허용)**를 허용하면 위젯도 현재 위치를 쓰고, 허용하지 않으면 앱에서 실행했을 때 얻은 **마지막 위치**를 씀 (백그라운드 권한 없이는 `lastKnown`도 null). 스크립트는 `timestamp`로 오래된 위치인지 판단 가능.
-- **배터리 보호 (최소 갱신 간격)**: 스크립트가 더 짧게 요청해도 백그라운드 갱신은 **화면 켜짐 5분 / 꺼짐 15분**보다 자주 실행하지 않음. 화면이 켜져 있을 때 잡은 알람은 폰을 깨우지 않는 알람(RTC)이라 화면이 꺼지면 다음에 켜질 때 실행되고, 화면이 꺼진 상태에서는 마지막 실행 15분 뒤에 깨우는 알람(RTC_WAKEUP)으로 다시 잡음. 위젯 탭·편집·설정 같은 수동 갱신은 항상 즉시 실행.
+- **백그라운드 갱신 정책 (배터리)**:
+
+  | 상황 | 동작 |
+  |---|---|
+  | 화면 켜짐 | 요청 시각에 갱신하되 마지막 실행 후 **최소 5분**. 알람은 폰을 깨우지 않는 `RTC` |
+  | 화면 꺼짐 (기본) | 예약·주기 갱신을 **실행하지 않음**. 밀린 갱신은 깨우지 않는 알람으로 기다렸다가 **화면이 켜지면(잠금 화면 포함) 바로 실행** — 잠금을 풀고 홈 화면이 보일 때쯤에는 갱신돼 있음 |
+  | 화면 꺼짐 + 설정 탭 **"화면이 꺼져 있어도 갱신"** 켬 | 최소 **15분** 간격으로 폰을 깨워(`RTC_WAKEUP`) 갱신. 백그라운드에서 알림을 예약하거나 기록을 남기는 스크립트용 |
+  | 수동 (탭·버튼·편집·위젯 설정) | 화면 상태와 관계없이 즉시 |
+
+  - 스크립트가 `refreshAfterDate`를 정하지 않은 위젯도 마지막 실행 15분 뒤 "따라잡기" 알람을 걸어, 화면이 켜지면 갱신됩니다.
+  - 화면이 꺼진 채 폰이 잠깐 깨어나 알람이 울려도(푸시 알림 등) 실행하지 않고 2분 뒤로 다시 미룹니다(깨우지 않는 알람이라 추가 배터리 비용 없음).
+  - WorkManager 주기 작업은 재부팅 등으로 알람이 사라졌을 때를 위한 **60분 안전망**이고, 화면이 꺼져 있으면 바로 끝납니다. 깨우지 않는 알람에는 WorkManager 예약을 함께 걸지 않습니다(작업이 화면 꺼짐 중에 폰을 깨울 수 있어서).
+  - 안드로이드 자체 제한(Doze, 삼성 "앱 절전")은 이와 별개로 갱신을 더 늦출 수 있습니다. 설정 탭 → 권한에서 **배터리 최적화 제외**를 권장합니다.
 - **중복 실행 방지**: 같은 위젯은 한 번에 하나만 실행하고, 방금 갱신된 위젯의 예약·주기 갱신은 건너뜀. 위젯 크기를 바꿔도 크기 구분(small/medium/large)이 같으면 다시 그리기만 하고 스크립트는 실행하지 않음.
 - **오프라인**: 네트워크가 없을 때 `Request`·`WebView`·`importModule`을 쓰는 스크립트의 백그라운드 갱신은 건너뛰고 마지막 화면을 유지. 응답은 10MB까지, HTTP 캐시(10MB)는 서버의 캐시 헤더를 따름.
 - **위치**: 요청 정확도에 맞는 최근 위치(정밀 1분, 100m 5분, 1~3km 15분 이내)는 GPS를 다시 켜지 않고 재사용. 새로 잡을 때도 전체 15초 안에서만 시도.
 - **저장공간·메모리**: 위젯을 지우면 그 위젯의 이미지 캐시도 삭제, `tmp`(공유받은 파일·카메라 사진·고른 문서)는 하루 지나면 정리. 불투명한 이미지는 JPEG, 투명한 이미지는 PNG로 저장. 이미지가 많은 위젯은 전체 비트맵 용량(6MB) 안에서 이미지를 작게 디코딩하고, 긴 텍스트 이미지는 높이 2048px까지. 실행 기록은 한 줄씩 추가(JSONL)하고 400줄이 되면 200줄로 정리.
-- **refreshAfterDate 정확도**: `USE_EXACT_ALARM`으로 지정 시각에 정확히 실행. 재부팅 등으로 알람이 사라져도 WorkManager 예약이 남아 있어 갱신됨 (알람이 울리면 WorkManager 예약을 즉시 실행으로 대체해 한 번만 실행).
+- **refreshAfterDate 정확도**: `USE_EXACT_ALARM`으로 지정 시각에 정확히 실행(화면이 켜져 있을 때). 재부팅 등으로 알람이 사라지면 60분 안전망 작업이 다시 실행해 알람을 새로 겁니다. 정확한 알람을 쓸 수 없는 기기는 WorkManager 예약으로 대신합니다.
 - **권한 요청**: 편집기에서 실행할 때 스크립트가 `Location.` / `Notification(` / `CalendarEvent.` / `Contact.` / `Photos.latest…`를 쓰면 필요한 권한만 먼저 요청.
 - **앱 UI (Alert·UITable·WebView 등)**: 앱에서 실행할 때만 사용 가능. 위젯 갱신 중에 부르면 "…during a widget refresh" 에러. 사용자가 화면을 보고 있는 시간은 실행 타임아웃에 포함하지 않음 (앱 실행은 전체 30분 상한).
 - **위젯 버튼**: 탭은 위젯마다 순서대로 처리되어(연속 탭이 누락되지 않음) 카운터 같은 상태 위젯을 만들 수 있음. 상태는 `FileManager`나 `Keychain`에 저장.

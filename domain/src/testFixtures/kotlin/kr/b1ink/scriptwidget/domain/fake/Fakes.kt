@@ -247,3 +247,7 @@ class FakeCatalogUrls : kr.b1ink.scriptwidget.domain.repository.CatalogUrlReposi
         state.value = state.value - url
     }
 }
+
+class FakeRefreshSettings(var whileScreenOff: Boolean = false) : kr.b1ink.scriptwidget.domain.scheduler.RefreshSettings {
+    override fun refreshWhileScreenOff(): Boolean = whileScreenOff
+}

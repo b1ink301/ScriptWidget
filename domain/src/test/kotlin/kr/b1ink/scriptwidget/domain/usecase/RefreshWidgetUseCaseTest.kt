@@ -4,6 +4,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import kr.b1ink.scriptwidget.domain.fake.FakeNetworkState
 import kr.b1ink.scriptwidget.domain.fake.FakeRefreshScheduler
+import kr.b1ink.scriptwidget.domain.fake.FakeRefreshSettings
 import kr.b1ink.scriptwidget.domain.fake.FakeRenderStateRepository
 import kr.b1ink.scriptwidget.domain.fake.FakeScriptEngine
 import kr.b1ink.scriptwidget.domain.fake.FakeScreenState
@@ -34,7 +35,8 @@ class RefreshWidgetUseCaseTest {
     private val scheduler = FakeRefreshScheduler()
     private val screen = FakeScreenState(on = true)
     private val network = FakeNetworkState(connected = true)
-    private val refresh = RefreshWidgetUseCase(bindings, scripts, RunScriptUseCase(engine), renderStates, scheduler, clock, screen, network)
+    private val settings = FakeRefreshSettings(whileScreenOff = false)
+    private val refresh = RefreshWidgetUseCase(bindings, scripts, RunScriptUseCase(engine), renderStates, scheduler, clock, screen, network, settings)
 
     private val okTree = WidgetRoot(children = listOf(TextNode("sunny")))
 
@@ -130,13 +132,13 @@ class RefreshWidgetUseCaseTest {
     }
 
     @Test
-    fun `a refresh time in the past is not scheduled`() = runTest {
+    fun `a refresh time in the past waits for the minimum interval`() = runTest {
         clock.millis = 100 * minute
         engine.result = ScriptRunResult(widget = okTree.copy(refreshAfter = 10L))
 
         refresh(7, WidgetFamily.Small)
 
-        assertTrue(scheduler.refreshAt.isEmpty())
+        assertEquals(listOf(7 to 105 * minute), scheduler.refreshAt)
     }
 
     @Test
@@ -200,7 +202,8 @@ class RefreshWidgetUseCaseTest {
     }
 
     @Test
-    fun `with the screen off a refresh is at least 15 minutes away and may wake the device`() = runTest {
+    fun `with refreshing while the screen is off, a refresh is at least 15 minutes away and may wake the device`() = runTest {
+        settings.whileScreenOff = true
         screen.on = false
         engine.result = ScriptRunResult(widget = okTree.copy(refreshAfter = 42L + 3 * minute))
 
@@ -224,7 +227,8 @@ class RefreshWidgetUseCaseTest {
     }
 
     @Test
-    fun `with the screen off scheduled refreshes run at most every 15 minutes`() = runTest {
+    fun `with refreshing while the screen is off, scheduled refreshes run at most every 15 minutes`() = runTest {
+        settings.whileScreenOff = true
         screen.on = false
         renderStates.states[7] = RenderState(scriptName = "weather", tree = okTree.copy(refreshAfter = 5 * minute), updatedAt = 1)
         engine.result = ScriptRunResult(widget = okTree)
@@ -238,6 +242,67 @@ class RefreshWidgetUseCaseTest {
         clock.millis = 15 * minute + 1
         refresh(7, WidgetFamily.Small, RefreshTrigger.Scheduled)
         assertEquals(1, engine.calls.size)
+    }
+
+    // --- screen off (default): nothing runs, the widget catches up when the screen turns on ---
+
+    @Test
+    fun `with the screen off, a scheduled refresh waits for the screen without waking the device`() = runTest {
+        screen.on = false
+        val current = RenderState(scriptName = "weather", tree = okTree.copy(refreshAfter = 20 * minute), updatedAt = 1)
+        renderStates.states[7] = current
+        clock.millis = 30 * minute
+
+        val state = refresh(7, WidgetFamily.Small, RefreshTrigger.Scheduled)
+
+        assertEquals(current, state)
+        assertTrue(engine.calls.isEmpty())
+        assertEquals(listOf(7 to 32 * minute), scheduler.refreshAt)
+        assertEquals(listOf(false), scheduler.wakeUps)
+    }
+
+    @Test
+    fun `with the screen off, periodic refreshes don't run`() = runTest {
+        screen.on = false
+        renderStates.states[7] = RenderState(scriptName = "weather", tree = okTree, updatedAt = 1)
+        clock.millis = 60 * minute
+
+        refresh(7, WidgetFamily.Small, RefreshTrigger.Periodic)
+
+        assertTrue(engine.calls.isEmpty())
+    }
+
+    @Test
+    fun `when the screen turns on, an overdue refresh runs right away`() = runTest {
+        renderStates.states[7] = RenderState(scriptName = "weather", tree = okTree.copy(refreshAfter = 20 * minute), updatedAt = 1)
+        clock.millis = 90 * minute
+        engine.result = ScriptRunResult(widget = okTree)
+
+        refresh(7, WidgetFamily.Small, RefreshTrigger.Scheduled)
+
+        assertEquals(1, engine.calls.size)
+    }
+
+    @Test
+    fun `widgets without refreshAfterDate get a catch-up refresh 15 minutes later that doesn't wake the device`() = runTest {
+        engine.result = ScriptRunResult(widget = okTree)
+
+        refresh(7, WidgetFamily.Small)
+
+        assertEquals(listOf(7 to 42L + 15 * minute), scheduler.refreshAt)
+        assertEquals(listOf(false), scheduler.wakeUps)
+    }
+
+    @Test
+    fun `a manual run while the screen is off schedules without waking the device`() = runTest {
+        screen.on = false
+        engine.result = ScriptRunResult(widget = okTree.copy(refreshAfter = 42L + minute))
+
+        refresh(7, WidgetFamily.Small, RefreshTrigger.Manual)
+
+        assertEquals(1, engine.calls.size)
+        assertEquals(listOf(7 to 42L + 5 * minute), scheduler.refreshAt)
+        assertEquals(listOf(false), scheduler.wakeUps)
     }
 
     @Test

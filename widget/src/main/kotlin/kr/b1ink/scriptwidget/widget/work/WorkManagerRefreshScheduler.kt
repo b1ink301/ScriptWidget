@@ -32,7 +32,7 @@ class WorkManagerRefreshScheduler(
             .setInputData(input(appWidgetId, RefreshTrigger.Periodic))
             .addTag(TAG)
             .build()
-        workManager.enqueueUniquePeriodicWork(periodicName(appWidgetId), ExistingPeriodicWorkPolicy.KEEP, request)
+        workManager.enqueueUniquePeriodicWork(periodicName(appWidgetId), ExistingPeriodicWorkPolicy.UPDATE, request)
     }
 
     override fun refreshAt(appWidgetId: Int, epochMillis: Long, wakeUp: Boolean) {
@@ -73,7 +73,8 @@ class WorkManagerRefreshScheduler(
 
     companion object {
         const val TAG = "ScriptWidget"
-        const val INTERVAL_MINUTES = 15L
+        /** Safety net (e.g. after a reboot cleared the alarms); regular refreshes come from alarms. */
+        const val INTERVAL_MINUTES = 60L
 
         fun periodicName(appWidgetId: Int) = "script-widget-periodic-$appWidgetId"
         fun oneTimeName(appWidgetId: Int) = "script-widget-now-$appWidgetId"
