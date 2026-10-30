@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -58,6 +59,7 @@ import kr.b1ink.scriptwidget.ui.permissions.title
 fun ScriptListRoute(
     container: AppContainer,
     onOpen: (String) -> Unit,
+    onNewDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = {},
     widgetRecommendations: List<AppPermission> = emptyList(),
     onOpenPermissions: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
@@ -153,6 +155,7 @@ fun ScriptListRoute(
         state = state,
         onOpen = onOpen,
         onCreate = vm::createScript,
+        onNewDesign = onNewDesign,
         onRequestDelete = vm::requestDelete,
         onConfirmDelete = vm::confirmDelete,
         onCancelDelete = vm::cancelDelete,
@@ -185,14 +188,23 @@ fun ScriptListScreen(
     onSetAppearance: (String, ScriptAppearance) -> Unit = { _, _ -> },
     onSearch: (String) -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
+    onNewDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = {},
 ) {
     var styling by remember { mutableStateOf<ScriptSummary?>(null) }
+    var choosingNew by remember { mutableStateOf(false) }
+    if (choosingNew) {
+        NewScriptDialog(
+            onCode = { choosingNew = false; onCreate() },
+            onTemplate = { choosingNew = false; onNewDesign(it) },
+            onDismiss = { choosingNew = false },
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("내 스크립트") },
                 actions = {
-                    FilledTonalButton(onClick = onCreate, modifier = Modifier.padding(end = 8.dp).testTag("new-script")) {
+                    FilledTonalButton(onClick = { choosingNew = true }, modifier = Modifier.padding(end = 8.dp).testTag("new-script")) {
                         Text("+ 새 스크립트")
                     }
                 },
@@ -353,5 +365,41 @@ private fun AppearanceDialog(script: ScriptSummary, onDismiss: () -> Unit, onPic
         },
         confirmButton = { TextButton(onClick = { onPick(ScriptAppearance(color, glyph)) }) { Text("적용") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } },
+    )
+}
+
+/** "+ 새 스크립트": write code, or start the widget designer from a template. */
+@Composable
+private fun NewScriptDialog(
+    onCode: () -> Unit,
+    onTemplate: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("새 스크립트") },
+        text = {
+            Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                androidx.compose.material3.ListItem(
+                    headlineContent = { Text("</> 코드로 작성") },
+                    supportingContent = { Text("JavaScript로 직접 작성합니다") },
+                    modifier = Modifier.clickable(onClick = onCode),
+                )
+                Text(
+                    "디자이너로 만들기",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
+                )
+                kr.b1ink.scriptwidget.domain.model.DesignTemplates.all.forEach { template ->
+                    androidx.compose.material3.ListItem(
+                        headlineContent = { Text("🎨 ${template.title}") },
+                        modifier = Modifier.testTag("template-${template.name}").clickable { onTemplate(template) },
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text("취소") } },
     )
 }

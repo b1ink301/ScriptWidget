@@ -156,10 +156,28 @@ class MainChromeTest {
         }
 
         compose.onNodeWithTag("new-script").performClick()
+        compose.onNodeWithText("코드로 작성", substring = true).performClick()
         compose.onNodeWithTag("script-search").performTextInput("일정")
 
         assertEquals(1, created)
         assertEquals("일정", query)
         compose.onNodeWithText("위젯 2개").assertIsDisplayed()
+    }
+
+    @Test
+    fun newScriptOffersDesignerTemplates() {
+        val designs = mutableListOf<kr.b1ink.scriptwidget.domain.model.DesignTemplates>()
+        compose.setContent {
+            ScriptListScreen(
+                state = ScriptListUiState(),
+                onOpen = {}, onCreate = {}, onRequestDelete = {}, onConfirmDelete = {}, onCancelDelete = {},
+                onNewDesign = { designs += it },
+            )
+        }
+
+        compose.onNodeWithTag("new-script").performClick()
+        compose.onNodeWithTag("template-Battery").performClick()
+
+        assertEquals(listOf(kr.b1ink.scriptwidget.domain.model.DesignTemplates.Battery), designs)
     }
 }

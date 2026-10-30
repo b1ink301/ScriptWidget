@@ -86,4 +86,24 @@ class MainNavStateTest {
         assertEquals(state, MainNavState.restore(state.save()))
         assertEquals(home, MainNavState.restore(home.save()))
     }
+
+    @Test
+    fun `a designed script opens in the designer and can switch to its code and back`() {
+        val designing = home.open("design_1", designer = true)
+
+        assertTrue(designing.designing)
+        assertFalse(designing.showsTabBar)
+        assertFalse(designing.showCode().designing)
+        assertEquals("design_1", designing.showCode().editing)
+        assertTrue(designing.showCode().showDesigner().designing)
+        assertEquals(home, designing.back())
+        assertFalse(home.open("plain").designing)
+    }
+
+    @Test
+    fun `the designer survives being saved and restored`() {
+        val designing = home.select(MainTab.Gallery).open("design_1", designer = true)
+
+        assertEquals(designing, MainNavState.restore(designing.save()))
+    }
 }

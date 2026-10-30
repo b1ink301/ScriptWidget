@@ -40,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
@@ -70,6 +71,7 @@ fun EditorRoute(
     autoRun: RunRequest? = null,
     onAutoRunConsumed: () -> Unit = {},
     onOpenApiReference: () -> Unit = {},
+    onOpenDesigner: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val vm = viewModel(key = "editor-$scriptName") {
@@ -126,9 +128,12 @@ fun EditorRoute(
     val catalog by androidx.compose.runtime.produceState(emptyList<kr.b1ink.scriptwidget.data.api.ApiEntry>(), container) {
         value = container.apiCatalog()
     }
+    // Scripts made in the designer can go back to it.
+    val designed = state.code?.let { kr.b1ink.scriptwidget.domain.model.DesignHeader.read(it) !is kr.b1ink.scriptwidget.domain.model.DesignRead.Plain } == true
     EditorScreen(
         state = state,
         catalog = catalog,
+        onOpenDesigner = if (designed) ({ scope.launch { vm.saveIfDirty(); onOpenDesigner() } }) else null,
         onOpenApiReference = onOpenApiReference,
         onBack = { scope.launch { vm.saveIfDirty(); onBack() } },
         onCodeChange = vm::onCodeChange,
@@ -179,6 +184,7 @@ fun EditorScreen(
     overlay: @Composable () -> Unit = {},
     catalog: List<kr.b1ink.scriptwidget.data.api.ApiEntry> = emptyList(),
     onOpenApiReference: () -> Unit = {},
+    onOpenDesigner: (() -> Unit)? = null,
 ) {
     var renaming by remember { mutableStateOf(false) }
 
@@ -189,6 +195,7 @@ fun EditorScreen(
                 navigationIcon = { TextButton(onClick = onBack) { Text("←") } },
                 title = { Text(text = state.name + if (state.dirty) " •" else "", maxLines = 1) },
                 actions = {
+                    onOpenDesigner?.let { TextButton(onClick = it, modifier = Modifier.testTag("open-designer")) { Text("디자인") } }
                     TextButton(onClick = { renaming = true }) { Text("이름") }
                     TextButton(onClick = onPin) { Text("고정") }
                     TextButton(onClick = onSave, enabled = state.dirty) { Text("저장") }

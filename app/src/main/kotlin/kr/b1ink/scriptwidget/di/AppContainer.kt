@@ -198,6 +198,16 @@ class AppContainer(
     }
     val runScript by lazy { RunScriptUseCase(engine, runHistory) }
 
+    // --- widget designer ---
+    val designGenerator: kr.b1ink.scriptwidget.domain.repository.DesignScriptGenerator =
+        kr.b1ink.scriptwidget.data.design.JsDesignScriptGenerator()
+    val createDesign = kr.b1ink.scriptwidget.domain.usecase.CreateDesignedScriptUseCase(scriptRepository, designGenerator)
+    val openDesign = kr.b1ink.scriptwidget.domain.usecase.OpenDesignUseCase(scriptRepository)
+    val saveDesign by lazy { kr.b1ink.scriptwidget.domain.usecase.SaveDesignUseCase(saveScript, scriptRepository, designGenerator) }
+
+    /** Designer previews run on every edit; they are not worth a run-history entry. */
+    val runPreview by lazy { RunScriptUseCase(engine) }
+
     /** Widget count and last run per script, for the script list. */
     /** Compares [currentVersion] with the latest GitHub release, picking the APK for this device's ABI. */
     fun checkForUpdate(currentVersion: String) = kr.b1ink.scriptwidget.domain.usecase.CheckForUpdateUseCase(

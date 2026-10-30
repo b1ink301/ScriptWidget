@@ -2,6 +2,7 @@ package kr.b1ink.scriptwidget
 
 import android.content.Intent
 import android.os.Bundle
+import kotlinx.coroutines.launch
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -112,10 +113,17 @@ class MainActivity : ComponentActivity() {
                         kr.b1ink.scriptwidget.ui.bookmarks.FileBookmarksRoute(container = container, onBack = { nav = nav.back() ?: nav })
                     nav.overlay == Overlay.ApiReference ->
                         kr.b1ink.scriptwidget.ui.api.ApiReferenceRoute(container = container, onBack = { nav = nav.back() ?: nav })
+                    editing != null && nav.designing -> kr.b1ink.scriptwidget.ui.designer.DesignerRoute(
+                        container = container,
+                        scriptName = editing,
+                        onBack = { nav = nav.closeEditor() },
+                        onShowCode = { nav = nav.showCode() },
+                    )
                     editing != null -> EditorRoute(
                         container = container,
                         scriptName = editing,
                         onBack = { nav = nav.closeEditor() },
+                        onOpenDesigner = { nav = nav.showDesigner() },
                         autoRun = autoRun,
                         onOpenApiReference = { nav = nav.show(Overlay.ApiReference) },
                         onAutoRunConsumed = { autoRun = null },
@@ -142,13 +150,24 @@ class MainActivity : ComponentActivity() {
         widgetRecommendations: List<kr.b1ink.scriptwidget.permissions.AppPermission>,
         onNav: (MainNavState) -> Unit,
     ) {
-        val open: (String) -> Unit = { onNav(nav.open(it)) }
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        // Scripts made in the designer (and not edited by hand since) open in the designer.
+        val open: (String) -> Unit = { name ->
+            scope.launch {
+                val designed = container.openDesign(name) is kr.b1ink.scriptwidget.domain.model.DesignRead.Designed
+                onNav(nav.open(name, designer = designed))
+            }
+        }
+        val newDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = { template ->
+            scope.launch { onNav(nav.open(container.createDesign(template.design), designer = true)) }
+        }
         when (nav.tab) {
             MainTab.Scripts -> {
                 PermissionActionHandler(permissions)
                 ScriptListRoute(
                     container = container,
                     onOpen = open,
+                    onNewDesign = newDesign,
                     widgetRecommendations = widgetRecommendations,
                     onOpenPermissions = { onNav(nav.show(Overlay.Permissions)) },
                     incomingFiles = pendingImport,

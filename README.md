@@ -16,6 +16,7 @@ iOS [Scriptable](https://scriptable.app/)처럼 **JavaScript로 안드로이드 
 - **Scriptable 호환 API**: `ListWidget`·스택·텍스트·이미지·`DrawContext`·`Request`·`FileManager`·`Keychain`·`Location`·`Calendar`/`Reminder`/`Contact`·`Notification`·`Alert`/`UITable`/`WebView`·`Intl` 등 ([지원 JS API](#지원-js-api)). `scriptable://` 링크와 iOS 경로도 처리
 - **갤러리**: 일정·할 일·달력·D-day·날씨·코인·RSS·세계 시계 등 23개 샘플, https `index.json` 카탈로그 추가(설치 전 코드·권한 확인), 업데이트 ([갤러리](#갤러리-샘플스크립트-마켓))
 - **위젯**: small/medium/large, 위젯 파라미터, 탭·버튼 액션(Android 확장), 라이트/다크 색, 투명 배경
+- **위젯 디자이너**: 코드 없이 텍스트·시각·심볼·이미지·스택을 배치하고 배터리·날씨·일정·할 일·JSON 등 데이터 블록을 연결. 미리보기는 실제 엔진으로 그리고, 저장하면 Scriptable 스크립트가 만들어짐 ([위젯 디자이너](#위젯-디자이너))
 - **편집기**: 문법 색상, 자동완성, 찾기/바꾸기, 미리보기(크기별), 콘솔, 실행 기록, API 도움말
 - **가져오기·내보내기**: `.js`/`.scriptable` 열기·공유, zip 전체 백업/복원, 파일 북마크(`bookmarkedPath`)
 - **실행 경로**: 앱, 위젯, 공유 시트, 알림, 홈 화면 바로가기, 자동화 앱(Tasker 등) 브로드캐스트
@@ -72,14 +73,14 @@ sequenceDiagram
 
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
-| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교) | `domain/src/test` | 128 |
-| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기 | `data/src/test` | 249 |
+| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교, 디자인 모델·편집 규칙·헤더·템플릿) | `domain/src/test` | 142 |
+| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교) | `data/src/test` | 255 |
 | widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
-| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인) | `app/src/test` | 119 |
+| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인, 디자이너 편집·되돌리기·미리보기) | `app/src/test` | 129 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
 | widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션) | `widget/src/androidTest` | 57 |
-| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행) | `app/src/androidTest` | 47 |
-| **합계** | | | **680** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택) | `app/src/androidTest` | 53 |
+| **합계** | | | **716** (+ 호환성 측정 하네스 1, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -112,7 +113,7 @@ export ANDROID_SERIAL=emulator-5554
 
 | 탭 | 내용 |
 |---|---|
-| **내 스크립트** | 스크립트 목록·검색, 각 스크립트의 "위젯 n개 · n분 전 실행", 상단 **+ 새 스크립트**, 스크립트 **⋮**(내보내기·바로가기·아이콘·삭제) |
+| **내 스크립트** | 스크립트 목록·검색, 각 스크립트의 "위젯 n개 · n분 전 실행", 상단 **+ 새 스크립트**(코드로 작성 / 디자이너 템플릿), 스크립트 **⋮**(내보내기·바로가기·아이콘·삭제) |
 | **갤러리** | 샘플·카탈로그 설치·열기·업데이트, **+ 카탈로그** |
 | **기록** | 실행 기록 |
 | **도움말** | API 도움말 |
@@ -170,6 +171,18 @@ export ANDROID_SERIAL=emulator-5554
 }
 ```
 `permissions` 값: `calendar` `contacts` `location` `network` `notification` `photos` (표시용). `version`을 올리면 설치한 사용자에게 업데이트가 보입니다.
+
+### 위젯 디자이너
+
+**+ 새 스크립트** → **디자이너로 만들기**에서 템플릿(빈 위젯·시계·배터리·다음 일정·할 일·날씨·JSON 값)을 고르면 디자이너가 열립니다.
+
+- **화면**: 위쪽 미리보기(소·중·대), 아래 **구조**(요소 트리)와 **속성**(선택한 요소). 미리보기에서 요소를 탭해도 선택됩니다.
+- **요소**: 텍스트, 시각(실시간), 심볼(SF Symbols 이름), 이미지(URL), 간격, 가로·세로 스택. 선택한 요소는 위·아래로 옮기기, 스택으로 묶기, 삭제. 되돌리기(↶)·다시 실행(↷).
+- **데이터 블록**: 텍스트의 `{value}` 자리에 들어갈 값 — 날짜 문구(형식 지정), 배터리, 다음 일정(제목·시간), 할 일(남은 개수·가장 급한 것), 날씨(기온·상태, Open-Meteo), JSON 값(URL + `data.0.name` 같은 경로), 위젯 파라미터. 값을 못 가져오면 `–`를 보여 줍니다.
+- **위젯 전체**: 배경색·그라데이션, 여백, 간격, 자동 갱신 요청(`refreshAfterDate`), 탭하면 열 주소.
+- **미리보기 = 실제 위젯**: 바꿀 때마다 Scriptable 코드를 다시 만들어 실제 엔진으로 실행해 그립니다(데이터 블록도 실제 값).
+- **저장 형식**: 일반 Scriptable 스크립트입니다. 맨 위 주석 `// scriptwidget-design: {...}`에 디자인이 함께 저장되어, 목록에서 열면 디자이너로 열립니다. **코드** 버튼으로 생성된 코드를 볼 수 있고, 편집기의 **디자인** 버튼으로 돌아옵니다.
+- **코드를 직접 고치면**: 그 스크립트는 편집기로 열립니다. 디자이너로 다시 열면 경고가 나오고, 거기서 저장하면 코드가 디자인대로 다시 만들어집니다(직접 고친 부분은 사라짐).
 
 ### 스크립트를 실행하는 방법
 

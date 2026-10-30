@@ -1,0 +1,231 @@
+package kr.b1ink.scriptwidget.data.design
+
+import kr.b1ink.scriptwidget.domain.model.DataBinding
+import kr.b1ink.scriptwidget.domain.model.DesignDate
+import kr.b1ink.scriptwidget.domain.model.DesignElement
+import kr.b1ink.scriptwidget.domain.model.DesignImage
+import kr.b1ink.scriptwidget.domain.model.DesignSpacer
+import kr.b1ink.scriptwidget.domain.model.DesignStack
+import kr.b1ink.scriptwidget.domain.model.DesignSymbol
+import kr.b1ink.scriptwidget.domain.model.DesignText
+import kr.b1ink.scriptwidget.domain.model.WidgetDesign
+import kr.b1ink.scriptwidget.domain.repository.DesignScriptGenerator
+
+/**
+ * Writes a design as a plain Scriptable script: data loading first, then one widget call per element,
+ * so every element becomes exactly one node at the same path (the designer relies on it to select
+ * elements by tapping the preview).
+ */
+class JsDesignScriptGenerator : DesignScriptGenerator {
+
+    override fun generate(design: WidgetDesign): String = buildString {
+        appendLine("// 디자이너로 만든 위젯입니다. 디자이너에서 열어 고치세요.")
+        appendLine("// 여기서 코드를 직접 고치면 디자이너에서 다시 열 때 고친 내용이 사라집니다.")
+        val bindings = design.bindings()
+        if (bindings.isNotEmpty()) {
+            appendLine()
+            append(DATA_HELPERS)
+            bindings.forEachIndexed { i, binding -> appendLine("await load(\"d$i\", async () => ${loader(binding)});") }
+        }
+        appendLine()
+        appendLine("const w = new ListWidget();")
+        design.background.gradient?.takeIf { it.size >= 2 }?.let { colors ->
+            appendLine("const bg = new LinearGradient();")
+            appendLine("bg.colors = [${colors.joinToString { color(it) }}];")
+            appendLine("bg.locations = [${colors.indices.joinToString { num(it / (colors.size - 1f)) }}];")
+            appendLine("w.backgroundGradient = bg;")
+        } ?: design.background.color?.let { appendLine("w.backgroundColor = ${color(it)};") }
+        design.padding?.let { appendLine("w.setPadding(${num(it)}, ${num(it)}, ${num(it)}, ${num(it)});") }
+        if (design.spacing > 0) appendLine("w.spacing = ${num(design.spacing)};")
+        design.url?.let { appendLine("w.url = ${str(it)};") }
+        design.refreshMinutes?.let { appendLine("w.refreshAfterDate = new Date(Date.now() + $it * 60 * 1000);") }
+        val names = Names()
+        design.children.forEach { element(it, "w", names, bindings) }
+        appendLine()
+        appendLine("Script.setWidget(w);")
+        appendLine("if (!config.runsInWidget) await w.presentMedium();")
+        appendLine("Script.complete();")
+    }
+
+    private fun StringBuilder.element(element: DesignElement, parent: String, names: Names, bindings: List<DataBinding>) {
+        appendLine()
+        when (element) {
+            is DesignText -> {
+                val v = names.next("text")
+                val parts = element.text.split(VALUE).map(::str)
+                val value = element.data?.let { "String(data.d${bindings.indexOf(it)})" }
+                val text = if (value == null) str(element.text) else parts.joinToString(" + $value + ")
+                appendLine("const $v = $parent.addText($text);")
+                appendLine("$v.font = ${font(element.weight, element.size)};")
+                element.color?.let { appendLine("$v.textColor = ${color(it)};") }
+                align(v, element.align)
+                if (element.lineLimit > 0) appendLine("$v.lineLimit = ${element.lineLimit};")
+                if (element.minimumScaleFactor < 1f) appendLine("$v.minimumScaleFactor = ${num(element.minimumScaleFactor)};")
+                element.url?.let { appendLine("$v.url = ${str(it)};") }
+            }
+            is DesignDate -> {
+                val v = names.next("date")
+                appendLine("const $v = $parent.addDate(new Date());")
+                appendLine("$v.${DATE_STYLES[element.style] ?: "applyTimeStyle"}();")
+                appendLine("$v.font = ${font(element.weight, element.size)};")
+                element.color?.let { appendLine("$v.textColor = ${color(it)};") }
+                align(v, element.align)
+            }
+            is DesignSymbol -> {
+                val v = names.next("symbol")
+                appendLine("const $v = $parent.addImage(SFSymbol.named(${str(element.name)}).image);")
+                appendLine("$v.imageSize = new Size(${num(element.size)}, ${num(element.size)});")
+                element.color?.let { appendLine("$v.tintColor = ${color(it)};") }
+            }
+            is DesignImage -> {
+                val v = names.next("image")
+                // A placeholder keeps the element's place when the image can't be loaded.
+                appendLine("const $v = $parent.addImage(await new Request(${str(element.url)}).loadImage().catch(() => SFSymbol.named(\"photo\").image));")
+                element.size?.let { appendLine("$v.imageSize = new Size(${num(it)}, ${num(it)});") }
+                if (element.cornerRadius > 0) appendLine("$v.cornerRadius = ${num(element.cornerRadius)};")
+            }
+            is DesignSpacer -> appendLine("$parent.addSpacer(${element.length?.let(::num).orEmpty()});")
+            is DesignStack -> {
+                val v = names.next("stack")
+                appendLine("const $v = $parent.addStack();")
+                appendLine(if (element.dir == "v") "$v.layoutVertically();" else "$v.layoutHorizontally();")
+                when (element.align) {
+                    "top" -> appendLine("$v.topAlignContent();")
+                    "bottom" -> appendLine("$v.bottomAlignContent();")
+                    else -> appendLine("$v.centerAlignContent();")
+                }
+                if (element.spacing > 0) appendLine("$v.spacing = ${num(element.spacing)};")
+                element.padding?.let { appendLine("$v.setPadding(${num(it)}, ${num(it)}, ${num(it)}, ${num(it)});") }
+                element.bg?.let { appendLine("$v.backgroundColor = ${color(it)};") }
+                if (element.cornerRadius > 0) appendLine("$v.cornerRadius = ${num(element.cornerRadius)};")
+                element.children.forEach { element(it, v, names, bindings) }
+            }
+        }
+    }
+
+    private fun StringBuilder.align(v: String, align: String) {
+        when (align) {
+            "center" -> appendLine("$v.centerAlignText();")
+            "right" -> appendLine("$v.rightAlignText();")
+        }
+    }
+
+    private fun loader(binding: DataBinding): String = when (binding) {
+        is DataBinding.DateText -> "formatDate(new Date(), ${str(binding.format)})"
+        DataBinding.Battery -> "Math.round(Device.batteryLevel() * 100)"
+        is DataBinding.Parameter -> "args.widgetParameter || ${str(binding.fallback)}"
+        is DataBinding.Json -> "pick(await new Request(${str(binding.url)}).loadJSON(), ${str(binding.path)})"
+        is DataBinding.Weather -> when (binding.field) {
+            DataBinding.Weather.Field.Temperature -> "Math.round((await weather()).temperature_2m)"
+            DataBinding.Weather.Field.Condition -> "weatherLabel((await weather()).weather_code)"
+        }
+        is DataBinding.NextEvent -> when (binding.field) {
+            DataBinding.NextEvent.Field.Title -> "(await nextEvent())?.title ?? \"일정 없음\""
+            DataBinding.NextEvent.Field.Time -> "eventTime(await nextEvent())"
+        }
+        is DataBinding.Reminders -> when (binding.field) {
+            DataBinding.Reminders.Field.Count -> "(await openReminders()).length"
+            DataBinding.Reminders.Field.Next -> "(await openReminders())[0]?.title ?? \"할 일 없음\""
+        }
+    }
+
+    /** Unique variable names: text1, text2, stack1 ... */
+    private class Names {
+        private val counts = mutableMapOf<String, Int>()
+        fun next(prefix: String): String = "$prefix${counts.merge(prefix, 1, Int::plus)}"
+    }
+
+    companion object {
+        private const val VALUE = "{value}"
+
+        private val DATE_STYLES = mapOf(
+            "time" to "applyTimeStyle",
+            "date" to "applyDateStyle",
+            "relative" to "applyRelativeStyle",
+            "timer" to "applyTimerStyle",
+        )
+
+        private val WEIGHTS = setOf("ultraLight", "thin", "light", "medium", "semibold", "bold", "heavy", "black")
+
+        /** A JavaScript string literal. */
+        fun str(text: String): String = buildString {
+            append('"')
+            text.forEach { c ->
+                when (c) {
+                    '"' -> append("\\\"")
+                    '\\' -> append("\\\\")
+                    '\n' -> append("\\n")
+                    '\r' -> append("\\r")
+                    '\t' -> append("\\t")
+                    '<' -> append("\\u003c")
+                    ' ' -> append("\\u2028")
+                    ' ' -> append("\\u2029")
+                    else -> if (c < ' ') append("\\u%04x".format(c.code)) else append(c)
+                }
+            }
+            append('"')
+        }
+
+        private fun num(value: Float): String =
+            if (value == value.toLong().toFloat()) value.toLong().toString() else value.toString()
+
+        private fun font(weight: String, size: Float): String =
+            if (weight in WEIGHTS) "Font.${weight}SystemFont(${num(size)})" else "Font.systemFont(${num(size)})"
+
+        /** `#AARRGGBB` → `new Color("#RRGGBB", alpha)`, as Scriptable expects. */
+        private fun color(argb: String): String {
+            val hex = argb.removePrefix("#")
+            if (hex.length != 8) return "new Color(${str("#$hex")})"
+            val alpha = hex.substring(0, 2).toInt(16) / 255f
+            val rgb = str("#" + hex.substring(2))
+            return if (alpha >= 1f) "new Color($rgb)" else "new Color($rgb, ${"%.3f".format(java.util.Locale.ROOT, alpha).trimEnd('0').trimEnd('.')})"
+        }
+
+        private val DATA_HELPERS = """
+            |// 데이터 블록: 실패하면 "–"를 보여 줍니다.
+            |const data = {};
+            |async function load(key, read) {
+            |  try { data[key] = await read(); } catch (e) { console.warn(`${'$'}{key}: ${'$'}{e}`); data[key] = "–"; }
+            |  if (data[key] === undefined || data[key] === null) data[key] = "–";
+            |}
+            |function formatDate(date, pattern) { const f = new DateFormatter(); f.dateFormat = pattern; return f.string(date); }
+            |function pick(json, path) {
+            |  const value = path.split(".").filter(Boolean).reduce((o, k) => (o == null ? undefined : o[k]), json);
+            |  return value !== null && typeof value === "object" ? JSON.stringify(value) : value;
+            |}
+            |let _weather;
+            |async function weather() {
+            |  if (_weather) return _weather;
+            |  let loc = { latitude: 37.5665, longitude: 126.978 };
+            |  try { Location.setAccuracyToKilometer(); loc = await Location.current(); } catch (e) {}
+            |  const url = `https://api.open-meteo.com/v1/forecast?latitude=${'$'}{loc.latitude}&longitude=${'$'}{loc.longitude}&current=temperature_2m,weather_code&timezone=auto`;
+            |  return (_weather = (await new Request(url).loadJSON()).current);
+            |}
+            |function weatherLabel(code) {
+            |  const labels = [[[0], "맑음"], [[1, 2], "구름 조금"], [[3], "흐림"], [[45, 48], "안개"], [[51, 53, 55, 56, 57], "이슬비"],
+            |    [[61, 63, 65, 66, 67, 80, 81, 82], "비"], [[71, 73, 75, 77, 85, 86], "눈"], [[95, 96, 99], "뇌우"]];
+            |  return (labels.find(([codes]) => codes.includes(code)) ?? [null, "–"])[1];
+            |}
+            |let _event;
+            |async function nextEvent() {
+            |  if (_event !== undefined) return _event;
+            |  const now = new Date();
+            |  const events = (await CalendarEvent.today([])).filter((e) => e.isAllDay || e.endDate > now);
+            |  events.sort((a, b) => a.startDate - b.startDate);
+            |  return (_event = events[0] ?? null);
+            |}
+            |function eventTime(e) {
+            |  if (!e) return "";
+            |  return e.isAllDay ? "하루 종일" : `${'$'}{formatDate(e.startDate, "HH:mm")} – ${'$'}{formatDate(e.endDate, "HH:mm")}`;
+            |}
+            |let _reminders;
+            |async function openReminders() {
+            |  if (_reminders) return _reminders;
+            |  const list = await Reminder.allIncomplete();
+            |  list.sort((a, b) => (a.dueDate ? a.dueDate.getTime() : Infinity) - (b.dueDate ? b.dueDate.getTime() : Infinity));
+            |  return (_reminders = list);
+            |}
+            |
+        """.trimMargin() + "\n"
+    }
+}
