@@ -27,8 +27,6 @@
     <string name="list_template_json">JSON value (GitHub stars)</string>
     <string name="list_shortcut_unsupported">This launcher doesn\'t support adding shortcuts.</string>
     <string name="list_widgets_none">No widgets</string>
-    <string name="list_widgets_one">1 widget</string>
-    <string name="list_widgets_count">%1$d widgets</string>
     <string name="list_ran">Ran %1$s</string>
     <string name="list_ago_just_now">just now</string>
     <string name="list_ago_minutes">%1$d min ago</string>
@@ -42,10 +40,8 @@
     <string name="list_exported">Exported \'%1$s\'.</string>
     <string name="list_script_not_found">Script \'%1$s\' not found.</string>
     <string name="list_export_failed">Export failed: %1$s</string>
-    <string name="list_backed_up">Backed up %1$d scripts.</string>
     <string name="list_backup_failed">Backup failed: %1$s</string>
     <string name="list_restored_none">Restored 0.</string>
     <string name="list_restored">Restored %1$d: %2$s</string>
-    <string name="list_restore_skipped">Skipped %1$d already up to date</string>
     <string name="list_restore_failed">Restore failed: %1$s</string>
 </resources>

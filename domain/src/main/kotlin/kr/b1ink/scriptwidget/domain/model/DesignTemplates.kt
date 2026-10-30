@@ -63,7 +63,7 @@ enum class DesignTemplates {
         Clock -> WidgetDesign(
             children = listOf(
                 DesignText("{value}", data = DataBinding.DateText("EEEE"), color = GRAY, size = 13f),
-                DesignDate(style = "time", size = 40f, weight = "bold"),
+                DesignDate(style = "time", size = 34f, weight = "bold"),
                 DesignText("{value}", data = DataBinding.DateText(texts.clockDate), size = 15f),
             ),
         )

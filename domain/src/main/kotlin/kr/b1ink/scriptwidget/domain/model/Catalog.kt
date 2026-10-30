@@ -32,7 +32,14 @@ data class CatalogEntry(
 data class CatalogText(val title: String, val description: String = "", val category: String = "")
 
 @Serializable
-data class Catalog(val title: String, val entries: List<CatalogEntry>)
+data class Catalog(
+    val title: String,
+    val entries: List<CatalogEntry>,
+    /** [title] in other languages, by language code ("en"). */
+    val titles: Map<String, String> = emptyMap(),
+) {
+    fun titleFor(language: String): String = titles[language] ?: title
+}
 
 /** Where an installed script came from, to offer updates without touching the user's edits. */
 @Serializable
@@ -60,6 +67,8 @@ data class GallerySection(
     val error: String? = null,
     /** Built-in catalogs can't be removed; added URLs can. */
     val removable: Boolean = false,
+    /** [title] in other languages, from the catalog. */
+    val titles: Map<String, String> = emptyMap(),
 )
 
 sealed interface UpdateResult {

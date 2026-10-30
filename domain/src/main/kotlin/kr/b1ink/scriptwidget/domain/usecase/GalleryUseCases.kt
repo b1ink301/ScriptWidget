@@ -39,6 +39,7 @@ class BrowseGalleryUseCase(
             GallerySection(
                 sourceId = source.id,
                 title = catalog.title,
+                titles = catalog.titles,
                 items = catalog.entries.map { entry ->
                     val status = status(source.id, entry, records, existing)
                     GalleryItem(entry, if (status == EntryStatus.NotInstalled) adopted(source, entry, existing) else status)

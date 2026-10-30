@@ -145,7 +145,7 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() ->
                 }
             }
             state.visibleSections.forEach { section ->
-                item(key = "header-${section.sourceId}") { SectionHeader(section, onRemove = { removing = section.sourceId }) }
+                item(key = "header-${section.sourceId}") { SectionHeader(section, state.language, onRemove = { removing = section.sourceId }) }
                 items(section.items, key = { "${section.sourceId}/${it.entry.id}" }) { item ->
                     EntryCard(item, state.language, busy = state.busy, actions = actions, sourceId = section.sourceId)
                 }
@@ -216,10 +216,10 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() ->
 }
 
 @Composable
-private fun SectionHeader(section: GallerySection, onRemove: () -> Unit) {
+private fun SectionHeader(section: GallerySection, language: String, onRemove: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(section.title, style = MaterialTheme.typography.titleMedium)
+            Text(section.titles[language] ?: section.title, style = MaterialTheme.typography.titleMedium)
             section.error?.let { Text(stringResource(R.string.gallery_load_failed, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
         }
         if (section.removable) TextButton(onClick = onRemove) { Text(stringResource(R.string.gallery_remove)) }

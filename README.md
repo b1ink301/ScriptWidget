@@ -20,6 +20,7 @@ iOS [Scriptable](https://scriptable.app/)처럼 **JavaScript로 안드로이드 
 - **편집기**: 문법 색상, 자동완성, 찾기/바꾸기, 미리보기(크기별), 콘솔, 실행 기록, API 도움말
 - **가져오기·내보내기**: `.js`/`.scriptable` 열기·공유, zip 전체 백업/복원, 파일 북마크(`bookmarkedPath`)
 - **실행 경로**: 앱, 위젯, 공유 시트, 알림, 홈 화면 바로가기, 자동화 앱(Tasker 등) 브로드캐스트
+- **한국어 · English**: 앱 화면, 갤러리, API 도움말, 디자이너 템플릿이 두 언어로 제공됩니다. 기기 언어를 따르고, Android 13 이상에서는 설정 탭에서 앱 언어를 따로 고를 수 있습니다 ([언어](#언어-한국어--english))
 - **효율**: 위젯별 단일 실행, 오프라인 스킵, 최근 위치 재사용, HTTP 캐시, 캐시·임시 파일 정리
 
 ## 아키텍처 (Clean Architecture)
@@ -73,14 +74,14 @@ sequenceDiagram
 
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
-| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교, 디자인 모델·편집 규칙·헤더·템플릿, 카탈로그 검사, 이벤트 트리거) | `domain/src/test` | 155 |
-| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교), 내장 카탈로그 검사, 트리거 저장소 | `data/src/test` | 261 |
+| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교, 디자인 모델·편집 규칙·헤더·템플릿, 카탈로그 검사, 이벤트 트리거) | `domain/src/test` | 160 |
+| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교), 내장 카탈로그 검사, 트리거 저장소 | `data/src/test` | 270 |
 | widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
-| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인, 디자이너 편집·되돌리기·미리보기, 설치 전 권한 경고, 트리거 화면) | `app/src/test` | 132 |
+| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인, 디자이너 편집·되돌리기·미리보기, 설치 전 권한 경고, 트리거 화면) | `app/src/test` | 133 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
-| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션, 이벤트 감시(콘텐츠 URI·조건·자정 알람)) | `widget/src/androidTest` | 64 |
-| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택, 트리거 화면) | `app/src/androidTest` | 55 |
-| **합계** | | | **747** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션, 이벤트 감시(콘텐츠 URI·조건·자정 알람)) | `widget/src/androidTest` | 65 |
+| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택, 트리거 화면) | `app/src/androidTest` | 59 |
+| **합계** | | | **767** (+ 호환성 측정 하네스 1, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -220,6 +221,16 @@ export ANDROID_SERIAL=emulator-5554
 - **스크립트 실행**: 백그라운드에서 바로 실행합니다(기록 탭에 "트리거"로 남음). `config.runsFromTrigger`가 `true`이고, `args.trigger`로 어떤 이벤트인지 알 수 있습니다.
 - 쓰지 않는 이벤트는 시스템에 등록하지 않습니다. 앱이 업데이트되거나 재부팅되면 다시 등록합니다.
 - 에뮬레이터 확인: 사진 추가와 시간대 변경(서울→도쿄→서울) 때 스크립트가 "트리거"로 실행됐습니다.
+
+### 언어 (한국어 · English)
+
+- 기본 리소스는 영어(`values/`)이고 한국어는 `values-ko/`에 있습니다. 한국어 기기는 한국어, 그 밖의 언어는 영어로 나옵니다.
+- **설정 → 앱 언어**(Android 13 이상): 기기 언어 / 한국어 / English. 시스템의 앱별 언어 설정에도 나타납니다(`locales_config.xml`).
+- **갤러리**: `catalog.json` 항목의 `translations.en`(제목·설명·분류)과 `titles.en`을 씁니다. 온라인 카탈로그가 앱보다 오래되어 번역이 없으면, 앱에 들어 있는 사본의 번역을 빌려 씁니다. 자기 카탈로그에도 같은 필드를 넣을 수 있습니다.
+- **디자이너**: 새 템플릿의 문구·날짜 형식과, 저장할 때 만들어지는 코드의 기본 문구(일정 없음/No events, 날씨 이름 등)가 앱 언어를 따릅니다.
+- **위젯 오류**: "스크립트가 지정되지 않음" 같은 앱 자체 오류는 코드로 넘겨서 위젯을 그릴 때 앱 언어로 바꿉니다. 스크립트가 낸 오류는 그대로 보여 줍니다.
+- 샘플 스크립트가 위젯에 그리는 글자(예: "오늘 일정")는 스크립트 내용이라 번역하지 않습니다.
+- 기기 테스트는 앱 언어를 한국어로 고정하는 `KoreanLocaleTestRunner`로 돌리고, 영어 화면은 `EnglishUiTest`가 확인합니다.
 
 ### 편집기·실행 기록·도움말
 - **편집기**: 줄 번호, 문법 색상(키워드·문자열·숫자·주석·API 이름), 키보드 위 자동완성(`Font.` 뒤에는 정적 멤버, `new ListWidget()`으로 만든 변수 뒤에는 그 클래스의 메서드, 그 밖에는 API·키워드·스크립트 안에서 선언한 이름), **찾기/바꾸기**(대소문자 무시, 모두 바꾸기).

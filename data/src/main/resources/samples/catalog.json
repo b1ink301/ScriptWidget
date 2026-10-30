@@ -1,5 +1,8 @@
 {
   "title": "기본 갤러리",
+  "titles": {
+    "en": "Built-in gallery"
+  },
   "entries": [
     {
       "id": "today_events",

@@ -93,6 +93,7 @@ fun ScriptListRoute(
     val state by vm.uiState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val context = androidx.compose.ui.platform.LocalContext.current
+    val shortcutUnsupported = androidx.compose.ui.res.stringResource(R.string.list_shortcut_unsupported)
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var exporting by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -156,7 +157,7 @@ fun ScriptListRoute(
         onSearch = vm::search,
         onAddShortcut = { name ->
             val pinned = kr.b1ink.scriptwidget.automation.ScriptShortcuts.requestPin(context, name)
-            if (!pinned) scope.launch { snackbar.showSnackbar(context.getString(R.string.list_shortcut_unsupported)) }
+            if (!pinned) scope.launch { snackbar.showSnackbar(shortcutUnsupported) }
         },
         state = state,
         onOpen = onOpen,

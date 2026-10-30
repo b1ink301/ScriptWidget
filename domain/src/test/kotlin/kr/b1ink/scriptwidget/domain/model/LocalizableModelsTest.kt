@@ -34,4 +34,12 @@ class LocalizableModelsTest {
         assertEquals(CatalogText("오늘 일정", "오늘 남은 일정", "일정·할 일"), entry.textFor("fr"))
         assertEquals("오늘 일정", entry.name, "the installed script keeps its name")
     }
+
+    @Test
+    fun `catalog titles can be translated too`() {
+        val catalog = Catalog("기본 갤러리", emptyList(), titles = mapOf("en" to "Built-in gallery"))
+
+        assertEquals("Built-in gallery", catalog.titleFor("en"))
+        assertEquals("기본 갤러리", catalog.titleFor("ko"))
+    }
 }

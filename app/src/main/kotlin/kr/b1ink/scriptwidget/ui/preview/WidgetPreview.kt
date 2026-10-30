@@ -164,6 +164,9 @@ private fun Node(
                 fontWeight = weight(node.weight),
                 textAlign = align(node.align),
                 maxLines = 1,
+                // "2:39 PM" must stay on one line (a wrapped second line showed through the first).
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
                 modifier = (if (inColumn && node.align != "left") Modifier.fillMaxWidth() else Modifier).then(select),
             )
         }

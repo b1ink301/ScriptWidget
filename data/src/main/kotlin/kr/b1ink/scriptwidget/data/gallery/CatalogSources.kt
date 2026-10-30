@@ -130,7 +130,7 @@ class OfficialCatalogSource(
     override val id: String = bundled.id
 
     override suspend fun catalog(): Catalog = try {
-        online.catalog()
+        withBundledTranslations(online.catalog())
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -144,6 +144,19 @@ class OfficialCatalogSource(
     } catch (e: Exception) {
         val local = runCatching { bundled.catalog().entries.firstOrNull { it.id == entry.id } }.getOrNull() ?: throw e
         bundled.code(local)
+    }
+
+    /** The online catalog can be older than the app: translations it lacks come from the bundled copy. */
+    private suspend fun withBundledTranslations(catalog: Catalog): Catalog {
+        val local = runCatching { bundled.catalog() }.getOrNull() ?: return catalog
+        val localEntries = local.entries.associateBy { it.id }
+        return catalog.copy(
+            titles = local.titles + catalog.titles,
+            entries = catalog.entries.map { entry ->
+                val borrowed = localEntries[entry.id]?.translations.orEmpty()
+                if (borrowed.isEmpty()) entry else entry.copy(translations = borrowed + entry.translations)
+            },
+        )
     }
 
     companion object {

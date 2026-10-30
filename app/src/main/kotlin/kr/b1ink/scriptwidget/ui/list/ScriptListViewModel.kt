@@ -47,8 +47,7 @@ data class ScriptListUiState(
     private fun subtitle(a: ScriptActivity): UiText {
         val widgets = when (a.widgets) {
             0 -> UiText.res(R.string.list_widgets_none)
-            1 -> UiText.res(R.string.list_widgets_one)
-            else -> UiText.res(R.string.list_widgets_count, a.widgets)
+            else -> UiText.plural(R.plurals.list_widgets, a.widgets)
         }
         val ran = a.lastRunAt?.let { UiText.res(R.string.list_ran, ago(now - it)) } ?: return widgets
         return UiText.res(R.string.list_subtitle_joined, widgets, ran)
@@ -181,7 +180,7 @@ class ScriptListViewModel(
     fun backupTo(uri: String) {
         viewModelScope.launch {
             val text = try {
-                UiText.res(R.string.list_backed_up, backupScripts(uri))
+                UiText.plural(R.plurals.list_backed_up, backupScripts(uri))
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -204,7 +203,7 @@ class ScriptListViewModel(
                             UiText.res(R.string.list_restored, result.added.size, result.added.joinToString())
                         },
                     )
-                    if (result.unchanged.isNotEmpty()) add(UiText.res(R.string.list_restore_skipped, result.unchanged.size))
+                    if (result.unchanged.isNotEmpty()) add(UiText.plural(R.plurals.list_restore_skipped, result.unchanged.size))
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e

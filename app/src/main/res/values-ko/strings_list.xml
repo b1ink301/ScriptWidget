@@ -27,8 +27,6 @@
     <string name="list_template_json">JSON 값 (GitHub 별)</string>
     <string name="list_shortcut_unsupported">이 런처는 바로가기 추가를 지원하지 않습니다.</string>
     <string name="list_widgets_none">위젯 없음</string>
-    <string name="list_widgets_one">위젯 1개</string>
-    <string name="list_widgets_count">위젯 %1$d개</string>
     <string name="list_ran">%1$s 실행</string>
     <string name="list_ago_just_now">방금</string>
     <string name="list_ago_minutes">%1$d분 전</string>
@@ -41,10 +39,8 @@
     <string name="list_exported">\'%1$s\'을(를) 내보냈습니다.</string>
     <string name="list_script_not_found">\'%1$s\' 스크립트를 찾을 수 없습니다.</string>
     <string name="list_export_failed">내보내기 실패: %1$s</string>
-    <string name="list_backed_up">%1$d개 스크립트를 백업했습니다.</string>
     <string name="list_backup_failed">백업 실패: %1$s</string>
     <string name="list_restored_none">0개를 복원했습니다.</string>
     <string name="list_restored">%1$d개를 복원했습니다: %2$s</string>
-    <string name="list_restore_skipped">이미 같은 내용이 있어 건너뜀: %1$d개</string>
     <string name="list_restore_failed">복원 실패: %1$s</string>
 </resources>

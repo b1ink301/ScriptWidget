@@ -77,6 +77,7 @@ fun EditorRoute(
     onOpenDesigner: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val editorPinUnsupported = androidx.compose.ui.res.stringResource(R.string.editor_pin_unsupported)
     val vm = viewModel(key = "editor-$scriptName") {
         EditorViewModel(
             scriptName,
@@ -152,7 +153,7 @@ fun EditorRoute(
             scope.launch {
                 vm.saveIfDirty()
                 if (!WidgetPinner.pin(context, state.name, state.parameter.ifBlank { null })) {
-                    Toast.makeText(context, context.getString(R.string.editor_pin_unsupported), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, editorPinUnsupported, Toast.LENGTH_SHORT).show()
                 }
             }
         },

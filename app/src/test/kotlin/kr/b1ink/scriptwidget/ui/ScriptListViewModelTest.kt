@@ -177,7 +177,7 @@ class ScriptListViewModelTest {
 
         vm.backupTo("content://backup")
         assertEquals(mapOf("01_hello.js" to "h"), codec.decode(documents.bytes["content://backup"]!!))
-        assertEquals(ScriptListEvent.ShowMessage(UiText.res(R.string.list_backed_up, 1)), vm.events.first())
+        assertEquals(ScriptListEvent.ShowMessage(UiText.plural(R.plurals.list_backed_up, 1)), vm.events.first())
     }
 
     @Test
@@ -191,7 +191,7 @@ class ScriptListViewModelTest {
             ScriptListEvent.ShowMessage(
                 listOf(
                     UiText.res(R.string.list_restored, 1, "news"),
-                    UiText.res(R.string.list_restore_skipped, 1),
+                    UiText.plural(R.plurals.list_restore_skipped, 1),
                 ),
             ),
             vm.events.first(),
@@ -238,7 +238,7 @@ class ScriptListViewModelTest {
         val rows = vm.uiState.value.visible.associate { it.summary.name to it.subtitle }
         fun ran(ago: UiText) = UiText.res(R.string.list_ran, ago)
         assertEquals(
-            UiText.res(R.string.list_subtitle_joined, UiText.res(R.string.list_widgets_count, 2), ran(UiText.res(R.string.list_ago_minutes, 3))),
+            UiText.res(R.string.list_subtitle_joined, UiText.plural(R.plurals.list_widgets, 2), ran(UiText.res(R.string.list_ago_minutes, 3))),
             rows["a"],
         )
         assertEquals(
@@ -246,7 +246,7 @@ class ScriptListViewModelTest {
             rows["b"],
         )
         assertEquals(
-            UiText.res(R.string.list_subtitle_joined, UiText.res(R.string.list_widgets_one), ran(UiText.res(R.string.list_ago_days, 3))),
+            UiText.res(R.string.list_subtitle_joined, UiText.plural(R.plurals.list_widgets, 1), ran(UiText.res(R.string.list_ago_days, 3))),
             rows["c"],
         )
         assertEquals(UiText.res(R.string.list_widgets_none), rows["d"], "never ran: only the widget count")

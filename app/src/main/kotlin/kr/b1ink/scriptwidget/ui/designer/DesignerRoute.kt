@@ -15,6 +15,7 @@ import kr.b1ink.scriptwidget.pin.WidgetPinner
 @Composable
 fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Unit, onShowCode: () -> Unit) {
     val context = LocalContext.current
+    val designerPinUnsupported = androidx.compose.ui.res.stringResource(R.string.designer_pin_unsupported)
     val scope = rememberCoroutineScope()
     val vm = viewModel(key = "designer-$scriptName") {
         DesignerViewModel(scriptName, container.openDesign, container.saveDesign, container.designGenerator, container.runPreview)
@@ -31,7 +32,7 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
                 scope.launch {
                     vm.saveIfDirty()
                     if (!WidgetPinner.pin(context, scriptName, null)) {
-                        Toast.makeText(context, context.getString(R.string.designer_pin_unsupported), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, designerPinUnsupported, Toast.LENGTH_SHORT).show()
                     }
                 }
             },
