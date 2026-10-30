@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="editor_pin_unsupported">이 런처는 위젯 고정을 지원하지 않습니다.</string>
+    <string name="editor_design">디자인</string>
+    <string name="editor_rename">이름</string>
+    <string name="editor_pin">고정</string>
+    <string name="editor_save">저장</string>
+    <string name="editor_run">▶ 실행</string>
+    <string name="editor_tab_code">코드</string>
+    <string name="editor_tab_result">실행 결과</string>
+    <string name="editor_rename_title">이름 변경</string>
+    <string name="editor_rename_confirm">변경</string>
+    <string name="editor_cancel">취소</string>
+    <string name="editor_ok">확인</string>
+    <string name="editor_run_hint">▶ 실행을 눌러 스크립트를 실행하세요.</string>
+    <string name="editor_timings">⏱ 런타임 생성 %1$dms · prelude %2$dms · 스크립트 %3$dms · 전체 %4$dms</string>
+    <string name="editor_console">콘솔</string>
+    <string name="editor_no_output">(출력 없음)</string>
+    <string name="editor_name_taken">같은 이름의 스크립트가 이미 있습니다.</string>
+    <string name="editor_name_invalid">사용할 수 없는 이름입니다. (/, \\, 앞쪽 . 불가, 최대 64자)</string>
+    <string name="editor_not_found">스크립트를 찾을 수 없습니다.</string>
+    <string name="editor_find">찾기</string>
+    <string name="editor_find_close">찾기 닫기</string>
+    <string name="editor_replace">바꾸기</string>
+    <string name="editor_replace_all">모두</string>
+</resources>

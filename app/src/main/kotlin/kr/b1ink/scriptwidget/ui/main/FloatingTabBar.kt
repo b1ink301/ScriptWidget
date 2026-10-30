@@ -43,6 +43,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Icon
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
+import kr.b1ink.scriptwidget.R
 
 /** Room tab screens leave at the bottom of their lists so the floating bar doesn't cover content. */
 val LocalBottomBarSpace = compositionLocalOf { 0.dp }
@@ -55,7 +58,7 @@ private val PILL_HEIGHT = 30.dp
 private val PILL_TOP = 9.dp
 private val PillShape = RoundedCornerShape(50)
 
-private data class TabSpec(val tab: MainTab, val label: String, val icon: ImageVector)
+private data class TabSpec(val tab: MainTab, @StringRes val label: Int, val icon: ImageVector)
 
 private fun outlineIcon(name: String, vararg paths: String): ImageVector =
     ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).apply {
@@ -72,9 +75,9 @@ private fun outlineIcon(name: String, vararg paths: String): ImageVector =
     }.build()
 
 private val TABS = listOf(
-    TabSpec(MainTab.Scripts, "내 스크립트", outlineIcon("code", "M8 7l-5 5 5 5", "M16 7l5 5-5 5")),
+    TabSpec(MainTab.Scripts, R.string.main_tab_scripts, outlineIcon("code", "M8 7l-5 5 5 5", "M16 7l5 5-5 5")),
     TabSpec(
-        MainTab.Gallery, "갤러리",
+        MainTab.Gallery, R.string.main_tab_gallery,
         outlineIcon(
             "gallery",
             "M5 3h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
@@ -83,10 +86,10 @@ private val TABS = listOf(
             "M16 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z",
         ),
     ),
-    TabSpec(MainTab.History, "기록", outlineIcon("history", "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z", "M12 7v5l3 2")),
-    TabSpec(MainTab.Help, "도움말", outlineIcon("help", "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z", "M4 19V5", "M8 7h8", "M8 11h6")),
+    TabSpec(MainTab.History, R.string.main_tab_history, outlineIcon("history", "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z", "M12 7v5l3 2")),
+    TabSpec(MainTab.Help, R.string.main_tab_help, outlineIcon("help", "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z", "M4 19V5", "M8 7h8", "M8 11h6")),
     TabSpec(
-        MainTab.Settings, "설정",
+        MainTab.Settings, R.string.main_tab_settings,
         outlineIcon(
             "settings",
             "M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
@@ -162,7 +165,7 @@ fun FloatingTabBar(selected: MainTab, onSelect: (MainTab) -> Unit, modifier: Mod
                             )
                         }
                         Text(
-                            spec.label,
+                            stringResource(spec.label),
                             fontSize = 10.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                             color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,

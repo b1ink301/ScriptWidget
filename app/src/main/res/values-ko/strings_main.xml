@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="main_tab_scripts">내 스크립트</string>
+    <string name="main_tab_gallery">갤러리</string>
+    <string name="main_tab_history">기록</string>
+    <string name="main_tab_help">도움말</string>
+    <string name="main_tab_settings">설정</string>
+</resources>
