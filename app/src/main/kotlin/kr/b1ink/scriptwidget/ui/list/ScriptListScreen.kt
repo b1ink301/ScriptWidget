@@ -239,7 +239,7 @@ fun ScriptListScreen(
                         Text("홈 화면에 위젯 추가하기", style = MaterialTheme.typography.titleSmall)
                         Text(
                             "편집기에서 '고정'을 누르거나, 홈 화면 위젯 목록에서 ScriptWidget → Script를 추가하세요. " +
-                                "위젯을 탭하면 즉시 새로고침되고 15분마다 자동 갱신됩니다.",
+                                "위젯을 탭하면 즉시 새로고침되고, 화면이 켜져 있는 동안 자동으로 갱신됩니다.",
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
