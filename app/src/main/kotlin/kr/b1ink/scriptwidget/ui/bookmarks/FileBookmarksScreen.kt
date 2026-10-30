@@ -1,5 +1,8 @@
 package kr.b1ink.scriptwidget.ui.bookmarks
 
+import androidx.compose.ui.platform.LocalContext
+import kr.b1ink.scriptwidget.R
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -67,36 +70,36 @@ fun FileBookmarksScreen(
     var naming by rememberSaveable { mutableStateOf(false) }
     var removing by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
     LaunchedEffect(state.message) {
-        state.message?.let { snackbar.showSnackbar(it); onMessageShown() }
+        state.message?.let { snackbar.showSnackbar(it.resolve(context)); onMessageShown() }
     }
     Scaffold(
         topBar = {
             TopAppBar(
                 navigationIcon = { TextButton(onClick = onBack) { Text("←") } },
-                title = { Text("파일 북마크") },
+                title = { Text(stringResource(R.string.bookmarks_title)) },
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
-        floatingActionButton = { ExtendedFloatingActionButton(onClick = { naming = true }) { Text("+ 북마크 추가") } },
+        floatingActionButton = { ExtendedFloatingActionButton(onClick = { naming = true }) { Text(stringResource(R.string.bookmarks_add)) } },
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding)) {
             item {
                 Text(
-                    "스크립트가 FileManager.bookmarkedPath(\"이름\")으로 읽는 파일입니다. 고른 파일은 앱 안으로 복사되며, " +
-                        "항목을 누르면 다른 파일로 바꿀 수 있습니다.",
+                    stringResource(R.string.bookmarks_intro),
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(16.dp),
                 )
             }
             if (state.rows.isEmpty()) {
-                item { Text("아직 북마크가 없습니다.", modifier = Modifier.padding(16.dp)) }
+                item { Text(stringResource(R.string.bookmarks_empty), modifier = Modifier.padding(16.dp)) }
             }
             items(state.rows, key = { it.name }) { row ->
                 ListItem(
                     headlineContent = { Text(row.name) },
                     supportingContent = { Text(row.size) },
-                    trailingContent = { TextButton(onClick = { removing = row.name }) { Text("삭제") } },
+                    trailingContent = { TextButton(onClick = { removing = row.name }) { Text(stringResource(R.string.bookmarks_delete)) } },
                     modifier = Modifier.testTag("bookmark-${row.name}").clickable { onPick(row.name) },
                 )
                 HorizontalDivider()
@@ -108,27 +111,27 @@ fun FileBookmarksScreen(
         var name by rememberSaveable { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { naming = false },
-            title = { Text("북마크 이름") },
+            title = { Text(stringResource(R.string.bookmarks_name_title)) },
             text = {
                 Column {
-                    Text("스크립트에 적힌 이름과 똑같이 입력하세요 (예: still)", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.bookmarks_name_hint), style = MaterialTheme.typography.bodySmall)
                     OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true, modifier = Modifier.testTag("bookmark-name"))
                 }
             },
             confirmButton = {
-                TextButton(enabled = name.isNotBlank(), onClick = { naming = false; onPick(name) }) { Text("파일 선택") }
+                TextButton(enabled = name.isNotBlank(), onClick = { naming = false; onPick(name) }) { Text(stringResource(R.string.bookmarks_pick_file)) }
             },
-            dismissButton = { TextButton(onClick = { naming = false }) { Text("취소") } },
+            dismissButton = { TextButton(onClick = { naming = false }) { Text(stringResource(R.string.bookmarks_cancel)) } },
         )
     }
 
     removing?.let { name ->
         AlertDialog(
             onDismissRequest = { removing = null },
-            title = { Text("'$name' 북마크를 삭제할까요?") },
-            text = { Text("앱 안에 복사해 둔 파일이 삭제됩니다. 원본 파일은 그대로입니다.") },
-            confirmButton = { TextButton(onClick = { removing = null; onRemove(name) }) { Text("삭제") } },
-            dismissButton = { TextButton(onClick = { removing = null }) { Text("취소") } },
+            title = { Text(stringResource(R.string.bookmarks_delete_title, name)) },
+            text = { Text(stringResource(R.string.bookmarks_delete_text)) },
+            confirmButton = { TextButton(onClick = { removing = null; onRemove(name) }) { Text(stringResource(R.string.bookmarks_delete)) } },
+            dismissButton = { TextButton(onClick = { removing = null }) { Text(stringResource(R.string.bookmarks_cancel)) } },
         )
     }
 }

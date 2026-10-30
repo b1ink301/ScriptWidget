@@ -65,6 +65,14 @@ class WorkManagerRefreshSchedulerTest {
     }
 
     @Test
+    fun refreshForEventRunsTheWorkerAsAnEventRefresh() {
+        scheduler.refreshForEvent(9)
+
+        assertEquals(listOf(9), ranFor)
+        assertEquals(listOf<String?>("Event"), triggers)
+    }
+
+    @Test
     fun schedulePeriodicEnqueuesHourlySafetyNetAndKeepsAnExistingSchedule() {
         scheduler.schedulePeriodic(3)
         val first = infos(WorkManagerRefreshScheduler.periodicName(3)).single()

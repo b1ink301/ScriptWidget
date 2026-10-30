@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="main_tab_scripts">My scripts</string>
+    <string name="main_tab_gallery">Gallery</string>
+    <string name="main_tab_history">History</string>
+    <string name="main_tab_help">Help</string>
+    <string name="main_tab_settings">Settings</string>
+</resources>

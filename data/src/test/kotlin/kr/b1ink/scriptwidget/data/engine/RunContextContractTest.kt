@@ -118,6 +118,18 @@ class RunContextContractTest {
     }
 
     @Test
+    fun `an event trigger tells the script which event started it`() = runTest {
+        assertEquals(
+            "calendar true false",
+            out(
+                "console.log(args.trigger, config.runsFromTrigger, config.runsInApp)",
+                ScriptEnvironment(runsInWidget = false, source = RunSource.Trigger, trigger = "calendar"),
+            ),
+        )
+        assertEquals("null false", out("console.log(args.trigger, config.runsFromTrigger)", ScriptEnvironment(runsInWidget = false)))
+    }
+
+    @Test
     fun `notifications remember which script to run, user info and actions`() = runTest {
         out(
             """

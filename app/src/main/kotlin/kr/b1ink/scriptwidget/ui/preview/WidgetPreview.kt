@@ -2,6 +2,7 @@ package kr.b1ink.scriptwidget.ui.preview
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +35,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import kr.b1ink.scriptwidget.widget.render.TextPlan
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,7 +63,14 @@ import kr.b1ink.scriptwidget.domain.model.WidgetRoot
  * module so that what you see while editing matches the home screen.
  */
 @Composable
-fun WidgetPreview(root: WidgetRoot, family: WidgetFamily) {
+fun WidgetPreview(
+    root: WidgetRoot,
+    family: WidgetFamily,
+    /** With [onSelect], elements can be tapped (the designer); the [selected] path is outlined. */
+    selected: List<Int>? = null,
+    onSelect: ((List<Int>?) -> Unit)? = null,
+) {
+    val selection = Selection(selected, onSelect)
     val (w, h) = when (family) {
         WidgetFamily.Small -> 170 to 170
         WidgetFamily.Medium -> 345 to 170
@@ -71,38 +82,53 @@ fun WidgetPreview(root: WidgetRoot, family: WidgetFamily) {
             .size(w.dp, h.dp)
             .clip(RoundedCornerShape(22.dp))
             .backgroundOf(root.background, Styles.DEFAULT_BACKGROUND)
+            .then(if (onSelect != null) Modifier.clickable { onSelect(null) } else Modifier)
             .padding(top = p[0].dp, start = p[1].dp, bottom = p[2].dp, end = p[3].dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        ColumnChildren(root.children, root.spacing)
+        ColumnChildren(root.children, root.spacing, emptyList(), selection)
+    }
+}
+
+/** Which element is selected in the designer, and where taps go. */
+private class Selection(val selected: List<Int>?, val onSelect: ((List<Int>?) -> Unit)?) {
+    fun modifier(path: List<Int>): Modifier {
+        val onSelect = onSelect ?: return Modifier
+        val outline = if (path == selected) Modifier.border(2.dp, SELECTED, RoundedCornerShape(4.dp)) else Modifier
+        return Modifier.testTag("preview-" + path.joinToString("-")).then(outline).clickable { onSelect(path) }
+    }
+
+    companion object {
+        val NONE = Selection(null, null)
+        private val SELECTED = Color(0xFF0A84FF)
     }
 }
 
 @Composable
-private fun ColumnScope.ColumnChildren(children: List<WidgetNode>, spacing: Float) {
+private fun ColumnScope.ColumnChildren(children: List<WidgetNode>, spacing: Float, path: List<Int>, selection: Selection) {
     children.forEachIndexed { i, node ->
         if (i > 0 && spacing > 0) Spacer(Modifier.height(spacing.dp))
         if (node is SpacerNode) {
             Spacer(node.length?.let { Modifier.height(it.dp) } ?: Modifier.weight(1f))
         } else if (StackLayout.wantsHeight(node)) {
             // Children that grow vertically split the column's height, as on the home screen.
-            Node(node, inColumn = true, outer = Modifier.weight(1f), weightedHeight = true)
+            Node(node, inColumn = true, outer = Modifier.weight(1f), weightedHeight = true, path = path + i, selection = selection)
         } else {
-            Node(node, inColumn = true)
+            Node(node, inColumn = true, path = path + i, selection = selection)
         }
     }
 }
 
 @Composable
-private fun RowScope.RowChildren(children: List<WidgetNode>, spacing: Float) {
+private fun RowScope.RowChildren(children: List<WidgetNode>, spacing: Float, path: List<Int>, selection: Selection) {
     children.forEachIndexed { i, node ->
         if (i > 0 && spacing > 0) Spacer(Modifier.width(spacing.dp))
         if (node is SpacerNode) {
             Spacer(node.length?.let { Modifier.width(it.dp) } ?: Modifier.weight(1f))
         } else if (StackLayout.wantsWidth(node)) {
-            Node(node, inColumn = false, outer = Modifier.weight(1f), weighted = true)
+            Node(node, inColumn = false, outer = Modifier.weight(1f), weighted = true, path = path + i, selection = selection)
         } else {
-            Node(node, inColumn = false)
+            Node(node, inColumn = false, path = path + i, selection = selection)
         }
     }
 }
@@ -114,7 +140,10 @@ private fun Node(
     outer: Modifier = Modifier,
     weighted: Boolean = false,
     weightedHeight: Boolean = false,
+    path: List<Int> = emptyList(),
+    selection: Selection = Selection.NONE,
 ) {
+    val select = selection.modifier(path)
     when (node) {
         is TextNode -> Text(
             text = node.text,
@@ -122,10 +151,11 @@ private fun Node(
             fontSize = node.size.sp,
             fontWeight = weight(node.weight),
             fontStyle = if (node.italic) FontStyle.Italic else FontStyle.Normal,
+            fontFamily = fontFamily(node),
             textAlign = align(node.align),
             maxLines = if (node.lineLimit > 0) node.lineLimit else Int.MAX_VALUE,
             overflow = TextOverflow.Ellipsis,
-            modifier = if (inColumn && node.align != "left") Modifier.fillMaxWidth() else Modifier,
+            modifier = (if (inColumn && node.align != "left") Modifier.fillMaxWidth() else Modifier).then(select),
         )
 
         is DateNode -> {
@@ -137,13 +167,16 @@ private fun Node(
                 fontWeight = weight(node.weight),
                 textAlign = align(node.align),
                 maxLines = 1,
-                modifier = if (inColumn && node.align != "left") Modifier.fillMaxWidth() else Modifier,
+                // "2:39 PM" must stay on one line (a wrapped second line showed through the first).
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+                modifier = (if (inColumn && node.align != "left") Modifier.fillMaxWidth() else Modifier).then(select),
             )
         }
 
         is ImageNode -> {
             val bitmap = remember(node.src) { ImageFileDecoder.decode(node.src, Styles.MAX_IMAGE_PX) } ?: return
-            var modifier: Modifier = Modifier
+            var modifier: Modifier = select
             node.size?.let { (w, h) -> modifier = modifier.size(w.dp, h.dp) }
             if (node.cornerRadius > 0) modifier = modifier.clip(RoundedCornerShape(node.cornerRadius.dp))
             val image = @Composable {
@@ -165,7 +198,7 @@ private fun Node(
         }
 
         is StackNode -> {
-            var modifier: Modifier = outer
+            var modifier: Modifier = outer.then(select)
             node.size?.let { (w, h) ->
                 if (w > 0) modifier = modifier.width(w.dp)
                 if (h > 0) modifier = modifier.height(h.dp)
@@ -183,14 +216,14 @@ private fun Node(
                 modifier = modifier.padding(top = p[0].dp, start = p[1].dp, bottom = p[2].dp, end = p[3].dp)
             }
             if (node.dir == "v") {
-                Column(modifier) { ColumnChildren(node.children, node.spacing) }
+                Column(modifier) { ColumnChildren(node.children, node.spacing, path, selection) }
             } else {
                 val vertical = when (node.align) {
                     "top" -> Alignment.Top
                     "bottom" -> Alignment.Bottom
                     else -> Alignment.CenterVertically
                 }
-                Row(modifier, verticalAlignment = vertical) { RowChildren(node.children, node.spacing) }
+                Row(modifier, verticalAlignment = vertical) { RowChildren(node.children, node.spacing, path, selection) }
             }
         }
 
@@ -254,4 +287,18 @@ private fun align(a: String) = when (a) {
     "center" -> TextAlign.Center
     "right" -> TextAlign.End
     else -> TextAlign.Start
+}
+
+/** Like the widget: a font file the script installed, else the system family its name suggests. */
+@Composable
+private fun fontFamily(node: TextNode): FontFamily? {
+    node.fontFile?.let { path ->
+        remember(path) { runCatching { FontFamily(androidx.compose.ui.text.font.Typeface(android.graphics.Typeface.createFromFile(path))) }.getOrNull() }
+            ?.let { return it }
+    }
+    return when (TextPlan.familyOf(node.font)) {
+        TextPlan.Family.Serif -> FontFamily.Serif
+        TextPlan.Family.Monospace -> FontFamily.Monospace
+        TextPlan.Family.SansSerif -> null
+    }
 }

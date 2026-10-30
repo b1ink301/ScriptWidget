@@ -23,7 +23,8 @@ import kr.b1ink.scriptwidget.domain.model.StackNode
 import kr.b1ink.scriptwidget.domain.model.TextNode
 import kr.b1ink.scriptwidget.domain.model.WidgetRoot
 import kr.b1ink.scriptwidget.widget.render.ScriptWidgetContent
-import kr.b1ink.scriptwidget.widget.render.WidgetMessages
+import kr.b1ink.scriptwidget.domain.model.WidgetError
+import kr.b1ink.scriptwidget.widget.render.STALE_BADGE
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Date
@@ -31,6 +32,8 @@ import java.util.Date
 @RunWith(AndroidJUnit4::class)
 class ScriptWidgetContentTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
+
+    private fun text(id: Int, vararg args: Any) = context.getString(id, *args)
 
     private fun render(state: RenderState?, assertions: androidx.glance.appwidget.testing.unit.GlanceAppWidgetUnitTest.() -> Unit) =
         runGlanceAppWidgetUnitTest {
@@ -56,7 +59,7 @@ class ScriptWidgetContentTest {
         onNode(hasText("Title")).assertExists()
         onNode(hasText("left")).assertExists()
         onNode(hasText("deep")).assertExists()
-        onNode(hasText(WidgetMessages.STALE_BADGE)).assertDoesNotExist()
+        onNode(hasText(STALE_BADGE)).assertDoesNotExist()
     }
 
     @Test
@@ -85,7 +88,7 @@ class ScriptWidgetContentTest {
         RenderState(scriptName = "s", tree = WidgetRoot(children = listOf(TextNode("last good"))), error = "offline")
     ) {
         onNode(hasText("last good")).assertExists()
-        onNode(hasText(WidgetMessages.STALE_BADGE)).assertExists()
+        onNode(hasText(STALE_BADGE)).assertExists()
     }
 
     @Test
@@ -98,7 +101,17 @@ class ScriptWidgetContentTest {
 
     @Test
     fun noStateShowsTheWaitingMessage() = render(null) {
-        onNode(hasText(WidgetMessages.WAITING)).assertExists()
+        onNode(hasText(text(R.string.widget_waiting))).assertExists()
+    }
+
+    @Test
+    fun appErrorsArePutIntoWordsInTheAppLanguage() {
+        render(RenderState(error = WidgetError.encode(WidgetError.NotBound))) {
+            onNode(hasText(text(R.string.widget_error_not_bound))).assertExists()
+        }
+        render(RenderState(scriptName = "weather", error = WidgetError.encode(WidgetError.ScriptNotFound("weather")))) {
+            onNode(hasText(text(R.string.widget_error_script_not_found, "weather"))).assertExists()
+        }
     }
 
     @Test

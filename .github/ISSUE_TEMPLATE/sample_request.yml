@@ -1,0 +1,22 @@
+name: Gallery sample request / 갤러리 샘플 제안
+description: I'd like to see this widget in the gallery / 이런 위젯이 갤러리에 있으면 좋겠어요
+labels: [gallery]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What widget is it? / 어떤 위젯인가요
+      description: What it shows and which sizes you'd use / 무엇을 보여 주는지, 어떤 크기로 쓰고 싶은지
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Data source (if any) / 데이터 출처 (있으면)
+      description: "Public API, RSS, etc. Also tell us whether an API key is needed. / 공개 API, RSS 등. API 키가 필요한지도 알려 주세요."
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Want to build it yourself? / 직접 만들어 볼까요?
+      options:
+        - label: I'll write the script and send a PR / 제가 스크립트를 만들어 PR을 보낼게요 (see CONTRIBUTING.md / CONTRIBUTING.ko.md 참고)

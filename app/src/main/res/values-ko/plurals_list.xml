@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="list_widgets">
+        <item quantity="other">위젯 %1$d개</item>
+    </plurals>
+    <plurals name="list_backed_up">
+        <item quantity="other">%1$d개 스크립트를 백업했습니다.</item>
+    </plurals>
+    <plurals name="list_restore_skipped">
+        <item quantity="other">이미 같은 내용이 있어 건너뜀: %1$d개</item>
+    </plurals>
+</resources>

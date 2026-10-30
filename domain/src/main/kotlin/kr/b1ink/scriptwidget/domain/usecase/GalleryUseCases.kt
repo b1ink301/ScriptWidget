@@ -39,6 +39,7 @@ class BrowseGalleryUseCase(
             GallerySection(
                 sourceId = source.id,
                 title = catalog.title,
+                titles = catalog.titles,
                 items = catalog.entries.map { entry ->
                     val status = status(source.id, entry, records, existing)
                     GalleryItem(entry, if (status == EntryStatus.NotInstalled) adopted(source, entry, existing) else status)
@@ -111,7 +112,7 @@ class AddCatalogUrlUseCase(private val urls: CatalogUrlRepository) {
     suspend operator fun invoke(input: String): AddUrlResult {
         val url = input.trim()
         val valid = Regex("""^https://[^\s/]+\.[^\s/]+(/\S*)?$""").matches(url)
-        if (!valid) return AddUrlResult.Invalid("https:// 로 시작하는 주소를 입력하세요")
+        if (!valid) return AddUrlResult.Invalid
         if (url in urls.urls.first()) return AddUrlResult.AlreadyAdded
         urls.add(url)
         return AddUrlResult.Added
@@ -130,6 +131,6 @@ class SeedFromCatalogUseCase(
 ) {
     suspend operator fun invoke() {
         if (scripts.list().isNotEmpty()) return
-        catalog.catalog().entries.forEach { install(catalog, it) }
+        catalog.catalog().entries.filter { it.seed }.forEach { install(catalog, it) }
     }
 }

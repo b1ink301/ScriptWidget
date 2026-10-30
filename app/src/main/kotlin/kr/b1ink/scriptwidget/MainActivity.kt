@@ -2,6 +2,7 @@ package kr.b1ink.scriptwidget
 
 import android.content.Intent
 import android.os.Bundle
+import kotlinx.coroutines.launch
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -109,12 +111,21 @@ class MainActivity : ComponentActivity() {
                         PermissionsRoute(vm = permissions, onBack = { nav = nav.back() ?: nav }, automation = container.automationSettings)
                     nav.overlay == Overlay.Bookmarks ->
                         kr.b1ink.scriptwidget.ui.bookmarks.FileBookmarksRoute(container = container, onBack = { nav = nav.back() ?: nav })
+                    nav.overlay == Overlay.Triggers ->
+                        kr.b1ink.scriptwidget.ui.triggers.TriggersRoute(container = container, onBack = { nav = nav.back() ?: nav })
                     nav.overlay == Overlay.ApiReference ->
                         kr.b1ink.scriptwidget.ui.api.ApiReferenceRoute(container = container, onBack = { nav = nav.back() ?: nav })
+                    editing != null && nav.designing -> kr.b1ink.scriptwidget.ui.designer.DesignerRoute(
+                        container = container,
+                        scriptName = editing,
+                        onBack = { nav = nav.closeEditor() },
+                        onShowCode = { nav = nav.showCode() },
+                    )
                     editing != null -> EditorRoute(
                         container = container,
                         scriptName = editing,
                         onBack = { nav = nav.closeEditor() },
+                        onOpenDesigner = { nav = nav.showDesigner() },
                         autoRun = autoRun,
                         onOpenApiReference = { nav = nav.show(Overlay.ApiReference) },
                         onAutoRunConsumed = { autoRun = null },
@@ -141,13 +152,25 @@ class MainActivity : ComponentActivity() {
         widgetRecommendations: List<kr.b1ink.scriptwidget.permissions.AppPermission>,
         onNav: (MainNavState) -> Unit,
     ) {
-        val open: (String) -> Unit = { onNav(nav.open(it)) }
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        // Scripts made in the designer (and not edited by hand since) open in the designer.
+        val open: (String) -> Unit = { name ->
+            scope.launch {
+                val designed = container.openDesign(name) is kr.b1ink.scriptwidget.domain.model.DesignRead.Designed
+                onNav(nav.open(name, designer = designed))
+            }
+        }
+        val newDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = { template ->
+            val texts = kr.b1ink.scriptwidget.ui.text.AppLanguage.templateTexts(this@MainActivity)
+            scope.launch { onNav(nav.open(container.createDesign(template.design(texts)), designer = true)) }
+        }
         when (nav.tab) {
             MainTab.Scripts -> {
                 PermissionActionHandler(permissions)
                 ScriptListRoute(
                     container = container,
                     onOpen = open,
+                    onNewDesign = newDesign,
                     widgetRecommendations = widgetRecommendations,
                     onOpenPermissions = { onNav(nav.show(Overlay.Permissions)) },
                     incomingFiles = pendingImport,
@@ -161,17 +184,27 @@ class MainActivity : ComponentActivity() {
             MainTab.Help -> kr.b1ink.scriptwidget.ui.api.ApiReferenceRoute(container = container)
             MainTab.Settings -> {
               var screenOff by remember { mutableStateOf(container.refreshSettings.refreshWhileScreenOff()) }
+              val updates = androidx.lifecycle.viewmodel.compose.viewModel {
+                  kr.b1ink.scriptwidget.ui.settings.UpdateViewModel(container.checkForUpdate(versionName())::invoke)
+              }
+              LaunchedEffect(Unit) { updates.checkOnce() }
               SettingsScreen(
                 versionName = versionName(),
                 refreshWhileScreenOff = screenOff,
+                update = updates.state.collectAsState().value,
+                language = kr.b1ink.scriptwidget.ui.text.AppLanguage.chosen(this@MainActivity),
+                canChooseLanguage = kr.b1ink.scriptwidget.ui.text.AppLanguage.canChoose,
                 actions = SettingsActions(
                     onPermissions = { onNav(nav.show(Overlay.Permissions)) },
+                    onTriggers = { onNav(nav.show(Overlay.Triggers)) },
+                    onLanguage = { kr.b1ink.scriptwidget.ui.text.AppLanguage.choose(this@MainActivity, it) },
                     onBookmarks = { onNav(nav.show(Overlay.Bookmarks)) },
                     onImport = { onNav(nav.request(ListAction.Import)) },
                     onBackup = { onNav(nav.request(ListAction.Backup)) },
                     onRestore = { onNav(nav.request(ListAction.Restore)) },
                     onCatalogs = { onNav(nav.select(MainTab.Gallery)) },
                     onOpenUrl = { url -> runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } },
+                    onCheckUpdate = updates::check,
                     onRefreshWhileScreenOff = { enabled ->
                         container.refreshSettings.setRefreshWhileScreenOff(enabled)
                         screenOff = enabled

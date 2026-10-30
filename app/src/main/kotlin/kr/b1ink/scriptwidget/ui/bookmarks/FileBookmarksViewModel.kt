@@ -1,5 +1,7 @@
 package kr.b1ink.scriptwidget.ui.bookmarks
 
+import kr.b1ink.scriptwidget.ui.text.UiText
+import kr.b1ink.scriptwidget.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,12 +18,12 @@ import kr.b1ink.scriptwidget.domain.usecase.RemoveFileBookmarkUseCase
 
 data class BookmarkRow(val name: String, val size: String)
 
-data class FileBookmarksUiState(val rows: List<BookmarkRow> = emptyList(), val message: String? = null)
+data class FileBookmarksUiState(val rows: List<BookmarkRow> = emptyList(), val message: UiText? = null)
 
 class FileBookmarksViewModel(bookmarks: FileBookmarkRepository, documents: ScriptDocuments) : ViewModel() {
     private val addBookmark = AddFileBookmarkUseCase(bookmarks, documents)
     private val removeBookmark = RemoveFileBookmarkUseCase(bookmarks)
-    private val message = MutableStateFlow<String?>(null)
+    private val message = MutableStateFlow<UiText?>(null)
 
     val uiState: StateFlow<FileBookmarksUiState> =
         combine(bookmarks.bookmarks, message) { all, msg ->
@@ -32,9 +34,12 @@ class FileBookmarksViewModel(bookmarks: FileBookmarkRepository, documents: Scrip
     fun add(name: String, uri: String) {
         viewModelScope.launch {
             message.value = when (val result = addBookmark(name, uri)) {
-                is BookmarkResult.Saved -> "'${result.name}' 북마크를 저장했습니다"
-                is BookmarkResult.Invalid -> result.reason
-                is BookmarkResult.Failed -> "파일을 읽지 못했습니다: ${result.message}"
+                is BookmarkResult.Saved -> UiText.res(R.string.bookmarks_saved, result.name)
+                is BookmarkResult.Invalid -> when (result.reason) {
+                    kr.b1ink.scriptwidget.domain.model.BookmarkName.Problem.Blank -> UiText.res(R.string.bookmarks_name_blank)
+                    kr.b1ink.scriptwidget.domain.model.BookmarkName.Problem.NotAFileName -> UiText.res(R.string.bookmarks_name_not_file_name)
+                }
+                is BookmarkResult.Failed -> UiText.res(R.string.bookmarks_read_failed, result.message)
             }
         }
     }

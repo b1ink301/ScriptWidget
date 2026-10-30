@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_title">Gallery</string>
+    <string name="gallery_add_catalog_button">+ Catalog</string>
+    <string name="gallery_category_all">All</string>
+    <string name="gallery_category_other">Other</string>
+    <string name="gallery_install_title">Install \'%1$s\'</string>
+    <string name="gallery_install_warning">This script comes from elsewhere. Check the code before installing.</string>
+    <string name="gallery_undeclared_permissions">⚠️ Permissions the code uses but the catalog doesn\'t show: %1$s</string>
+    <string name="gallery_required_permissions">Required permissions: %1$s</string>
+    <string name="gallery_install">Install</string>
+    <string name="gallery_cancel">Cancel</string>
+    <string name="gallery_add_catalog_title">Add catalog</string>
+    <string name="gallery_add_catalog_hint">Enter the address of a script list (index.json), e.g. the raw URL of a GitHub repository</string>
+    <string name="gallery_add">Add</string>
+    <string name="gallery_remove_catalog_title">Remove this catalog?</string>
+    <string name="gallery_remove_catalog_message">%1$s\n\nScripts installed from this catalog will stay.</string>
+    <string name="gallery_remove">Remove</string>
+    <string name="gallery_load_failed">Couldn\'t load: %1$s</string>
+    <string name="gallery_sizes">Size %1$s</string>
+    <string name="gallery_open">Open</string>
+    <string name="gallery_update">Update</string>
+    <string name="gallery_permission_calendar">Calendar</string>
+    <string name="gallery_permission_contacts">Contacts</string>
+    <string name="gallery_permission_location">Location</string>
+    <string name="gallery_permission_network">Internet</string>
+    <string name="gallery_permission_notification">Notifications</string>
+    <string name="gallery_permission_photos">Photos</string>
+    <string name="gallery_message_installed">Installed \'%1$s\'</string>
+    <string name="gallery_message_updated">Updated \'%1$s\'</string>
+    <string name="gallery_message_installed_as_copy">Kept your edited script and installed the new version as \'%1$s\'</string>
+    <string name="gallery_message_catalog_added">Catalog added</string>
+    <string name="gallery_message_already_added">This address has already been added</string>
+    <string name="gallery_message_invalid_url">Enter an address that starts with https://</string>
+    <string name="gallery_message_catalog_removed">Catalog removed. Scripts you installed from it stay.</string>
+    <string name="gallery_message_failed">Failed: %1$s</string>
+</resources>

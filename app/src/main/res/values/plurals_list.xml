@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="list_widgets">
+        <item quantity="one">%1$d widget</item>
+        <item quantity="other">%1$d widgets</item>
+    </plurals>
+    <plurals name="list_backed_up">
+        <item quantity="one">Backed up %1$d script.</item>
+        <item quantity="other">Backed up %1$d scripts.</item>
+    </plurals>
+    <plurals name="list_restore_skipped">
+        <item quantity="one">Skipped %1$d script that was already up to date</item>
+        <item quantity="other">Skipped %1$d scripts that were already up to date</item>
+    </plurals>
+</resources>

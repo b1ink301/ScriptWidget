@@ -38,6 +38,8 @@
     runsFromHomeScreen: source === "HomeScreen",
     /** Android extension: started by an automation app (Tasker, MacroDroid, …). */
     runsFromAutomation: source === "Automation",
+    /** Android extension: started by an event trigger (calendar changed, charging, …); see args.trigger. */
+    runsFromTrigger: source === "Trigger",
     runsWithSiri: false,
     runsInAccessoryWidget: false,
     widgetFamily: __env.widgetFamily,
@@ -49,6 +51,8 @@
     /** Android extension: the tapAction of the widget element that started this run. */
     widgetAction: __env.widgetAction ?? null,
     shortcutParameter: __env.shortcutParameter ?? null,
+    /** Android extension: the event that started this run, e.g. "calendar", "day", "charging". */
+    trigger: __env.trigger ?? null,
     siriShortcutArguments: {},
     plainTexts: share.plainTexts ?? [],
     urls: share.urls ?? [],

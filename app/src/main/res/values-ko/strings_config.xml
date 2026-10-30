@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_title">위젯 스크립트 선택</string>
+    <string name="config_parameter_label">파라미터 (args.widgetParameter)</string>
+    <string name="config_done">완료</string>
+</resources>

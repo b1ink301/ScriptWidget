@@ -50,4 +50,17 @@ class OfficialCatalogSourceTest {
         assertEquals("// bundled events", source.code(entry("events", version = 2)))
         assertFailsWith<Exception> { source.code(entry("new_sample")) }
     }
+
+    @Test
+    fun `translations missing online are borrowed from the bundled copy`() = runTest {
+        val english = mapOf("en" to kr.b1ink.scriptwidget.domain.model.CatalogText("Today's events", "Events left today", "Calendar"))
+        val bundled = FakeCatalogSource("builtin", "기본 갤러리", listOf(entry("events").copy(translations = english)), mapOf("events" to "// e"))
+        val source = OfficialCatalogSource(online, bundled)
+
+        val entries = source.catalog().entries
+
+        assertEquals(english, entries.single { it.id == "events" }.translations)
+        assertEquals(2, entries.single { it.id == "events" }.version, "the online entry still wins")
+        assertEquals(emptyMap(), entries.single { it.id == "new_sample" }.translations)
+    }
 }

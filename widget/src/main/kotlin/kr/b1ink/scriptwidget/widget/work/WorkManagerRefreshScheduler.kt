@@ -25,6 +25,15 @@ class WorkManagerRefreshScheduler(
         workManager.enqueueUniqueWork(oneTimeName(appWidgetId), ExistingWorkPolicy.REPLACE, request)
     }
 
+    override fun refreshForEvent(appWidgetId: Int) {
+        val request = OneTimeWorkRequestBuilder<ScriptUpdateWorker>()
+            .setInputData(input(appWidgetId, RefreshTrigger.Event))
+            .addTag(TAG)
+            .build()
+        // Several events at once (e.g. many calendar edits) collapse into one run.
+        workManager.enqueueUniqueWork(eventName(appWidgetId), ExistingWorkPolicy.REPLACE, request)
+    }
+
     override fun schedulePeriodic(appWidgetId: Int) {
         val request = PeriodicWorkRequestBuilder<ScriptUpdateWorker>(INTERVAL_MINUTES, TimeUnit.MINUTES)
             // Binding already triggers refreshNow(); don't run the script twice right away.
@@ -64,6 +73,7 @@ class WorkManagerRefreshScheduler(
         workManager.cancelUniqueWork(oneTimeName(appWidgetId))
         workManager.cancelUniqueWork(atName(appWidgetId))
         workManager.cancelUniqueWork(actionName(appWidgetId))
+        workManager.cancelUniqueWork(eventName(appWidgetId))
     }
 
     private fun input(appWidgetId: Int, trigger: RefreshTrigger): Data = workDataOf(
@@ -80,5 +90,6 @@ class WorkManagerRefreshScheduler(
         fun oneTimeName(appWidgetId: Int) = "script-widget-now-$appWidgetId"
         fun atName(appWidgetId: Int) = "script-widget-at-$appWidgetId"
         fun actionName(appWidgetId: Int) = "script-widget-action-$appWidgetId"
+        fun eventName(appWidgetId: Int) = "script-widget-event-$appWidgetId"
     }
 }

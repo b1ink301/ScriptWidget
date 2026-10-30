@@ -65,4 +65,13 @@ class FileBookmarkUseCaseTest {
 
         assertTrue(bookmarks.bookmarks.first().isEmpty())
     }
+
+    @Test
+    fun `a picture added from the designer gets a free name instead of replacing one`() = runTest {
+        add("photo", "content://wall.png")
+
+        assertEquals(BookmarkResult.Saved("photo 2"), add.underFreeName("photo", "content://wall.png"))
+        assertEquals(BookmarkResult.Saved("photo 3"), add.underFreeName("photo", "content://wall.png"))
+        assertEquals(BookmarkResult.Saved("bg"), add.underFreeName("bg", "content://wall.png"))
+    }
 }

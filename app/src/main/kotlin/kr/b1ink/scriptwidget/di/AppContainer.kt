@@ -147,13 +147,15 @@ class AppContainer(
     // --- use cases ---
     val observeScriptNames = ObserveScriptNamesUseCase(scriptRepository)
     // --- gallery ---
-    private val bundledCatalog by lazy { kr.b1ink.scriptwidget.data.gallery.BuiltinCatalogSource() }
+    /** Gallery scripts that come in several languages (designs) install in the app's language. */
+    private val galleryLanguage: () -> String = { kr.b1ink.scriptwidget.ui.text.AppLanguage.current(appContext) }
+    private val bundledCatalog by lazy { kr.b1ink.scriptwidget.data.gallery.BuiltinCatalogSource(galleryLanguage) }
 
     /** The gallery from the GitHub repository (new and fixed samples), bundled copy when offline. */
     val builtinCatalog: kr.b1ink.scriptwidget.domain.repository.CatalogSource by lazy {
         kr.b1ink.scriptwidget.data.gallery.OfficialCatalogSource(
             online = kr.b1ink.scriptwidget.data.gallery.RemoteCatalogSource(
-                kr.b1ink.scriptwidget.data.gallery.OfficialCatalogSource.URL, http, timeoutSeconds = 8.0,
+                kr.b1ink.scriptwidget.data.gallery.OfficialCatalogSource.URL, http, timeoutSeconds = 8.0, language = galleryLanguage,
             ),
             bundled = bundledCatalog,
         )
@@ -162,7 +164,7 @@ class AppContainer(
     val catalogUrls by lazy { kr.b1ink.scriptwidget.data.gallery.FileCatalogUrlRepository(File(rootDir, "gallery/urls.json")) }
     val scriptRepositoryForGallery: kr.b1ink.scriptwidget.domain.repository.ScriptRepository get() = scriptRepository
     fun remoteCatalog(url: String): kr.b1ink.scriptwidget.domain.repository.CatalogSource =
-        kr.b1ink.scriptwidget.data.gallery.RemoteCatalogSource(url, http)
+        kr.b1ink.scriptwidget.data.gallery.RemoteCatalogSource(url, http, language = galleryLanguage)
 
     /** First launch: every gallery sample, remembered as installed so it can be updated later. */
     val seedSamples: suspend () -> Unit = {
@@ -182,12 +184,16 @@ class AppContainer(
     val fileBookmarks by lazy {
         kr.b1ink.scriptwidget.data.files.FileBookmarkStore(File(rootDir, "script_storage/${SandboxedFileSystem.BOOKMARKS}"))
     }
+    /** Font files scripts and designs use by name: Documents/fonts. */
+    val fonts by lazy { kr.b1ink.scriptwidget.data.files.FontStore(File(rootDir, "script_storage/Documents/fonts")) }
     val importScripts by lazy { ImportScriptsUseCase(scriptRepository, scriptDocuments) }
     val scriptSummaries by lazy { kr.b1ink.scriptwidget.domain.usecase.ObserveScriptSummariesUseCase(scriptRepository) }
     val setScriptAppearance by lazy { kr.b1ink.scriptwidget.domain.usecase.SetScriptAppearanceUseCase(scriptRepository) }
     private val archiveCodec by lazy { kr.b1ink.scriptwidget.data.backup.ZipScriptArchiveCodec() }
     val backupScripts by lazy { kr.b1ink.scriptwidget.domain.usecase.BackupScriptsUseCase(scriptRepository, archiveCodec, scriptDocuments) }
     val restoreScripts by lazy { kr.b1ink.scriptwidget.domain.usecase.RestoreScriptsUseCase(scriptRepository, archiveCodec, scriptDocuments) }
+    /** A script and its catalog entry, zipped for publishing in a gallery. */
+    val exportForGallery by lazy { kr.b1ink.scriptwidget.domain.usecase.ExportForGalleryUseCase(scriptRepository, archiveCodec, scriptDocuments) }
     val exportScript by lazy { ExportScriptUseCase(scriptRepository, scriptDocuments) }
     /** Every run (app, widget, automation, …) for the run history screen. */
     val runHistory by lazy {
@@ -198,7 +204,25 @@ class AppContainer(
     }
     val runScript by lazy { RunScriptUseCase(engine, runHistory) }
 
+    // --- widget designer ---
+    /** Generated scripts use the words of the app's language at the time they are saved. */
+    val designGenerator = kr.b1ink.scriptwidget.domain.repository.DesignScriptGenerator { design ->
+        kr.b1ink.scriptwidget.data.design.JsDesignScriptGenerator(kr.b1ink.scriptwidget.ui.text.AppLanguage.generatorTexts(appContext)).generate(design)
+    }
+    val createDesign = kr.b1ink.scriptwidget.domain.usecase.CreateDesignedScriptUseCase(scriptRepository, designGenerator)
+    val openDesign = kr.b1ink.scriptwidget.domain.usecase.OpenDesignUseCase(scriptRepository)
+    val saveDesign by lazy { kr.b1ink.scriptwidget.domain.usecase.SaveDesignUseCase(saveScript, scriptRepository, designGenerator) }
+
+    /** Designer previews run on every edit; they are not worth a run-history entry. */
+    val runPreview by lazy { RunScriptUseCase(engine) }
+
     /** Widget count and last run per script, for the script list. */
+    /** Compares [currentVersion] with the latest GitHub release, picking the APK for this device's ABI. */
+    fun checkForUpdate(currentVersion: String) = kr.b1ink.scriptwidget.domain.usecase.CheckForUpdateUseCase(
+        kr.b1ink.scriptwidget.data.update.GitHubReleaseSource(http, android.os.Build.SUPPORTED_ABIS.toList()),
+        currentVersion,
+    )
+
     fun scriptActivity() = kr.b1ink.scriptwidget.domain.usecase.ObserveScriptActivityUseCase(scriptRepository, bindingRepository, runHistory)()
 
     private val apiCatalogLock = kotlinx.coroutines.sync.Mutex()
@@ -206,8 +230,10 @@ class AppContainer(
 
     /** The script API read from the prelude (for completions and the API reference); built once. */
     suspend fun apiCatalog(): List<kr.b1ink.scriptwidget.data.api.ApiEntry> = apiCatalogLock.withLock {
-        apiCatalogCache ?: runCatching { kr.b1ink.scriptwidget.data.api.ApiCatalog.load(engine) }.getOrDefault(emptyList())
+        val entries = apiCatalogCache ?: runCatching { kr.b1ink.scriptwidget.data.api.ApiCatalog.load(engine) }.getOrDefault(emptyList())
             .also { if (it.isNotEmpty()) apiCatalogCache = it }
+        // Descriptions follow the app's current language, which can change while the cache lives.
+        kr.b1ink.scriptwidget.data.api.ApiCatalog.inLanguage(entries, kr.b1ink.scriptwidget.ui.text.AppLanguage.current(appContext))
     }
     val runScriptByName by lazy { kr.b1ink.scriptwidget.domain.usecase.RunScriptByNameUseCase(scriptRepository, runScript) }
     /** Whether widgets keep refreshing while the screen is off (settings tab). */
@@ -235,9 +261,24 @@ class AppContainer(
     override val scheduleBoundWidgets by lazy { ScheduleBoundWidgetsUseCase(bindingRepository, scheduler) }
     override val resizeWidget by lazy { kr.b1ink.scriptwidget.domain.usecase.ResizeWidgetUseCase(renderStates, scheduler) }
 
+    // --- event triggers ---
+    val eventTriggers: kr.b1ink.scriptwidget.domain.repository.EventTriggerRepository by lazy {
+        kr.b1ink.scriptwidget.data.trigger.FileEventTriggerRepository(File(rootDir, "triggers/triggers.json"))
+    }
+    val eventMonitor: kr.b1ink.scriptwidget.domain.scheduler.EventMonitor by lazy {
+        kr.b1ink.scriptwidget.widget.work.AndroidEventMonitor(appContext)
+    }
+    override val handleEvent by lazy {
+        kr.b1ink.scriptwidget.domain.usecase.HandleEventUseCase(eventTriggers, bindingRepository, scheduler, runScriptByName)
+    }
+
+    /** Re-hooks the watched events (after an update or reboot; cheap when nothing changed). */
+    suspend fun syncEventMonitor() = kr.b1ink.scriptwidget.domain.usecase.SyncEventMonitorUseCase(eventTriggers, eventMonitor)()
+
     /** Built during WorkManager's initialization: must not resolve anything that needs WorkManager. */
     val workerFactory = ScriptWorkerFactory(
         refreshWidget = { refreshWidget },
         families = { AppWidgetManagerFamilyResolver(AppWidgetManager.getInstance(appContext)) },
+        handleEvent = { handleEvent },
     )
 }

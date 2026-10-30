@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ScriptWidget</string>
+    <string name="app_name" translatable="false">ScriptWidget</string>
     <string name="widget_name">Script</string>
-    <string name="widget_description">JavaScript로 그리는 위젯</string>
+    <string name="widget_description">Widgets drawn with JavaScript</string>
 </resources>

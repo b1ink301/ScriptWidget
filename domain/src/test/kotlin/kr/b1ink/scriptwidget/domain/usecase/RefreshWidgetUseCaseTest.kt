@@ -18,6 +18,7 @@ import kr.b1ink.scriptwidget.domain.model.ScriptEnvironment
 import kr.b1ink.scriptwidget.domain.model.ScriptRunResult
 import kr.b1ink.scriptwidget.domain.model.TextNode
 import kr.b1ink.scriptwidget.domain.model.WidgetBinding
+import kr.b1ink.scriptwidget.domain.model.WidgetError
 import kr.b1ink.scriptwidget.domain.model.WidgetFamily
 import kr.b1ink.scriptwidget.domain.model.WidgetRoot
 import kotlin.test.Test
@@ -100,7 +101,7 @@ class RefreshWidgetUseCaseTest {
 
         assertTrue(engine.calls.isEmpty())
         assertNull(state.scriptName)
-        assertEquals(RefreshWidgetUseCase.NOT_BOUND_ERROR, state.error)
+        assertEquals(WidgetError.NotBound, WidgetError.decode(state.error))
         assertEquals(state, renderStates.states[99])
     }
 
@@ -242,6 +243,32 @@ class RefreshWidgetUseCaseTest {
         clock.millis = 15 * minute + 1
         refresh(7, WidgetFamily.Small, RefreshTrigger.Scheduled)
         assertEquals(1, engine.calls.size)
+    }
+
+    // --- event triggers (calendar changed, ...) ---
+
+    @Test
+    fun `an event refresh runs right away even shortly after the last run`() = runTest {
+        renderStates.states[7] = RenderState(scriptName = "weather", tree = okTree, updatedAt = 1)
+        clock.millis = 1 * minute
+        engine.result = ScriptRunResult(widget = okTree)
+
+        refresh(7, WidgetFamily.Small, RefreshTrigger.Event)
+
+        assertEquals(1, engine.calls.size)
+    }
+
+    @Test
+    fun `with the screen off, an event refresh waits for the screen`() = runTest {
+        screen.on = false
+        renderStates.states[7] = RenderState(scriptName = "weather", tree = okTree, updatedAt = 1)
+        clock.millis = 30 * minute
+
+        refresh(7, WidgetFamily.Small, RefreshTrigger.Event)
+
+        assertTrue(engine.calls.isEmpty())
+        assertEquals(listOf(7 to 32 * minute), scheduler.refreshAt)
+        assertEquals(listOf(false), scheduler.wakeUps)
     }
 
     // --- screen off (default): nothing runs, the widget catches up when the screen turns on ---

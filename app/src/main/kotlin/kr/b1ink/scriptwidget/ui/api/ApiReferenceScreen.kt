@@ -1,5 +1,8 @@
 package kr.b1ink.scriptwidget.ui.api
 
+import androidx.annotation.StringRes
+import kr.b1ink.scriptwidget.R
+import androidx.compose.ui.res.stringResource
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -51,7 +54,7 @@ fun ApiReferenceRoute(container: AppContainer, onBack: (() -> Unit)? = null) {
 fun ApiReferenceScreen(state: ApiReferenceUiState, onBack: (() -> Unit)?, onSearch: (String) -> Unit, onSelect: (String) -> Unit) {
     Scaffold(
         topBar = {
-            TopAppBar(navigationIcon = { onBack?.let { TextButton(onClick = it) { Text("←") } } }, title = { Text("API 도움말") })
+            TopAppBar(navigationIcon = { onBack?.let { TextButton(onClick = it) { Text("←") } } }, title = { Text(stringResource(R.string.api_title)) })
         },
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace.current)) {
@@ -60,17 +63,17 @@ fun ApiReferenceScreen(state: ApiReferenceUiState, onBack: (() -> Unit)?, onSear
                     value = state.query,
                     onValueChange = onSearch,
                     singleLine = true,
-                    label = { Text("클래스·메서드 검색") },
+                    label = { Text(stringResource(R.string.api_search_label)) },
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                 )
             }
-            if (state.loading) item { Text("불러오는 중…", Modifier.padding(16.dp)) }
+            if (state.loading) item { Text(stringResource(R.string.api_loading), Modifier.padding(16.dp)) }
             items(state.entries, key = { it.name }) { entry ->
                 ListItem(
                     modifier = Modifier.clickable { onSelect(entry.name) },
                     headlineContent = { Text(entry.name, fontFamily = FontFamily.Monospace) },
                     supportingContent = { if (entry.summary.isNotEmpty()) Text(entry.summary, maxLines = 2) },
-                    trailingContent = { Text(kindLabel(entry), style = MaterialTheme.typography.labelSmall) },
+                    trailingContent = { Text(stringResource(kindLabel(entry)), style = MaterialTheme.typography.labelSmall) },
                 )
                 HorizontalDivider()
             }
@@ -89,12 +92,15 @@ private fun ApiEntryScreen(entry: ApiEntry, onBack: () -> Unit) {
                 title = { Text(entry.name, fontFamily = FontFamily.Monospace) },
                 actions = {
                     TextButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(entry.docsUrl))) } }) {
-                        Text("공식 문서")
+                        Text(stringResource(R.string.api_official_docs))
                     }
                 },
             )
         },
     ) { padding ->
+        val staticTitle = stringResource(R.string.api_section_static)
+        val methodsTitle = stringResource(R.string.api_section_methods)
+        val propertiesTitle = stringResource(R.string.api_section_properties)
         LazyColumn(
             Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp),
@@ -107,9 +113,9 @@ private fun ApiEntryScreen(entry: ApiEntry, onBack: () -> Unit) {
                     Text(code, fontFamily = FontFamily.Monospace, modifier = Modifier.padding(top = 8.dp))
                 }
             }
-            section("정적 멤버", entry.members.filter { it.isStatic && entry.kind == ApiEntry.Kind.Class }, entry.name)
-            section("메서드", entry.members.filter { it.kind == ApiMember.Kind.Method && !(it.isStatic && entry.kind == ApiEntry.Kind.Class) }, null)
-            section("속성", entry.members.filter { it.kind == ApiMember.Kind.Property && !(it.isStatic && entry.kind == ApiEntry.Kind.Class) }, null)
+            section(staticTitle, entry.members.filter { it.isStatic && entry.kind == ApiEntry.Kind.Class }, entry.name)
+            section(methodsTitle, entry.members.filter { it.kind == ApiMember.Kind.Method && !(it.isStatic && entry.kind == ApiEntry.Kind.Class) }, null)
+            section(propertiesTitle, entry.members.filter { it.kind == ApiMember.Kind.Property && !(it.isStatic && entry.kind == ApiEntry.Kind.Class) }, null)
         }
     }
 }
@@ -126,8 +132,9 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(title: String
     }
 }
 
+@StringRes
 private fun kindLabel(entry: ApiEntry) = when (entry.kind) {
-    ApiEntry.Kind.Class -> "클래스"
-    ApiEntry.Kind.Object -> "객체"
-    ApiEntry.Kind.Function -> "함수"
+    ApiEntry.Kind.Class -> R.string.api_kind_class
+    ApiEntry.Kind.Object -> R.string.api_kind_object
+    ApiEntry.Kind.Function -> R.string.api_kind_function
 }

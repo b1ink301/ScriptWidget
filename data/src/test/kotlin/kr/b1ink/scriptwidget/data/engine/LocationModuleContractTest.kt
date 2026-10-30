@@ -103,6 +103,40 @@ class LocationModuleContractTest {
     }
 
     @Test
+    fun `scripts and modules know their file, like Scriptable's module global`() = runTest {
+        modules = mapOf("lib" to "module.exports = module.filename;")
+        val out = logOf(
+            """
+            const fm = FileManager.local();
+            console.log(module.filename === fm.joinPath(fm.documentsDirectory(), "main.js"));
+            console.log(typeof module.exports, typeof exports);
+            console.log(importModule("lib") === fm.joinPath(fm.documentsDirectory(), "lib.js"));
+            console.log(fm.isFileStoredIniCloud(module.filename), module.filename.includes("Documents/iCloud~"));
+            """.trimIndent(),
+        )
+        assertEquals("true\nobject object\ntrue\nfalse false", out)
+    }
+
+    @Test
+    fun `top-level code runs inside a function, so arguments exists`() = runTest {
+        assertEquals("0 {\"a\":1}", logOf("""const cfg = Object.assign({}, { a: 1 }, arguments[0]); console.log(arguments.length, JSON.stringify(cfg));"""))
+    }
+
+    @Test
+    fun `modules saved in Documents load by relative or absolute path`() = runTest {
+        val out = logOf(
+            """
+            const fm = FileManager.local();
+            const dir = fm.joinPath(fm.documentsDirectory(), "MyWidget");
+            fm.createDirectory(dir, true);
+            fm.writeString(fm.joinPath(dir, "util.js"), "module.exports = { twice: (n) => n * 2 };");
+            console.log(importModule("MyWidget/util").twice(2), importModule(fm.joinPath(dir, "util.js")).twice(3));
+            """.trimIndent(),
+        )
+        assertEquals("4 6", out)
+    }
+
+    @Test
     fun `missing modules throw`() = runTest {
         assertContains(assertNotNull(run("""importModule("nope");""").error), "nope")
     }

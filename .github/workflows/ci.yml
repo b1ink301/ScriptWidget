@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
   workflow_dispatch:
 
@@ -19,14 +19,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 25
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
 
       - name: Unit tests (domain, data with QuickJS, widget, app)
         run: ./gradlew test --continue
@@ -34,19 +36,56 @@ jobs:
       - name: Debug APK
         run: ./gradlew :app:assembleDebug
 
+      - name: Report failed unit tests
+        if: failure()
+        run: python3 .github/scripts/report-test-failures.py "**/build/test-results/**/*.xml"
+
       - name: Upload test reports
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unit-test-reports
           path: '**/build/reports/tests/'
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 14
+
+  checks:
+    name: Code style, lint & release build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
+
+      - name: Code style (ktlint via Spotless)
+        run: ./gradlew spotlessCheck
+
+      - name: Android Lint (new issues only; existing ones are in lint-baseline.xml)
+        run: ./gradlew lintDebug --continue
+
+      # Unsigned here; catches R8/shrinker problems before a release tag does.
+      - name: Release build (R8)
+        run: ./gradlew :app:assembleRelease
+
+      - name: Upload lint reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lint-reports
+          path: '**/build/reports/lint-results-*.html'
 
   device-tests:
     name: Device tests (emulator)
@@ -54,14 +93,16 @@ jobs:
     timeout-minutes: 60
     needs: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 25
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
 
       - name: Enable KVM
         run: |
@@ -79,9 +120,13 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: ./gradlew connectedDebugAndroidTest --continue
 
+      - name: Report failed device tests
+        if: failure()
+        run: python3 .github/scripts/report-test-failures.py "**/build/outputs/androidTest-results/connected/**/*.xml"
+
       - name: Upload device test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: device-test-reports
           path: '**/build/reports/androidTests/'

@@ -1,5 +1,7 @@
 package kr.b1ink.scriptwidget.ui.bookmarks
 
+import kr.b1ink.scriptwidget.ui.text.UiText
+import kr.b1ink.scriptwidget.R
 import kotlinx.coroutines.test.runTest
 import kr.b1ink.scriptwidget.domain.fake.FakeFileBookmarks
 import kr.b1ink.scriptwidget.domain.fake.FakeScriptDocuments
@@ -34,7 +36,7 @@ class FileBookmarksViewModelTest {
         vm.add("still", "content://wall.png")
 
         assertEquals(listOf("still"), vm.uiState.value.rows.map { it.name })
-        assertEquals("'still' 북마크를 저장했습니다", vm.uiState.value.message)
+        assertEquals(UiText.res(R.string.bookmarks_saved, "still"), vm.uiState.value.message)
     }
 
     @Test
@@ -44,7 +46,7 @@ class FileBookmarksViewModelTest {
         vm.add("a/b", "content://wall.png")
 
         assertTrue(vm.uiState.value.rows.isEmpty())
-        assertEquals("이름에 / \\ 를 쓸 수 없습니다", vm.uiState.value.message)
+        assertEquals(UiText.res(R.string.bookmarks_name_not_file_name), vm.uiState.value.message)
     }
 
     @Test

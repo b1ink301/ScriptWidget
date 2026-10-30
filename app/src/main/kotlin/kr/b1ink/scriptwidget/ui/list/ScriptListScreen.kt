@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -53,11 +54,16 @@ import kr.b1ink.scriptwidget.domain.model.ScriptAppearance
 import kr.b1ink.scriptwidget.domain.model.ScriptSummary
 import kr.b1ink.scriptwidget.permissions.AppPermission
 import kr.b1ink.scriptwidget.ui.permissions.title
+import androidx.compose.ui.res.stringResource
+import kr.b1ink.scriptwidget.R
+import kr.b1ink.scriptwidget.domain.model.DesignTemplates
+import kr.b1ink.scriptwidget.ui.text.asString
 
 @Composable
 fun ScriptListRoute(
     container: AppContainer,
     onOpen: (String) -> Unit,
+    onNewDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = {},
     widgetRecommendations: List<AppPermission> = emptyList(),
     onOpenPermissions: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
@@ -87,6 +93,7 @@ fun ScriptListRoute(
     val state by vm.uiState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val context = androidx.compose.ui.platform.LocalContext.current
+    val shortcutUnsupported = androidx.compose.ui.res.stringResource(R.string.list_shortcut_unsupported)
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var exporting by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -109,7 +116,9 @@ fun ScriptListRoute(
         vm.events.collect { event ->
             when (event) {
                 is ScriptListEvent.OpenEditor -> onOpen(event.name)
-                is ScriptListEvent.ShowMessage -> snackbar.showSnackbar(event.text, withDismissAction = true, duration = SnackbarDuration.Long)
+                is ScriptListEvent.ShowMessage -> snackbar.showSnackbar(
+                    event.lines.joinToString("\n") { it.resolve(context) },
+                    withDismissAction = true, duration = SnackbarDuration.Long)
                 is ScriptListEvent.ChooseBackupTarget -> backupPicker.launch(event.fileName)
                 is ScriptListEvent.ChooseExportTarget -> {
                     exporting = event.scriptName
@@ -148,11 +157,12 @@ fun ScriptListRoute(
         onSearch = vm::search,
         onAddShortcut = { name ->
             val pinned = kr.b1ink.scriptwidget.automation.ScriptShortcuts.requestPin(context, name)
-            if (!pinned) scope.launch { snackbar.showSnackbar("이 런처는 바로가기 추가를 지원하지 않습니다.") }
+            if (!pinned) scope.launch { snackbar.showSnackbar(shortcutUnsupported) }
         },
         state = state,
         onOpen = onOpen,
         onCreate = vm::createScript,
+        onNewDesign = onNewDesign,
         onRequestDelete = vm::requestDelete,
         onConfirmDelete = vm::confirmDelete,
         onCancelDelete = vm::cancelDelete,
@@ -185,15 +195,24 @@ fun ScriptListScreen(
     onSetAppearance: (String, ScriptAppearance) -> Unit = { _, _ -> },
     onSearch: (String) -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
+    onNewDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = {},
 ) {
     var styling by remember { mutableStateOf<ScriptSummary?>(null) }
+    var choosingNew by remember { mutableStateOf(false) }
+    if (choosingNew) {
+        NewScriptDialog(
+            onCode = { choosingNew = false; onCreate() },
+            onTemplate = { choosingNew = false; onNewDesign(it) },
+            onDismiss = { choosingNew = false },
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("내 스크립트") },
+                title = { Text(stringResource(R.string.list_title)) },
                 actions = {
-                    FilledTonalButton(onClick = onCreate, modifier = Modifier.padding(end = 8.dp).testTag("new-script")) {
-                        Text("+ 새 스크립트")
+                    FilledTonalButton(onClick = { choosingNew = true }, modifier = Modifier.padding(end = 8.dp).testTag("new-script")) {
+                        Text(stringResource(R.string.list_new_script_button))
                     }
                 },
             )
@@ -208,7 +227,7 @@ fun ScriptListScreen(
                 OutlinedTextField(
                     value = state.query,
                     onValueChange = onSearch,
-                    placeholder = { Text("스크립트 검색") },
+                    placeholder = { Text(stringResource(R.string.list_search_placeholder)) },
                     singleLine = true,
                     shape = RoundedCornerShape(28.dp),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).testTag("script-search"),
@@ -221,9 +240,9 @@ fun ScriptListScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
                     ) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("위젯이 더 정확하게 갱신되도록 설정하세요", style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(R.string.list_recommendations_title), style = MaterialTheme.typography.titleSmall)
                             Text(
-                                widgetRecommendations.joinToString(" · ") { it.title() } + " →",
+                                widgetRecommendations.map { it.title() }.joinToString(" · ") + " →",
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }
@@ -236,10 +255,9 @@ fun ScriptListScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("홈 화면에 위젯 추가하기", style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.list_add_widget_title), style = MaterialTheme.typography.titleSmall)
                         Text(
-                            "편집기에서 '고정'을 누르거나, 홈 화면 위젯 목록에서 ScriptWidget → Script를 추가하세요. " +
-                                "위젯을 탭하면 즉시 새로고침되고 15분마다 자동 갱신됩니다.",
+                            stringResource(R.string.list_add_widget_body),
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
@@ -252,7 +270,7 @@ fun ScriptListScreen(
                     modifier = Modifier.clickable { onOpen(name) },
                     leadingContent = { ScriptIcon(script) },
                     headlineContent = { Text(name) },
-                    supportingContent = { Text(row.subtitle, style = MaterialTheme.typography.bodySmall) },
+                    supportingContent = { Text(row.subtitle.asString(), style = MaterialTheme.typography.bodySmall) },
                     trailingContent = {
                         ScriptMenu(
                             onExport = { onExport(name) },
@@ -280,10 +298,10 @@ fun ScriptListScreen(
     state.pendingDelete?.let { name ->
         AlertDialog(
             onDismissRequest = onCancelDelete,
-            title = { Text("스크립트 삭제") },
-            text = { Text("'$name'을(를) 삭제할까요? 이 스크립트를 쓰는 위젯은 에러를 표시합니다.") },
-            confirmButton = { TextButton(onClick = onConfirmDelete) { Text("삭제") } },
-            dismissButton = { TextButton(onClick = onCancelDelete) { Text("취소") } },
+            title = { Text(stringResource(R.string.list_delete_title)) },
+            text = { Text(stringResource(R.string.list_delete_message, name)) },
+            confirmButton = { TextButton(onClick = onConfirmDelete) { Text(stringResource(R.string.list_delete)) } },
+            dismissButton = { TextButton(onClick = onCancelDelete) { Text(stringResource(R.string.list_cancel)) } },
         )
     }
 }
@@ -294,10 +312,10 @@ private fun ScriptMenu(onExport: () -> Unit, onAddShortcut: () -> Unit, onStyle:
     Box {
         TextButton(onClick = { open = true }) { Text("⋮") }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(text = { Text("내보내기") }, onClick = { open = false; onExport() })
-            DropdownMenuItem(text = { Text("홈 화면에 바로가기") }, onClick = { open = false; onAddShortcut() })
-            DropdownMenuItem(text = { Text("아이콘·색상") }, onClick = { open = false; onStyle() })
-            DropdownMenuItem(text = { Text("삭제") }, onClick = { open = false; onDelete() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.list_menu_export)) }, onClick = { open = false; onExport() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.list_menu_shortcut)) }, onClick = { open = false; onAddShortcut() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.list_menu_appearance)) }, onClick = { open = false; onStyle() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.list_delete)) }, onClick = { open = false; onDelete() })
         }
     }
 }
@@ -322,7 +340,7 @@ private fun AppearanceDialog(script: ScriptSummary, onDismiss: () -> Unit, onPic
     var glyph by remember { mutableStateOf(script.appearance?.glyph) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("아이콘·색상") },
+        title = { Text(stringResource(R.string.list_menu_appearance)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ScriptIcon(ScriptSummary(script.name, ScriptAppearance(color, glyph)), size = 48.dp)
@@ -351,7 +369,57 @@ private fun AppearanceDialog(script: ScriptSummary, onDismiss: () -> Unit, onPic
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onPick(ScriptAppearance(color, glyph)) }) { Text("적용") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } },
+        confirmButton = { TextButton(onClick = { onPick(ScriptAppearance(color, glyph)) }) { Text(stringResource(R.string.list_apply)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.list_cancel)) } },
     )
 }
+
+/** "+ New script": write code, or start the widget designer from a template. */
+@Composable
+private fun NewScriptDialog(
+    onCode: () -> Unit,
+    onTemplate: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.list_new_script_title)) },
+        text = {
+            Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                androidx.compose.material3.ListItem(
+                    headlineContent = { Text(stringResource(R.string.list_new_code)) },
+                    supportingContent = { Text(stringResource(R.string.list_new_code_description)) },
+                    modifier = Modifier.clickable(onClick = onCode),
+                )
+                Text(
+                    stringResource(R.string.list_new_designer),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
+                )
+                kr.b1ink.scriptwidget.domain.model.DesignTemplates.all.forEach { template ->
+                    androidx.compose.material3.ListItem(
+                        headlineContent = { Text("🎨 ${stringResource(template.titleRes)}") },
+                        modifier = Modifier.testTag("template-${template.name}").clickable { onTemplate(template) },
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(R.string.list_cancel)) } },
+    )
+}
+
+/** The template's name in the app's language (the domain title is Korean only). */
+private val DesignTemplates.titleRes: Int
+    get() = when (this) {
+        DesignTemplates.Blank -> R.string.list_template_blank
+        DesignTemplates.Clock -> R.string.list_template_clock
+        DesignTemplates.Battery -> R.string.list_template_battery
+        DesignTemplates.NextEvent -> R.string.list_template_next_event
+        DesignTemplates.Reminders -> R.string.list_template_reminders
+        DesignTemplates.Weather -> R.string.list_template_weather
+        DesignTemplates.GitHubStars -> R.string.list_template_json
+        DesignTemplates.PhotoFrame -> R.string.list_template_photo
+        DesignTemplates.DDay -> R.string.list_template_dday
+    }

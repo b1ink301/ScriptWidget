@@ -6,6 +6,8 @@
         restricted to alarm/calendar apps on Google Play; this app is distributed outside Play.
     -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- Widgets that need the network skip their run while offline. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission
         android:name="android.permission.SCHEDULE_EXACT_ALARM"
         android:maxSdkVersion="32" />
@@ -14,5 +16,15 @@
         <receiver
             android:name=".work.RefreshAlarmReceiver"
             android:exported="false" />
+
+        <!-- Event triggers: the midnight alarm and time zone / clock changes. -->
+        <receiver
+            android:name=".work.EventReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

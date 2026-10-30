@@ -1,13 +1,16 @@
 package kr.b1ink.scriptwidget.ui.gallery
 
 import kotlinx.coroutines.test.runTest
+import kr.b1ink.scriptwidget.R
 import kr.b1ink.scriptwidget.domain.fake.FakeCatalogSource
 import kr.b1ink.scriptwidget.domain.fake.FakeCatalogUrls
 import kr.b1ink.scriptwidget.domain.fake.FakeInstalledScripts
 import kr.b1ink.scriptwidget.domain.fake.FakeScriptRepository
 import kr.b1ink.scriptwidget.domain.model.CatalogEntry
+import kr.b1ink.scriptwidget.domain.model.CatalogText
 import kr.b1ink.scriptwidget.domain.model.EntryStatus
 import kr.b1ink.scriptwidget.ui.MainDispatcherRule
+import kr.b1ink.scriptwidget.ui.text.UiText
 import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,12 +40,13 @@ class GalleryViewModelTest {
         code = mapOf("clock" to "// remote clock"),
     )
 
-    private fun vm() = GalleryViewModel(
+    private fun vm(language: String = "ko") = GalleryViewModel(
         builtin = builtin,
         remote = { url -> if (url == remote.id) remote else FakeCatalogSource(url, url, failure = "404") },
         urls = urls,
         installed = installed,
         scripts = scripts,
+        language = language,
     )
 
     @Test
@@ -65,6 +69,19 @@ class GalleryViewModelTest {
     }
 
     @Test
+    fun `categories follow the app language and fall back to the catalog's own`() = runTest {
+        builtin.entries = listOf(
+            entry("events", "오늘 일정", "일정·할 일").copy(translations = mapOf("en" to CatalogText("Today", category = "Schedule"))),
+            entry("quotes", "명언", "정보"),
+        )
+        val vm = vm(language = "en")
+
+        assertEquals(listOf("Schedule", "정보"), vm.uiState.value.categories)
+        vm.selectCategory("Schedule")
+        assertEquals(listOf("events"), vm.uiState.value.visibleSections.flatMap { s -> s.items.map { it.entry.id } })
+    }
+
+    @Test
     fun `built-in entries install right away and can be opened`() = runTest {
         val vm = vm()
 
@@ -72,7 +89,7 @@ class GalleryViewModelTest {
 
         assertEquals("// events", scripts.files["오늘 일정"])
         assertEquals(EntryStatus.Installed("오늘 일정"), vm.uiState.value.sections[0].items[0].status)
-        assertEquals("'오늘 일정'을 설치했습니다", vm.uiState.value.message)
+        assertEquals(UiText.res(R.string.gallery_message_installed, "오늘 일정"), vm.uiState.value.message)
     }
 
     @Test
@@ -116,7 +133,7 @@ class GalleryViewModelTest {
         vm.update(builtin.id, "events")
 
         assertEquals("// events v2", scripts.files["오늘 일정"])
-        assertEquals("'오늘 일정'을 업데이트했습니다", vm.uiState.value.message)
+        assertEquals(UiText.res(R.string.gallery_message_updated, "오늘 일정"), vm.uiState.value.message)
     }
 
     @Test
@@ -127,7 +144,7 @@ class GalleryViewModelTest {
         assertEquals(listOf("기본 갤러리", "Example"), vm.uiState.value.sections.map { it.title })
 
         vm.addUrl("ftp://nope")
-        assertEquals("https:// 로 시작하는 주소를 입력하세요", vm.uiState.value.message)
+        assertEquals(UiText.res(R.string.gallery_message_invalid_url), vm.uiState.value.message)
 
         vm.removeUrl("https://example.com/index.json")
         assertEquals(listOf("기본 갤러리"), vm.uiState.value.sections.map { it.title })
@@ -138,5 +155,12 @@ class GalleryViewModelTest {
         urls.add("https://broken.example/index.json")
 
         assertEquals("404", vm().uiState.value.sections[1].error)
+    }
+
+    @Test
+    fun `an install preview flags permissions the code uses but the catalog does not show`() {
+        val preview = InstallPreview("u", entry("clock", "세계 시계", "정보", permissions = listOf("network")), "await Location.current(); new Request(u)")
+
+        assertEquals(setOf("location"), preview.undeclaredPermissions)
     }
 }

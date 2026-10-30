@@ -10,11 +10,11 @@ class RunScriptByNameUseCase(
     private val scripts: ScriptRepository,
     private val runScript: RunScriptUseCase,
 ) {
-    suspend operator fun invoke(name: String, source: RunSource, parameter: String? = null): ScriptRunResult {
+    suspend operator fun invoke(name: String, source: RunSource, parameter: String? = null, trigger: String? = null): ScriptRunResult {
         val code = scripts.read(name) ?: return ScriptRunResult(error = "Script not found: $name")
         return runScript(
             script = code,
-            env = ScriptEnvironment(runsInWidget = false, cacheKey = CACHE_KEY, source = source, shortcutParameter = parameter),
+            env = ScriptEnvironment(runsInWidget = false, cacheKey = CACHE_KEY, source = source, shortcutParameter = parameter, trigger = trigger),
             scriptName = name,
         )
     }

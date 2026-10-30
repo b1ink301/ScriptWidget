@@ -16,7 +16,7 @@ class AndroidScriptDocuments(context: Context) : ScriptDocuments {
 
     override suspend fun read(uri: String): ScriptFile {
         val bytes = readLimited(uri, MAX_BYTES)
-        return ScriptFile(displayName(Uri.parse(uri)), bytes.toString(Charsets.UTF_8).removePrefix("﻿"))
+        return ScriptFile(displayName(Uri.parse(uri)), bytes.toString(Charsets.UTF_8).removePrefix("\uFEFF"))
     }
 
     override suspend fun write(uri: String, content: String) = writeBytes(uri, content.toByteArray(Charsets.UTF_8))

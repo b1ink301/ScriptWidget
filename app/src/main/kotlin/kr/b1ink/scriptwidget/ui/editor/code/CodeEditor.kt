@@ -43,6 +43,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kr.b1ink.scriptwidget.data.api.ApiEntry
+import androidx.compose.ui.res.stringResource
+import kr.b1ink.scriptwidget.R
 
 private val Background = Color(0xFF1E1E1E)
 private val Plain = Color(0xFFD4D4D4)
@@ -92,7 +94,7 @@ fun CodeEditor(
 
     Column(modifier.fillMaxSize().background(Background).imePadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = { searching = !searching }) { Text(if (searching) "찾기 닫기" else "찾기", color = Plain) }
+            TextButton(onClick = { searching = !searching }) { Text(if (searching) stringResource(R.string.editor_find_close) else stringResource(R.string.editor_find), color = Plain) }
             TextButton(onClick = onOpenApiReference) { Text("API", color = Plain) }
             if (searching) {
                 val current = matches.indexOfFirst { it.first == value.selection.start && it.last + 1 == value.selection.end }
@@ -182,7 +184,7 @@ private fun SearchBar(
     Column(Modifier.fillMaxWidth().background(Color(0xFF252526)).padding(horizontal = 8.dp, vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
-                value = query, onValueChange = onQuery, singleLine = true, label = { Text("찾기") }, textStyle = FieldText,
+                value = query, onValueChange = onQuery, singleLine = true, label = { Text(stringResource(R.string.editor_find)) }, textStyle = FieldText,
                 modifier = Modifier.weight(1f).focusRequester(focus),
             )
             TextButton(onClick = onPrevious) { Text("▲") }
@@ -190,11 +192,11 @@ private fun SearchBar(
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
-                value = replacement, onValueChange = onReplacement, singleLine = true, label = { Text("바꾸기") }, textStyle = FieldText,
+                value = replacement, onValueChange = onReplacement, singleLine = true, label = { Text(stringResource(R.string.editor_replace)) }, textStyle = FieldText,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = onReplace) { Text("바꾸기") }
-            TextButton(onClick = onReplaceAll) { Text("모두") }
+            TextButton(onClick = onReplace) { Text(stringResource(R.string.editor_replace)) }
+            TextButton(onClick = onReplaceAll) { Text(stringResource(R.string.editor_replace_all)) }
         }
     }
 }

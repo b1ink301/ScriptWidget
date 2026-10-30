@@ -4,6 +4,9 @@ interface WidgetRefreshScheduler {
     /** Runs the widget's script once, as soon as possible. */
     fun refreshNow(appWidgetId: Int)
 
+    /** Runs the widget's script soon because a device event asked for it (see RefreshTrigger.Event). */
+    fun refreshForEvent(appWidgetId: Int)
+
     /** Keeps the widget refreshing periodically (keeps an existing schedule). */
     fun schedulePeriodic(appWidgetId: Int)
 

@@ -174,4 +174,18 @@ class UtilitiesContractTest {
         assertContains(assertNotNull(result.error), "widget")
         assertTrue(urls.opened.isEmpty())
     }
+
+    @Test
+    fun `atob and btoa convert base64 like browsers`() = runTest {
+        assertEquals(
+            "aGVsbG8gd29ybGQ= hello world SGk= Hi  true",
+            out(
+                """
+                let threw = false;
+                try { btoa("한") } catch (e) { threw = true }
+                console.log(btoa("hello world"), atob("aGVsbG8gd29ybGQ="), btoa("Hi"), atob("SGk"), atob(""), threw);
+                """.trimIndent(),
+            ),
+        )
+    }
 }

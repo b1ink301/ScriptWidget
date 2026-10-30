@@ -35,6 +35,13 @@ val releaseSigning: Map<String, String>? = run {
 }
 
 android {
+    // Existing findings are recorded in lint-baseline.xml; new errors fail the build (CI runs lintDebug).
+    lint {
+        baseline = file("lint-baseline.xml")
+        abortOnError = true
+        checkDependencies = false
+    }
+
     namespace = "kr.b1ink.scriptwidget"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
@@ -45,7 +52,7 @@ android {
         // CI passes the release tag: -PversionName=1.2.3 -PversionCode=10203
         versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 1
         versionName = providers.gradleProperty("versionName").orNull ?: "0.1.0-dev"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "kr.b1ink.scriptwidget.KoreanLocaleTestRunner"
     }
 
     signingConfigs {

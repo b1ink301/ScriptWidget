@@ -92,8 +92,8 @@ class SampleScriptsTest {
     @Test
     fun `settings sample configures itself with Alert and UITable in the app and renders the choice in the widget`() = runTest {
         val ui = FakeUiPresenter().apply {
-            alertAnswers += AlertResult(index = 0, texts = listOf("Busan"))      // main menu: "도시 변경" → text field
-            tableEvents += TableEvent.Selected(row = 2)                          // pick the 3rd theme row
+            alertAnswers += AlertResult(index = 0, texts = listOf("Busan")) // main menu: "도시 변경" → text field
+            tableEvents += TableEvent.Selected(row = 2) // pick the 3rd theme row
         }
         val services = fakeServices(files = files, ui = ui)
         val sample = samples.getValue("08_settings_ui")

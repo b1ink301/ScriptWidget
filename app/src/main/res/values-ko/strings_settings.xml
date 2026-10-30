@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">설정</string>
+    <string name="settings_group_permissions_widgets">권한·위젯</string>
+    <string name="settings_permissions_title">권한</string>
+    <string name="settings_permissions_subtitle">알림·위치·캘린더·배터리 최적화, 자동화 앱에서 실행</string>
+    <string name="settings_triggers_title">자동 실행 트리거</string>
+    <string name="settings_triggers_subtitle">캘린더 변경·자정·충전·Wi-Fi 등에서 위젯 갱신 또는 스크립트 실행</string>
+    <string name="settings_screen_off_title">화면이 꺼져 있어도 갱신</string>
+    <string name="settings_screen_off_on">15분마다 폰을 깨워 갱신합니다 (배터리 사용 증가)</string>
+    <string name="settings_screen_off_off">꺼짐: 화면이 켜질 때 바로 갱신합니다 (배터리 절약)</string>
+    <string name="settings_group_files">파일</string>
+    <string name="settings_bookmarks_title">파일 북마크</string>
+    <string name="settings_bookmarks_subtitle">스크립트가 bookmarkedPath()로 읽는 파일</string>
+    <string name="settings_import_title">스크립트 가져오기</string>
+    <string name="settings_import_subtitle">.js · .scriptable 파일</string>
+    <string name="settings_backup_title">전체 백업</string>
+    <string name="settings_backup_subtitle">모든 스크립트를 zip 하나로 저장</string>
+    <string name="settings_restore_title">백업에서 복원</string>
+    <string name="settings_restore_subtitle">덮어쓰지 않고 없는 스크립트만 추가</string>
+    <string name="settings_group_gallery">갤러리</string>
+    <string name="settings_catalogs_title">카탈로그 관리</string>
+    <string name="settings_catalogs_subtitle">기본 갤러리와 추가한 카탈로그(index.json)</string>
+    <string name="settings_group_language">언어</string>
+    <string name="settings_language_title">앱 언어</string>
+    <string name="settings_language_system">기기 언어</string>
+    <string name="settings_language_follows_system">기기 언어를 따릅니다 (Android 13 이상에서 선택 가능)</string>
+    <string name="settings_cancel">취소</string>
+    <string name="settings_group_about">정보</string>
+    <string name="settings_view_source">GitHub에서 소스 보기</string>
+    <string name="settings_license_title">라이선스</string>
+    <string name="settings_license_subtitle">GPL-3.0 · 오픈소스 라이선스</string>
+    <string name="settings_update_checking">업데이트 확인 중…</string>
+    <string name="settings_update_checking_subtitle">GitHub 릴리스를 확인하고 있습니다</string>
+    <string name="settings_update_available">새 버전 %1$s</string>
+    <string name="settings_update_available_apk">현재 %1$s · 탭하면 APK를 받습니다</string>
+    <string name="settings_update_available_page">현재 %1$s · 탭하면 릴리스 페이지를 엽니다</string>
+    <string name="settings_update_up_to_date">최신 버전입니다</string>
+    <string name="settings_update_up_to_date_subtitle">현재 %1$s · 탭하면 다시 확인</string>
+    <string name="settings_update_failed">업데이트 확인 실패</string>
+    <string name="settings_update_failed_subtitle">%1$s · 탭하면 다시 시도</string>
+    <string name="settings_update_check">업데이트 확인</string>
+    <string name="settings_update_check_subtitle">GitHub 릴리스에서 새 버전 확인</string>
+    <string name="settings_license_path" formatted="false">/blob/main/README.ko.md#%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4</string>
+</resources>

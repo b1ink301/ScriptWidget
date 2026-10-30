@@ -15,13 +15,13 @@ class ResizeWidgetUseCaseTest {
     private val resize = ResizeWidgetUseCase(renderStates, scheduler)
 
     @Test
-    fun `resizing within the same family redraws without running the script`() = runTest {
-        val state = RenderState(scriptName = "clock", family = WidgetFamily.Medium, updatedAt = 1)
-        renderStates.states[3] = state
+    fun `resizing within the same family keeps the drawn state without running the script`() = runTest {
+        // The receiver already redrew the widget at its new size; publishing again would draw twice.
+        renderStates.states[3] = RenderState(scriptName = "clock", family = WidgetFamily.Medium, updatedAt = 1)
 
         resize(3, WidgetFamily.Medium)
 
-        assertEquals(listOf(3 to state), renderStates.published)
+        assertTrue(renderStates.published.isEmpty())
         assertTrue(scheduler.refreshed.isEmpty())
     }
 

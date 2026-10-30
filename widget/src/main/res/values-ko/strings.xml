@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_waiting">실행 대기 중… 탭하여 새로고침</string>
+    <string name="widget_error_not_bound">스크립트가 지정되지 않았습니다. 위젯을 길게 눌러 설정하세요.</string>
+    <string name="widget_error_script_not_found">스크립트 \'%1$s\'를 찾을 수 없습니다.</string>
+</resources>

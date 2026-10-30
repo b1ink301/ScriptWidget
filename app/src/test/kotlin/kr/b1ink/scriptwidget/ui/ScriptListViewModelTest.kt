@@ -17,11 +17,12 @@ import kr.b1ink.scriptwidget.domain.usecase.ObserveScriptNamesUseCase
 import kr.b1ink.scriptwidget.domain.usecase.SeedSampleScriptsUseCase
 import kr.b1ink.scriptwidget.ui.list.ScriptListEvent
 import kr.b1ink.scriptwidget.ui.list.ScriptListViewModel
+import kr.b1ink.scriptwidget.R
+import kr.b1ink.scriptwidget.ui.text.UiText
 import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class ScriptListViewModelTest {
     @get:Rule
@@ -114,8 +115,15 @@ class ScriptListViewModelTest {
 
         vm.importFiles(listOf("content://a", "content://b", "content://png"))
 
-        val event = vm.events.first() as ScriptListEvent.ShowMessage
-        assertTrue("2개" in event.text && "photo.png" in event.text, event.text)
+        assertEquals(
+            ScriptListEvent.ShowMessage(
+                listOf(
+                    UiText.res(R.string.list_imported, 2, "clock, news"),
+                    UiText.res(R.string.list_import_failed, "photo.png", UiText.res(R.string.list_reason_not_a_script)),
+                ),
+            ),
+            vm.events.first(),
+        )
         assertEquals(listOf("01_hello", "clock", "news"), vm.uiState.value.names)
     }
 
@@ -137,7 +145,7 @@ class ScriptListViewModelTest {
 
         vm.exportTo("01_hello", "content://out")
         assertEquals("h", documents.written["content://out"])
-        assertTrue(vm.events.first() is ScriptListEvent.ShowMessage)
+        assertEquals(ScriptListEvent.ShowMessage(UiText.res(R.string.list_exported, "01_hello")), vm.events.first())
     }
 
     // --- icons, backup ---
@@ -169,7 +177,7 @@ class ScriptListViewModelTest {
 
         vm.backupTo("content://backup")
         assertEquals(mapOf("01_hello.js" to "h"), codec.decode(documents.bytes["content://backup"]!!))
-        assertTrue("1개" in (vm.events.first() as ScriptListEvent.ShowMessage).text)
+        assertEquals(ScriptListEvent.ShowMessage(UiText.plural(R.plurals.list_backed_up, 1)), vm.events.first())
     }
 
     @Test
@@ -179,8 +187,15 @@ class ScriptListViewModelTest {
 
         vm.restoreFrom("content://zip")
 
-        val text = (vm.events.first() as ScriptListEvent.ShowMessage).text
-        assertTrue("news" in text && "1개" in text, text)
+        assertEquals(
+            ScriptListEvent.ShowMessage(
+                listOf(
+                    UiText.res(R.string.list_restored, 1, "news"),
+                    UiText.plural(R.plurals.list_restore_skipped, 1),
+                ),
+            ),
+            vm.events.first(),
+        )
         assertEquals("n", scripts.files["news"])
     }
 
@@ -191,7 +206,8 @@ class ScriptListViewModelTest {
 
         vm.restoreFrom("content://bad")
 
-        assertTrue("복원 실패" in (vm.events.first() as ScriptListEvent.ShowMessage).text)
+        val lines = (vm.events.first() as ScriptListEvent.ShowMessage).lines
+        assertEquals(R.string.list_restore_failed, (lines.single() as UiText.Res).id)
     }
 
     // --- search and activity ---
@@ -220,9 +236,19 @@ class ScriptListViewModelTest {
         val vm = viewModel()
 
         val rows = vm.uiState.value.visible.associate { it.summary.name to it.subtitle }
-        assertEquals("위젯 2개 · 3분 전 실행", rows["a"])
-        assertEquals("위젯 없음 · 5시간 전 실행", rows["b"])
-        assertEquals("위젯 1개 · 3일 전 실행", rows["c"])
-        assertEquals("위젯 없음", rows["d"], "never ran: only the widget count")
+        fun ran(ago: UiText) = UiText.res(R.string.list_ran, ago)
+        assertEquals(
+            UiText.res(R.string.list_subtitle_joined, UiText.plural(R.plurals.list_widgets, 2), ran(UiText.res(R.string.list_ago_minutes, 3))),
+            rows["a"],
+        )
+        assertEquals(
+            UiText.res(R.string.list_subtitle_joined, UiText.res(R.string.list_widgets_none), ran(UiText.res(R.string.list_ago_hours, 5))),
+            rows["b"],
+        )
+        assertEquals(
+            UiText.res(R.string.list_subtitle_joined, UiText.plural(R.plurals.list_widgets, 1), ran(UiText.res(R.string.list_ago_days, 3))),
+            rows["c"],
+        )
+        assertEquals(UiText.res(R.string.list_widgets_none), rows["d"], "never ran: only the widget count")
     }
 }

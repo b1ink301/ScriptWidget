@@ -19,6 +19,8 @@ import kr.b1ink.scriptwidget.domain.usecase.GetScriptUseCase
 import kr.b1ink.scriptwidget.domain.usecase.RenameScriptUseCase
 import kr.b1ink.scriptwidget.domain.usecase.RunScriptUseCase
 import kr.b1ink.scriptwidget.domain.usecase.SaveScriptUseCase
+import kr.b1ink.scriptwidget.R
+import kr.b1ink.scriptwidget.ui.text.UiText
 
 enum class EditorTab { Code, Result }
 
@@ -49,7 +51,7 @@ data class EditorUiState(
     val parameter: String = "",
     val result: ScriptRunResult? = null,
     val tab: EditorTab = EditorTab.Code,
-    val message: String? = null,
+    val message: UiText? = null,
 )
 
 class EditorViewModel(
@@ -171,8 +173,8 @@ class EditorViewModel(
 
     companion object {
         const val PREVIEW_CACHE_KEY = "preview"
-        const val MESSAGE_NAME_TAKEN = "같은 이름의 스크립트가 이미 있습니다."
-        const val MESSAGE_NAME_INVALID = "사용할 수 없는 이름입니다. (/, \\, 앞쪽 . 불가, 최대 64자)"
-        const val MESSAGE_NOT_FOUND = "스크립트를 찾을 수 없습니다."
+        val MESSAGE_NAME_TAKEN: UiText = UiText.res(R.string.editor_name_taken)
+        val MESSAGE_NAME_INVALID: UiText = UiText.res(R.string.editor_name_invalid)
+        val MESSAGE_NOT_FOUND: UiText = UiText.res(R.string.editor_not_found)
     }
 }

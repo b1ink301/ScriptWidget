@@ -47,6 +47,7 @@ sealed interface DeepLink {
             }
         }
 
-        private fun decode(text: String) = URLDecoder.decode(text, Charsets.UTF_8)
+        // The Charset overload needs API 33; minSdk is 26.
+        private fun decode(text: String) = URLDecoder.decode(text, "UTF-8")
     }
 }

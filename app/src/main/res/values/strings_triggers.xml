@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="triggers_title">Automation triggers</string>
+    <string name="triggers_add_button">+ Trigger</string>
+    <string name="triggers_intro">Runs a script when something happens on the device. A widget refresh waits until the screen turns on if it is off; running a script happens right away in the background (the script can read the event from args.trigger).</string>
+    <string name="triggers_empty">No triggers yet. Add one with + Trigger at the top right.</string>
+    <string name="triggers_action_refresh_row">→ Refresh \'%1$s\' widgets</string>
+    <string name="triggers_action_run_row">→ Run script \'%1$s\'</string>
+    <string name="triggers_delete">Delete</string>
+    <string name="triggers_new_title">New trigger</string>
+    <string name="triggers_when">When</string>
+    <string name="triggers_which_script">Which script</string>
+    <string name="triggers_what">What</string>
+    <string name="triggers_action_refresh">Refresh widgets</string>
+    <string name="triggers_action_run">Run script</string>
+    <string name="triggers_add">Add</string>
+    <string name="triggers_cancel">Cancel</string>
+    <string name="triggers_event_calendar_title">Calendar changed</string>
+    <string name="triggers_event_contacts_title">Contacts changed</string>
+    <string name="triggers_event_photo_title">New photo</string>
+    <string name="triggers_event_day_title">New day</string>
+    <string name="triggers_event_timezone_title">Time zone changed</string>
+    <string name="triggers_event_charging_title">Charging</string>
+    <string name="triggers_event_wifi_title">Wi-Fi connected</string>
+    <string name="triggers_event_calendar_when">When the calendar changes</string>
+    <string name="triggers_event_contacts_when">When contacts change</string>
+    <string name="triggers_event_photo_when">When a new photo is added</string>
+    <string name="triggers_event_day_when">When the day changes (midnight)</string>
+    <string name="triggers_event_timezone_when">When the time zone or time changes</string>
+    <string name="triggers_event_charging_when">While charging (at most once an hour)</string>
+    <string name="triggers_event_wifi_when">While on Wi-Fi (at most once an hour)</string>
+    <string name="triggers_event_calendar_contacts_note">Runs within seconds of adding or editing an event or contact. Requires the matching permission.</string>
+    <string name="triggers_event_photo_note">Runs when you take or save a photo. Requires the photos permission.</string>
+    <string name="triggers_event_day_note">Runs at midnight. If the screen is off, it runs the next time the screen turns on.</string>
+    <string name="triggers_event_timezone_note">Runs when the time zone changes (e.g. while traveling) or when you set the time manually.</string>
+    <string name="triggers_event_charging_note">Runs when charging starts, then again every hour while still charging.</string>
+    <string name="triggers_event_wifi_note">Runs when you connect to Wi-Fi (an unmetered network), then again every hour while connected.</string>
+</resources>

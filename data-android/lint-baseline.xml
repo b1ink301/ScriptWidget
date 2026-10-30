@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 9.4.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.4.1)" variant="all" version="9.4.1">
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        prefs.edit().putString(hash(key), encrypt(value)).commit()"
+        errorLine2="                                                          ~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/KeystoreSecretStore.kt"
+            line="30"
+            column="59"/>
+    </issue>
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="        prefs.edit().remove(hash(key)).commit()"
+        errorLine2="                                       ~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/KeystoreSecretStore.kt"
+            line="34"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX function `createBitmap` instead?"
+        errorLine1="        val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidCanvasRenderer.kt"
+            line="28"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Canvas.withTranslation` instead?"
+        errorLine1="        canvas.save()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidCanvasRenderer.kt"
+            line="80"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toColorInt` instead?"
+        errorLine1="    private fun parse(color: String) = runCatching { Color.parseColor(color) }.getOrDefault(Color.BLACK)"
+        errorLine2="                                                     ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidCanvasRenderer.kt"
+            line="102"
+            column="54"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        val uri = Uri.parse(handle)"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidDocumentStore.kt"
+            line="18"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        resolver.openOutputStream(Uri.parse(handle), &quot;wt&quot;)?.use { it.write(bytes) } ?: throw IOException(&quot;Cannot write $handle&quot;)"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidDocumentStore.kt"
+            line="27"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            pendingStore(context).edit().remove(spec.identifier).apply()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidNotifier.kt"
+            line="44"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        pendingStore(context).edit().putString(spec.identifier, Json.encodeToString(NotificationSpec.serializer(), spec)).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidNotifier.kt"
+            line="49"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        val pending = pendingStore(context).edit()"
+        errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidNotifier.kt"
+            line="60"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        if (past.isNotEmpty()) store.edit().apply { past.forEach { remove(it.identifier) } }.apply()"
+        errorLine2="                               ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidNotifier.kt"
+            line="74"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            spec.openURL?.let { return Intent(Intent.ACTION_VIEW, Uri.parse(it)) }"
+        errorLine2="                                                                  ~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidNotifier.kt"
+            line="106"
+            column="67"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            pendingStore(context).edit().remove(spec.identifier).apply()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidNotifier.kt"
+            line="115"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                    context, (spec.identifier + &quot;#&quot; + index).hashCode(), Intent(Intent.ACTION_VIEW, Uri.parse(action.url)),"
+        errorLine2="                                                                                                    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidNotifier.kt"
+            line="142"
+            column="101"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        resolver.openInputStream(Uri.parse(handle))?.use { it.readBytes() }"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidPhotoLibrary.kt"
+            line="37"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        return ScriptFile(displayName(Uri.parse(uri)), bytes.toString(Charsets.UTF_8).removePrefix(&quot;\uFEFF&quot;))"
+        errorLine2="                                      ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidScriptDocuments.kt"
+            line="19"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        val parsed = Uri.parse(uri)"
+        errorLine2="                     ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidScriptDocuments.kt"
+            line="27"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        resolver.openInputStream(Uri.parse(uri))?.use { input ->"
+        errorLine2="                                 ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidScriptDocuments.kt"
+            line="36"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)"
+        errorLine2="                                                ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/AndroidUrlOpener.kt"
+            line="14"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Bitmap.get` instead?"
+        errorLine1="                if (android.graphics.Color.alpha(getPixel(x, y)) &lt; 255) return true"
+        errorLine2="                                                 ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/BitmapImageStore.kt"
+            line="70"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Bitmap.scale` instead?"
+        errorLine1="            return Bitmap.createScaledBitmap("
+        errorLine2="                   ^">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/BitmapImageStore.kt"
+            line="88"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            selector = Intent(Intent.ACTION_SENDTO, Uri.parse(&quot;mailto:&quot;))"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/ComposerIntents.kt"
+            line="41"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            selector = Intent(Intent.ACTION_SENDTO, Uri.parse(&quot;mailto:&quot;))"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/ComposerIntents.kt"
+            line="41"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        Intent(Intent.ACTION_SENDTO, Uri.parse(&quot;smsto:&quot; + spec.recipients.joinToString(&quot;;&quot;))).apply {"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/ComposerIntents.kt"
+            line="61"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs.edit().putString(hash(key), encrypt(value)).commit()"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/KeystoreSecretStore.kt"
+            line="30"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs.edit().remove(hash(key)).commit()"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/KeystoreSecretStore.kt"
+            line="34"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX function `createBitmap` instead?"
+        errorLine1="        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/kr/b1ink/scriptwidget/data/android/MaterialSymbolRenderer.kt"
+            line="21"
+            column="22"/>
+    </issue>
+
+</issues>

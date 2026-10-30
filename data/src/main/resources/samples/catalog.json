@@ -1,5 +1,8 @@
 {
   "title": "기본 갤러리",
+  "titles": {
+    "en": "Built-in gallery"
+  },
   "entries": [
     {
       "id": "today_events",
@@ -17,7 +20,14 @@
       "permissions": [
         "calendar"
       ],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Today's Events",
+          "description": "Today's remaining events in time order. Choose a calendar with the parameter.",
+          "category": "Calendar & To-dos"
+        }
+      }
     },
     {
       "id": "reminders",
@@ -32,10 +42,15 @@
         "medium",
         "large"
       ],
-      "permissions": [
-        "notification"
-      ],
-      "author": "ScriptWidget"
+      "permissions": [],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "To-dos",
+          "description": "Your open to-dos. Tap ○ in the widget to complete one; run it in the app to add a new to-do.",
+          "category": "Calendar & To-dos"
+        }
+      }
     },
     {
       "id": "month_calendar",
@@ -53,7 +68,14 @@
       "permissions": [
         "calendar"
       ],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "This Month",
+          "description": "This month's calendar with today highlighted and a dot on days with events.",
+          "category": "Calendar & To-dos"
+        }
+      }
     },
     {
       "id": "dday",
@@ -68,7 +90,14 @@
         "medium"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "D-day",
+          "description": "Days left until the date in the parameter. e.g. \"2026-12-25 Christmas\"",
+          "category": "Calendar & To-dos"
+        }
+      }
     },
     {
       "id": "battery",
@@ -83,7 +112,14 @@
         "medium"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Battery",
+          "description": "Draws the battery level as a ring and shows the charging state.",
+          "category": "Everyday"
+        }
+      }
     },
     {
       "id": "memo",
@@ -99,7 +135,14 @@
         "large"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Memo",
+          "description": "Pins a note you wrote in the app to your home screen.",
+          "category": "Everyday"
+        }
+      }
     },
     {
       "id": "habit",
@@ -114,7 +157,14 @@
         "medium"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Water & Habit Tracker",
+          "description": "A habit widget: each tap on + adds to today's count. e.g. \"Water 8\"",
+          "category": "Everyday"
+        }
+      }
     },
     {
       "id": "photo_frame",
@@ -130,7 +180,14 @@
         "large"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Photo Frame",
+          "description": "Fills the widget with the photo from the file bookmark \"photo\".",
+          "category": "Everyday"
+        }
+      }
     },
     {
       "id": "birthdays",
@@ -148,7 +205,14 @@
       "permissions": [
         "contacts"
       ],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Upcoming Birthdays",
+          "description": "Birthdays from your contacts, soonest first.",
+          "category": "Everyday"
+        }
+      }
     },
     {
       "id": "progress",
@@ -164,7 +228,14 @@
         "large"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Day, Week, Month & Year Progress",
+          "description": "Bars showing how much of today, this week, this month and this year has passed.",
+          "category": "Info"
+        }
+      }
     },
     {
       "id": "crypto",
@@ -182,7 +253,14 @@
       "permissions": [
         "network"
       ],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Crypto Prices",
+          "description": "KRW prices and changes from the Upbit public API. e.g. \"BTC,ETH,SOL\"",
+          "category": "Info"
+        }
+      }
     },
     {
       "id": "rss_news",
@@ -200,7 +278,14 @@
       "permissions": [
         "network"
       ],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "RSS News",
+          "description": "The latest headlines from an RSS feed; tap one to open the article.",
+          "category": "Info"
+        }
+      }
     },
     {
       "id": "quotes",
@@ -215,7 +300,14 @@
         "medium"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Quote of the Day",
+          "description": "A different quote every day. No internet needed.",
+          "category": "Info"
+        }
+      }
     },
     {
       "id": "world_clock",
@@ -231,7 +323,14 @@
         "large"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "World Clock",
+          "description": "The current time in several cities. e.g. \"New York=America/New_York,Paris=Europe/Paris\"",
+          "category": "Info"
+        }
+      }
     },
     {
       "id": "01_hello",
@@ -247,7 +346,14 @@
         "large"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Hello Widget",
+          "description": "A basic text and background color example.",
+          "category": "Examples"
+        }
+      }
     },
     {
       "id": "02_exchange_rate",
@@ -265,7 +371,14 @@
       "permissions": [
         "network"
       ],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Exchange Rates",
+          "description": "Loads exchange rates from a public API. Set the currency with the parameter.",
+          "category": "Examples"
+        }
+      }
     },
     {
       "id": "03_image",
@@ -283,7 +396,14 @@
       "permissions": [
         "network"
       ],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Image",
+          "description": "A remote image and horizontal stack example.",
+          "category": "Examples"
+        }
+      }
     },
     {
       "id": "04_error",
@@ -298,8 +418,17 @@
         "medium",
         "large"
       ],
-      "permissions": [],
-      "author": "ScriptWidget"
+      "permissions": [
+        "network"
+      ],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Error Widget",
+          "description": "Shows how a script error appears in a widget.",
+          "category": "Examples"
+        }
+      }
     },
     {
       "id": "05_async_timers",
@@ -315,7 +444,14 @@
         "large"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Async & Timers",
+          "description": "An example of async/await, Promise and setTimeout.",
+          "category": "Examples"
+        }
+      }
     },
     {
       "id": "06_weather",
@@ -334,7 +470,14 @@
         "location",
         "network"
       ],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Weather",
+          "description": "Weather at your current location (Open-Meteo, no key needed). Shows the last weather when offline.",
+          "category": "Examples"
+        }
+      }
     },
     {
       "id": "07_showcase",
@@ -350,7 +493,14 @@
         "large"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Showcase",
+          "description": "A collection of features: SF Symbols, drawing, device info and more.",
+          "category": "Examples"
+        }
+      }
     },
     {
       "id": "08_settings_ui",
@@ -366,7 +516,14 @@
         "large"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Settings UI",
+          "description": "A pattern for configuring with Alert and UITable in the app and applying it to the widget.",
+          "category": "Examples"
+        }
+      }
     },
     {
       "id": "09_counter",
@@ -382,7 +539,227 @@
         "large"
       ],
       "permissions": [],
-      "author": "ScriptWidget"
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Counter",
+          "description": "An interactive example that counts up and down with widget buttons.",
+          "category": "Examples"
+        }
+      }
+    },
+    {
+      "id": "design_clock",
+      "name": "디자인 시계",
+      "title": "시계",
+      "category": "디자인",
+      "description": "요일과 큰 시각, 날짜. 디자이너로 열어 바로 고칠 수 있습니다.",
+      "script": "designs/clock.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Clock",
+          "description": "Weekday, a big clock and the date. Opens in the designer.",
+          "category": "Designs"
+        }
+      },
+      "localizedScripts": {
+        "en": "designs/clock.en.js"
+      },
+      "seed": false
+    },
+    {
+      "id": "design_battery",
+      "name": "디자인 배터리",
+      "title": "배터리",
+      "category": "디자인",
+      "description": "배터리 잔량을 크게 보여 줍니다. 디자이너로 열립니다.",
+      "script": "designs/battery.js",
+      "version": 1,
+      "sizes": [
+        "small"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Battery",
+          "description": "Battery level in large type. Opens in the designer.",
+          "category": "Designs"
+        }
+      },
+      "localizedScripts": {
+        "en": "designs/battery.en.js"
+      },
+      "seed": false
+    },
+    {
+      "id": "design_next_event",
+      "name": "디자인 다음 일정",
+      "title": "다음 일정",
+      "category": "디자인",
+      "description": "다음 일정의 제목과 시간. 디자이너로 열립니다.",
+      "script": "designs/next_event.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium"
+      ],
+      "permissions": [
+        "calendar"
+      ],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Next event",
+          "description": "Title and time of your next event. Opens in the designer.",
+          "category": "Designs"
+        }
+      },
+      "localizedScripts": {
+        "en": "designs/next_event.en.js"
+      },
+      "seed": false
+    },
+    {
+      "id": "design_reminders",
+      "name": "디자인 할 일",
+      "title": "할 일",
+      "category": "디자인",
+      "description": "남은 할 일 개수와 가장 급한 할 일. 디자이너로 열립니다.",
+      "script": "designs/reminders.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Reminders",
+          "description": "How many to-dos are left and the most urgent one. Opens in the designer.",
+          "category": "Designs"
+        }
+      },
+      "localizedScripts": {
+        "en": "designs/reminders.en.js"
+      },
+      "seed": false
+    },
+    {
+      "id": "design_weather",
+      "name": "디자인 날씨",
+      "title": "날씨",
+      "category": "디자인",
+      "description": "현재 위치의 기온과 날씨(Open-Meteo). 디자이너로 열립니다.",
+      "script": "designs/weather.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium"
+      ],
+      "permissions": [
+        "location",
+        "network"
+      ],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Weather",
+          "description": "Temperature and conditions where you are (Open-Meteo). Opens in the designer.",
+          "category": "Designs"
+        }
+      },
+      "localizedScripts": {
+        "en": "designs/weather.en.js"
+      },
+      "seed": false
+    },
+    {
+      "id": "design_github_stars",
+      "name": "디자인 JSON 값",
+      "title": "JSON 값 (GitHub 별)",
+      "category": "디자인",
+      "description": "JSON 주소의 값 하나를 크게 보여 줍니다. 예: GitHub 저장소의 별 수.",
+      "script": "designs/github_stars.js",
+      "version": 1,
+      "sizes": [
+        "small"
+      ],
+      "permissions": [
+        "network"
+      ],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "JSON value (GitHub stars)",
+          "description": "One value from a JSON URL in large type, e.g. a GitHub repository's stars.",
+          "category": "Designs"
+        }
+      },
+      "localizedScripts": {
+        "en": "designs/github_stars.en.js"
+      },
+      "seed": false
+    },
+    {
+      "id": "design_photo_frame",
+      "name": "디자인 사진 액자",
+      "title": "사진 액자",
+      "category": "디자인",
+      "description": "파일 북마크 \"photo\"의 사진 위에 날짜. 디자이너에서 사진을 고르세요.",
+      "script": "designs/photo_frame.js",
+      "version": 1,
+      "sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "Photo frame",
+          "description": "The date over the picture in file bookmark \"photo\". Pick the photo in the designer.",
+          "category": "Designs"
+        }
+      },
+      "localizedScripts": {
+        "en": "designs/photo_frame.en.js"
+      },
+      "seed": false
+    },
+    {
+      "id": "design_dday",
+      "name": "디자인 D-day",
+      "title": "D-day",
+      "category": "디자인",
+      "description": "크리스마스까지 남은 날. 디자이너에서 날짜를 바꾸거나 위젯 파라미터로 정하세요.",
+      "script": "designs/dday.js",
+      "version": 1,
+      "sizes": [
+        "small"
+      ],
+      "permissions": [],
+      "author": "ScriptWidget",
+      "translations": {
+        "en": {
+          "title": "D-day",
+          "description": "Days to Christmas. Change the date in the designer or set it with the widget parameter.",
+          "category": "Designs"
+        }
+      },
+      "localizedScripts": {
+        "en": "designs/dday.en.js"
+      },
+      "seed": false
     }
   ]
 }
