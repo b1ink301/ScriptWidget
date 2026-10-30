@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -42,6 +43,25 @@ class MainChromeTest {
         compose.onNodeWithTag("tab-Gallery").assertIsSelected()
         compose.onNodeWithTag("tab-Scripts").assertIsNotSelected()
         listOf("내 스크립트", "갤러리", "기록", "도움말", "설정").forEach { compose.onNodeWithText(it).assertIsDisplayed() }
+    }
+
+    @Test
+    fun oneIndicatorMovesToTheSelectedTab() {
+        var tab by mutableStateOf(MainTab.History)
+        compose.setContent { FloatingTabBar(selected = tab, onSelect = { tab = it }) }
+
+        compose.onNodeWithTag("tab-Help").performClick()
+        compose.waitForIdle()
+
+        // A single indicator (no second capsule fading out on the previous tab), centered on the new tab.
+        val indicators = compose.onAllNodesWithTag("tab-indicator", useUnmergedTree = true).fetchSemanticsNodes()
+        assertEquals(1, indicators.size)
+        val indicator = indicators.single().boundsInRoot
+        val help = compose.onNodeWithTag("tab-Help").fetchSemanticsNode().boundsInRoot
+        kotlin.test.assertTrue(
+            kotlin.math.abs(indicator.center.x - help.center.x) < 2f,
+            "indicator at ${indicator.center.x}, Help tab at ${help.center.x}",
+        )
     }
 
     @Test

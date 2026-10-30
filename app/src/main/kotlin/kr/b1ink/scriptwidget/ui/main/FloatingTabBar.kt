@@ -1,6 +1,15 @@
 package kr.b1ink.scriptwidget.ui.main
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +49,11 @@ val LocalBottomBarSpace = compositionLocalOf { 0.dp }
 
 /** Height of the bar plus its gap above the gesture area. */
 val FloatingTabBarSpace = 96.dp
+
+private val PILL_WIDTH = 52.dp
+private val PILL_HEIGHT = 30.dp
+private val PILL_TOP = 9.dp
+private val PillShape = RoundedCornerShape(50)
 
 private data class TabSpec(val tab: MainTab, val label: String, val icon: ImageVector)
 
@@ -96,40 +110,66 @@ fun FloatingTabBar(selected: MainTab, onSelect: (MainTab) -> Unit, modifier: Mod
         tonalElevation = 3.dp,
         shadowElevation = 8.dp,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 6.dp).selectableGroup(),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TABS.forEach { spec ->
-                val isSelected = spec.tab == selected
-                val pill by animateColorAsState(
-                    if (isSelected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent, label = "pill",
-                )
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("tab-${spec.tab.name}")
-                        .selectable(selected = isSelected, role = Role.Tab, onClick = { onSelect(spec.tab) }),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Box(
-                        Modifier.size(width = 52.dp, height = 30.dp).background(pill, RoundedCornerShape(15.dp)),
-                        contentAlignment = Alignment.Center,
+        BoxWithConstraints(Modifier.padding(horizontal = 6.dp)) {
+            val tabWidth = maxWidth / TABS.size
+            val index = TABS.indexOfFirst { it.tab == selected }.coerceAtLeast(0)
+            // One capsule that slides to the selected tab, so two tabs never look selected at once.
+            val indicatorX by animateDpAsState(
+                targetValue = tabWidth * index + (tabWidth - PILL_WIDTH) / 2,
+                animationSpec = spring(dampingRatio = 0.8f, stiffness = 500f),
+                label = "indicator",
+            )
+            Box(
+                Modifier
+                    .offset(x = indicatorX, y = PILL_TOP)
+                    .size(PILL_WIDTH, PILL_HEIGHT)
+                    .background(MaterialTheme.colorScheme.secondaryContainer, PillShape)
+                    .testTag("tab-indicator"),
+            )
+            Row(
+                modifier = Modifier.fillMaxSize().selectableGroup(),
+                verticalAlignment = Alignment.Top,
+            ) {
+                TABS.forEach { spec ->
+                    val isSelected = spec.tab == selected
+                    val interaction = remember { MutableInteractionSource() }
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxSize()
+                            .testTag("tab-${spec.tab.name}")
+                            // The press ripple is drawn in the rounded capsule below, not over the whole cell.
+                            .selectable(
+                                selected = isSelected,
+                                interactionSource = interaction,
+                                indication = null,
+                                role = Role.Tab,
+                                onClick = { onSelect(spec.tab) },
+                            ),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Icon(
-                            spec.icon, contentDescription = null, modifier = Modifier.size(22.dp),
-                            tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                        Box(
+                            Modifier
+                                .padding(top = PILL_TOP)
+                                .size(PILL_WIDTH, PILL_HEIGHT)
+                                .clip(PillShape)
+                                .indication(interaction, ripple()),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                spec.icon, contentDescription = null, modifier = Modifier.size(22.dp),
+                                tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Text(
+                            spec.label,
+                            fontSize = 10.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 2.dp),
                         )
                     }
-                    Text(
-                        spec.label,
-                        fontSize = 10.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
                 }
             }
         }
