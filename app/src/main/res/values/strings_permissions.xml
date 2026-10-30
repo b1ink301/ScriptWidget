@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permissions_title">Permissions</string>
+    <string name="permissions_intro">ScriptWidget is distributed outside Google Play (on GitHub), so it can use permissions that Play policy restricts. Allow only what you need.</string>
+    <string name="permissions_open_app_settings">Open app settings</string>
+    <string name="permissions_granted">Allowed</string>
+    <string name="permissions_denied">Not allowed</string>
+    <string name="permissions_allow">Allow</string>
+    <string name="permissions_location_first">Allow location first</string>
+    <string name="permissions_automation_title">Run from automation apps</string>
+    <string name="permissions_automation_description">Apps such as Tasker or MacroDroid can run scripts in the background with the broadcast kr.b1ink.scriptwidget.action.RUN_SCRIPT (extras: scriptName, parameter). Results come back as kr.b1ink.scriptwidget.action.SCRIPT_RESULT (output, error). While this is on, other apps can run your scripts, so turn it on only when you need it.</string>
+    <string name="permissions_notifications_title">Notifications</string>
+    <string name="permissions_location_title">Location</string>
+    <string name="permissions_background_location_title">Background location (allow all the time)</string>
+    <string name="permissions_battery_title">Battery optimization exemption</string>
+    <string name="permissions_exact_alarm_title">Exact alarms</string>
+    <string name="permissions_calendar_title">Calendar</string>
+    <string name="permissions_contacts_title">Contacts</string>
+    <string name="permissions_photos_title">Photos</string>
+    <string name="permissions_notifications_description">Scripts can send notifications with Notification.</string>
+    <string name="permissions_location_description">Gets the current location with Location.current().</string>
+    <string name="permissions_background_location_description">Uses the current location during widget refreshes too. If not allowed, the last location obtained in the app is used. Choose \"Allow all the time\" on the settings screen.</string>
+    <string name="permissions_battery_description">Keeps widget refreshes from being deferred while the phone is saving power.</string>
+    <string name="permissions_exact_alarm_description">Refreshes exactly at the time set with refreshAfterDate.</string>
+    <string name="permissions_calendar_description">Reads and adds events with Calendar and CalendarEvent. (Reminder is stored in the app and needs no permission.)</string>
+    <string name="permissions_contacts_description">Reads and edits contacts with Contact.</string>
+    <string name="permissions_photos_description">Reads recent photos and screenshots with Photos.latestPhoto(). (Picking and saving photos needs no permission.)</string>
+</resources>

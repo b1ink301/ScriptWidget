@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kr.b1ink.scriptwidget.R
 import kr.b1ink.scriptwidget.domain.model.AddUrlResult
 import kr.b1ink.scriptwidget.domain.model.CatalogEntry
 import kr.b1ink.scriptwidget.domain.model.GallerySection
@@ -20,6 +21,7 @@ import kr.b1ink.scriptwidget.domain.usecase.BrowseGalleryUseCase
 import kr.b1ink.scriptwidget.domain.usecase.InstallCatalogEntryUseCase
 import kr.b1ink.scriptwidget.domain.usecase.RemoveCatalogUrlUseCase
 import kr.b1ink.scriptwidget.domain.usecase.UpdateCatalogEntryUseCase
+import kr.b1ink.scriptwidget.ui.text.UiText
 import kotlin.coroutines.cancellation.CancellationException
 
 /** A downloaded script waiting for the user to confirm, after seeing its code and permissions. */
@@ -35,13 +37,18 @@ data class GalleryUiState(
     val category: String? = null,
     val preview: InstallPreview? = null,
     val busy: Boolean = false,
-    val message: String? = null,
+    val message: UiText? = null,
+    /** "ko" / "en": entries show their title, description and category in this language. */
+    val language: String = "ko",
 ) {
-    val categories: List<String> get() = sections.flatMap { s -> s.items.map { it.entry.category } }.distinct()
+    /** Categories in [language]; a blank one is shown as "Other". */
+    val categories: List<String> get() = sections.flatMap { s -> s.items.map { categoryOf(it.entry) } }.distinct()
 
     val visibleSections: List<GallerySection>
         get() = if (category == null) sections
-        else sections.map { s -> s.copy(items = s.items.filter { it.entry.category == category }) }
+        else sections.map { s -> s.copy(items = s.items.filter { categoryOf(it.entry) == category }) }
+
+    fun categoryOf(entry: CatalogEntry): String = entry.textFor(language).category
 }
 
 class GalleryViewModel(
@@ -50,6 +57,8 @@ class GalleryViewModel(
     urls: CatalogUrlRepository,
     installed: InstalledScriptRepository,
     scripts: ScriptRepository,
+    /** "ko" / "en", from the app's current language. */
+    language: String = "ko",
 ) : ViewModel() {
     private val browse = BrowseGalleryUseCase(builtin, urls, remote, installed, scripts)
     private val installEntry = InstallCatalogEntryUseCase(scripts, installed)
@@ -57,7 +66,7 @@ class GalleryViewModel(
     private val addCatalogUrl = AddCatalogUrlUseCase(urls)
     private val removeCatalogUrl = RemoveCatalogUrlUseCase(urls)
 
-    private val _uiState = MutableStateFlow(GalleryUiState())
+    private val _uiState = MutableStateFlow(GalleryUiState(language = language))
     val uiState: StateFlow<GalleryUiState> = _uiState.asStateFlow()
 
     init {
@@ -77,7 +86,7 @@ class GalleryViewModel(
         task {
             if (source === builtin) {
                 val name = installEntry(source, entry)
-                done("'$name'을 설치했습니다")
+                done(UiText.res(R.string.gallery_message_installed, name))
             } else {
                 _uiState.update { it.copy(preview = InstallPreview(sourceId, entry, source.code(entry))) }
             }
@@ -89,7 +98,7 @@ class GalleryViewModel(
         _uiState.update { it.copy(preview = null) }
         task {
             val name = installEntry(PreviewedSource(sourceFor(preview.sourceId), preview), preview.entry)
-            done("'$name'을 설치했습니다")
+            done(UiText.res(R.string.gallery_message_installed, name))
         }
     }
 
@@ -99,23 +108,23 @@ class GalleryViewModel(
         val entry = entry(sourceId, entryId) ?: return
         task {
             when (val result = updateEntry(sourceFor(sourceId), entry)) {
-                is UpdateResult.Updated -> done("'${result.scriptName}'을 업데이트했습니다")
-                is UpdateResult.InstalledAsCopy -> done("고친 스크립트는 그대로 두고 '${result.scriptName}'으로 설치했습니다")
+                is UpdateResult.Updated -> done(UiText.res(R.string.gallery_message_updated, result.scriptName))
+                is UpdateResult.InstalledAsCopy -> done(UiText.res(R.string.gallery_message_installed_as_copy, result.scriptName))
             }
         }
     }
 
     fun addUrl(url: String) = task {
         when (val result = addCatalogUrl(url)) {
-            AddUrlResult.Added -> done("카탈로그를 추가했습니다")
-            AddUrlResult.AlreadyAdded -> _uiState.update { it.copy(message = "이미 추가된 주소입니다") }
-            AddUrlResult.Invalid -> _uiState.update { it.copy(message = "https:// 로 시작하는 주소를 입력하세요") }
+            AddUrlResult.Added -> done(UiText.res(R.string.gallery_message_catalog_added))
+            AddUrlResult.AlreadyAdded -> _uiState.update { it.copy(message = UiText.res(R.string.gallery_message_already_added)) }
+            AddUrlResult.Invalid -> _uiState.update { it.copy(message = UiText.res(R.string.gallery_message_invalid_url)) }
         }
     }
 
     fun removeUrl(url: String) = task {
         removeCatalogUrl(url)
-        done("카탈로그를 삭제했습니다. 설치한 스크립트는 그대로 남아 있습니다")
+        done(UiText.res(R.string.gallery_message_catalog_removed))
     }
 
     fun messageShown() = _uiState.update { it.copy(message = null) }
@@ -130,7 +139,7 @@ class GalleryViewModel(
         _uiState.update { it.copy(loading = false, sections = sections) }
     }
 
-    private suspend fun done(message: String) {
+    private suspend fun done(message: UiText) {
         reload()
         _uiState.update { it.copy(message = message) }
     }
@@ -143,7 +152,7 @@ class GalleryViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _uiState.update { it.copy(message = "실패했습니다: ${e.message ?: e::class.simpleName}") }
+                _uiState.update { it.copy(message = UiText.res(R.string.gallery_message_failed, e.message ?: e::class.simpleName.orEmpty())) }
             } finally {
                 _uiState.update { it.copy(busy = false) }
             }

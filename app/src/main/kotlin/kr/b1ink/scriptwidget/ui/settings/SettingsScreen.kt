@@ -25,7 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kr.b1ink.scriptwidget.R
 import kr.b1ink.scriptwidget.domain.model.UpdateStatus
 import kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace
 
@@ -45,6 +47,9 @@ class SettingsActions(
 )
 
 const val REPOSITORY_URL = "https://github.com/b1ink301/ScriptWidget"
+
+/** The README's license section (its Korean heading, percent-encoded). */
+private const val LICENSE_URL = "$REPOSITORY_URL#%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4"
 
 /** Everything used now and then: permissions, files, backups, catalogs and about. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,45 +74,45 @@ fun SettingsScreen(
             onDismiss = { choosingLanguage = false },
         )
     }
-    Scaffold(topBar = { TopAppBar(title = { Text("설정") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = LocalBottomBarSpace.current),
         ) {
-            group("권한·위젯") {
-                Row("🔐", "권한", "알림·위치·캘린더·배터리 최적화, 자동화 앱에서 실행", actions.onPermissions)
-                Row("⚡", "자동 실행 트리거", "캘린더 변경·자정·충전·Wi-Fi 등에서 위젯 갱신 또는 스크립트 실행", actions.onTriggers)
+            group(R.string.settings_group_permissions_widgets) {
+                Row("🔐", stringResource(R.string.settings_permissions_title), stringResource(R.string.settings_permissions_subtitle), actions.onPermissions)
+                Row("⚡", stringResource(R.string.settings_triggers_title), stringResource(R.string.settings_triggers_subtitle), actions.onTriggers)
                 ToggleRow(
-                    "🌙", "화면이 꺼져 있어도 갱신",
-                    if (refreshWhileScreenOff) "15분마다 폰을 깨워 갱신합니다 (배터리 사용 증가)"
-                    else "꺼짐: 화면이 켜질 때 바로 갱신합니다 (배터리 절약)",
+                    "🌙", stringResource(R.string.settings_screen_off_title),
+                    if (refreshWhileScreenOff) stringResource(R.string.settings_screen_off_on)
+                    else stringResource(R.string.settings_screen_off_off),
                     checked = refreshWhileScreenOff,
                     onChange = actions.onRefreshWhileScreenOff,
                     tag = "screen-off-refresh",
                 )
             }
-            group("파일") {
-                Row("🔖", "파일 북마크", "스크립트가 bookmarkedPath()로 읽는 파일", actions.onBookmarks)
-                Row("📥", "스크립트 가져오기", ".js · .scriptable 파일", actions.onImport)
-                Row("🗂️", "전체 백업", "모든 스크립트를 zip 하나로 저장", actions.onBackup)
-                Row("♻️", "백업에서 복원", "덮어쓰지 않고 없는 스크립트만 추가", actions.onRestore)
+            group(R.string.settings_group_files) {
+                Row("🔖", stringResource(R.string.settings_bookmarks_title), stringResource(R.string.settings_bookmarks_subtitle), actions.onBookmarks)
+                Row("📥", stringResource(R.string.settings_import_title), stringResource(R.string.settings_import_subtitle), actions.onImport)
+                Row("🗂️", stringResource(R.string.settings_backup_title), stringResource(R.string.settings_backup_subtitle), actions.onBackup)
+                Row("♻️", stringResource(R.string.settings_restore_title), stringResource(R.string.settings_restore_subtitle), actions.onRestore)
             }
-            group("갤러리") {
-                Row("🌐", "카탈로그 관리", "기본 갤러리와 추가한 카탈로그(index.json)", actions.onCatalogs)
+            group(R.string.settings_group_gallery) {
+                Row("🌐", stringResource(R.string.settings_catalogs_title), stringResource(R.string.settings_catalogs_subtitle), actions.onCatalogs)
             }
-            group("언어 · Language") {
+            group(R.string.settings_group_language) {
                 Box(Modifier.testTag("language-row")) {
                     Row(
                         "🌐",
-                        "앱 언어 · App language",
-                        if (!canChooseLanguage) "기기 언어를 따릅니다 (Android 13 이상에서 선택 가능)" else languageLabel(language),
+                        stringResource(R.string.settings_language_title),
+                        if (!canChooseLanguage) stringResource(R.string.settings_language_follows_system) else languageLabel(language),
                     ) { if (canChooseLanguage) choosingLanguage = true }
                 }
             }
-            group("정보") {
+            group(R.string.settings_group_about) {
                 UpdateRow(update, actions)
-                Row("ℹ️", "ScriptWidget $versionName", "GitHub에서 소스 보기") { actions.onOpenUrl(REPOSITORY_URL) }
-                Row("📄", "라이선스", "GPL-3.0 · 오픈소스 라이선스") { actions.onOpenUrl("$REPOSITORY_URL#라이선스") }
+                Row("ℹ️", stringResource(R.string.settings_app_version, versionName), stringResource(R.string.settings_view_source)) { actions.onOpenUrl(REPOSITORY_URL) }
+                Row("📄", stringResource(R.string.settings_license_title), stringResource(R.string.settings_license_subtitle)) { actions.onOpenUrl(LICENSE_URL) }
             }
         }
     }
@@ -117,12 +122,18 @@ fun SettingsScreen(
 private fun GroupScope.UpdateRow(update: UpdateUiState, actions: SettingsActions) {
     val status = (update as? UpdateUiState.Done)?.status
     val (title, subtitle) = when {
-        update == UpdateUiState.Checking -> "업데이트 확인 중…" to "GitHub 릴리스를 확인하고 있습니다"
+        update == UpdateUiState.Checking ->
+            stringResource(R.string.settings_update_checking) to stringResource(R.string.settings_update_checking_subtitle)
         status is UpdateStatus.Available ->
-            "새 버전 ${status.release.version}" to "현재 ${status.current} · 탭하면 ${if (status.release.apkUrl != null) "APK를 받습니다" else "릴리스 페이지를 엽니다"}"
-        status is UpdateStatus.UpToDate -> "최신 버전입니다" to "현재 ${status.current} · 탭하면 다시 확인"
-        status is UpdateStatus.Failed -> "업데이트 확인 실패" to "${status.message} · 탭하면 다시 시도"
-        else -> "업데이트 확인" to "GitHub 릴리스에서 새 버전 확인"
+            stringResource(R.string.settings_update_available, status.release.version) to stringResource(
+                if (status.release.apkUrl != null) R.string.settings_update_available_apk else R.string.settings_update_available_page,
+                status.current,
+            )
+        status is UpdateStatus.UpToDate ->
+            stringResource(R.string.settings_update_up_to_date) to stringResource(R.string.settings_update_up_to_date_subtitle, status.current)
+        status is UpdateStatus.Failed ->
+            stringResource(R.string.settings_update_failed) to stringResource(R.string.settings_update_failed_subtitle, status.message)
+        else -> stringResource(R.string.settings_update_check) to stringResource(R.string.settings_update_check_subtitle)
     }
     val emoji = if (status is UpdateStatus.Available) "⬆️" else "🔄"
     Box(Modifier.testTag("update-row")) {
@@ -133,17 +144,18 @@ private fun GroupScope.UpdateRow(update: UpdateUiState, actions: SettingsActions
     }
 }
 
+@Composable
 private fun languageLabel(language: String?) = when (language) {
-    "ko" -> "한국어"
-    "en" -> "English"
-    else -> "기기 언어 · System"
+    "ko" -> stringResource(R.string.settings_language_korean)
+    "en" -> stringResource(R.string.settings_language_english)
+    else -> stringResource(R.string.settings_language_system)
 }
 
 @Composable
 private fun LanguageDialog(current: String?, onChoose: (String?) -> Unit, onDismiss: () -> Unit) {
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("앱 언어 · App language") },
+        title = { Text(stringResource(R.string.settings_language_title)) },
         text = {
             Column {
                 listOf(null to "system", "ko" to "ko", "en" to "en").forEach { (value, tag) ->
@@ -156,14 +168,14 @@ private fun LanguageDialog(current: String?, onChoose: (String?) -> Unit, onDism
             }
         },
         confirmButton = {},
-        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text("취소 · Cancel") } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) } },
     )
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.group(title: String, rows: @Composable GroupScope.() -> Unit) {
+private fun androidx.compose.foundation.lazy.LazyListScope.group(@androidx.annotation.StringRes title: Int, rows: @Composable GroupScope.() -> Unit) {
     item {
         Text(
-            title,
+            stringResource(title),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 6.dp),

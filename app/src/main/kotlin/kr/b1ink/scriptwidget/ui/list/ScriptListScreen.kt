@@ -241,7 +241,7 @@ fun ScriptListScreen(
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(stringResource(R.string.list_recommendations_title), style = MaterialTheme.typography.titleSmall)
                             Text(
-                                widgetRecommendations.joinToString(" · ") { it.title() } + " →",
+                                widgetRecommendations.map { it.title() }.joinToString(" · ") + " →",
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }

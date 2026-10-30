@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_group_permissions_widgets">Permissions &amp; widgets</string>
+    <string name="settings_permissions_title">Permissions</string>
+    <string name="settings_permissions_subtitle">Notifications, location, calendar, battery optimization, run from automation apps</string>
+    <string name="settings_triggers_title">Automatic triggers</string>
+    <string name="settings_triggers_subtitle">Refresh widgets or run scripts on calendar changes, midnight, charging, Wi-Fi and more</string>
+    <string name="settings_screen_off_title">Refresh while the screen is off</string>
+    <string name="settings_screen_off_on">Wakes the phone every 15 minutes to refresh (uses more battery)</string>
+    <string name="settings_screen_off_off">Off: refreshes as soon as the screen turns on (saves battery)</string>
+    <string name="settings_group_files">Files</string>
+    <string name="settings_bookmarks_title">File bookmarks</string>
+    <string name="settings_bookmarks_subtitle">Files scripts read with bookmarkedPath()</string>
+    <string name="settings_import_title">Import scripts</string>
+    <string name="settings_import_subtitle">.js · .scriptable files</string>
+    <string name="settings_backup_title">Back up everything</string>
+    <string name="settings_backup_subtitle">Save all scripts into a single zip</string>
+    <string name="settings_restore_title">Restore from backup</string>
+    <string name="settings_restore_subtitle">Adds only missing scripts, without overwriting</string>
+    <string name="settings_group_gallery">Gallery</string>
+    <string name="settings_catalogs_title">Manage catalogs</string>
+    <string name="settings_catalogs_subtitle">The built-in gallery and catalogs you added (index.json)</string>
+    <string name="settings_group_language">Language</string>
+    <string name="settings_language_title">App language</string>
+    <string name="settings_language_system">System default</string>
+    <string name="settings_language_follows_system">Follows the device language (choosable on Android 13+)</string>
+    <string name="settings_language_korean" translatable="false">한국어</string>
+    <string name="settings_language_english" translatable="false">English</string>
+    <string name="settings_cancel">Cancel</string>
+    <string name="settings_group_about">About</string>
+    <string name="settings_app_version" translatable="false">ScriptWidget %1$s</string>
+    <string name="settings_view_source">View source on GitHub</string>
+    <string name="settings_license_title">License</string>
+    <string name="settings_license_subtitle">GPL-3.0 · Open-source licenses</string>
+    <string name="settings_update_checking">Checking for updates…</string>
+    <string name="settings_update_checking_subtitle">Checking GitHub releases</string>
+    <string name="settings_update_available">New version %1$s</string>
+    <string name="settings_update_available_apk">Current %1$s · Tap to download the APK</string>
+    <string name="settings_update_available_page">Current %1$s · Tap to open the release page</string>
+    <string name="settings_update_up_to_date">You\'re up to date</string>
+    <string name="settings_update_up_to_date_subtitle">Current %1$s · Tap to check again</string>
+    <string name="settings_update_failed">Update check failed</string>
+    <string name="settings_update_failed_subtitle">%1$s · Tap to try again</string>
+    <string name="settings_update_check">Check for updates</string>
+    <string name="settings_update_check_subtitle">Look for a new version in GitHub releases</string>
+</resources>
