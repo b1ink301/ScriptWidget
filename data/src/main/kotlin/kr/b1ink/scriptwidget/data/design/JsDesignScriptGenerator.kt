@@ -60,7 +60,7 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
                 val value = element.data?.let { "String(data.d${bindings.indexOf(it)})" }
                 val text = if (value == null) str(element.text) else parts.joinToString(" + $value + ")
                 appendLine("const $v = $parent.addText($text);")
-                appendLine("$v.font = ${font(element.weight, element.size)};")
+                appendLine("$v.font = ${font(element.weight, element.size, element.font)};")
                 element.color?.let { appendLine("$v.textColor = ${color(it)};") }
                 align(v, element.align)
                 if (element.lineLimit > 0) appendLine("$v.lineLimit = ${element.lineLimit};")
@@ -129,6 +129,12 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             DataBinding.NextEvent.Field.Title -> "(await nextEvent())?.title ?? ${str(texts.noEvents)}"
             DataBinding.NextEvent.Field.Time -> "eventTime(await nextEvent())"
         }
+        is DataBinding.Countdown -> when (binding.field) {
+            DataBinding.Countdown.Field.Days -> "countdown(${str(binding.date)}, ${binding.yearly})"
+            DataBinding.Countdown.Field.Name -> "countdownName(${str(binding.date)})"
+        }
+        is DataBinding.Progress -> "progress(${str(binding.period.name.lowercase())})"
+        is DataBinding.WorldTime -> "worldTime(${str(binding.zone)})"
         is DataBinding.Reminders -> when (binding.field) {
             DataBinding.Reminders.Field.Count -> "(await openReminders()).length"
             DataBinding.Reminders.Field.Next -> "(await openReminders())[0]?.title ?? ${str(texts.noReminders)}"
@@ -176,8 +182,13 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
         private fun num(value: Float): String =
             if (value == value.toLong().toFloat()) value.toLong().toString() else value.toString()
 
-        private fun font(weight: String, size: Float): String =
-            if (weight in WEIGHTS) "Font.${weight}SystemFont(${num(size)})" else "Font.systemFont(${num(size)})"
+        /** [name]: null = system, "monospace", or a font name ("serif", a font file in Documents/fonts). */
+        private fun font(weight: String, size: Float, name: String? = null): String = when {
+            name == null -> if (weight in WEIGHTS) "Font.${weight}SystemFont(${num(size)})" else "Font.systemFont(${num(size)})"
+            name == "monospace" -> "Font.${if (weight in WEIGHTS) weight else "regular"}MonospacedSystemFont(${num(size)})"
+            weight in WEIGHTS -> "Object.assign(new Font(${str(name)}, ${num(size)}), { weight: ${str(weight)} })"
+            else -> "new Font(${str(name)}, ${num(size)})"
+        }
 
         /** `#AARRGGBB` → `new Color("#RRGGBB", alpha)`, as Scriptable expects. */
         private fun color(argb: String): String {
@@ -234,6 +245,36 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             |function eventTime(e) {
             |  if (!e) return "";
             |  return e.isAllDay ? ${str(texts.allDay)} : `${'$'}{formatDate(e.startDate, "HH:mm")} – ${'$'}{formatDate(e.endDate, "HH:mm")}`;
+            |}
+            |function countdownTarget(date) {
+            |  const m = (date || (args.widgetParameter || "")).trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})\s*(.*)$/);
+            |  return m ? { date: new Date(+m[1], +m[2] - 1, +m[3]), name: m[4] } : null;
+            |}
+            |function countdown(date, yearly) {
+            |  const target = countdownTarget(date);
+            |  if (!target) return null;
+            |  const today = new Date();
+            |  today.setHours(0, 0, 0, 0);
+            |  let day = target.date;
+            |  while (yearly && day < today) day = new Date(day.getFullYear() + 1, day.getMonth(), day.getDate());
+            |  const days = Math.round((day - today) / 86400000);
+            |  return days === 0 ? "D-DAY" : days > 0 ? `D-${'$'}{days}` : `D+${'$'}{-days}`;
+            |}
+            |function countdownName(date) { const target = countdownTarget(date); return target ? target.name : null; }
+            |function progress(period) {
+            |  const now = new Date();
+            |  const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+            |  const monday = d - ((now.getDay() + 6) % 7);
+            |  const [start, end] = {
+            |    day: [new Date(y, m, d), new Date(y, m, d + 1)],
+            |    week: [new Date(y, m, monday), new Date(y, m, monday + 7)],
+            |    month: [new Date(y, m, 1), new Date(y, m + 1, 1)],
+            |    year: [new Date(y, 0, 1), new Date(y + 1, 0, 1)],
+            |  }[period];
+            |  return Math.floor(((now - start) / (end - start)) * 100);
+            |}
+            |function worldTime(zone) {
+            |  return new Intl.DateTimeFormat("en-GB", { timeZone: zone, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
             |}
             |let _reminders;
             |async function openReminders() {

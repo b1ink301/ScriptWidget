@@ -10,6 +10,8 @@ data class TemplateTexts(
     val remindersLeft: String,
     val clockDate: String,
     val longDate: String,
+    /** The D-day template's event. */
+    val christmas: String,
 ) {
     companion object {
         val KOREAN = TemplateTexts(
@@ -17,6 +19,7 @@ data class TemplateTexts(
                 DesignTemplates.Blank to "빈 위젯", DesignTemplates.Clock to "시계", DesignTemplates.Battery to "배터리",
                 DesignTemplates.NextEvent to "다음 일정", DesignTemplates.Reminders to "할 일", DesignTemplates.Weather to "날씨",
                 DesignTemplates.GitHubStars to "JSON 값 (GitHub 별)", DesignTemplates.PhotoFrame to "사진 액자",
+                DesignTemplates.DDay to "D-day",
             ),
             battery = "배터리",
             nextEvent = "다음 일정",
@@ -24,12 +27,14 @@ data class TemplateTexts(
             remindersLeft = "{value}개 남음",
             clockDate = "M월 d일",
             longDate = "M월 d일 EEEE",
+            christmas = "크리스마스",
         )
         val ENGLISH = TemplateTexts(
             titles = mapOf(
                 DesignTemplates.Blank to "Blank widget", DesignTemplates.Clock to "Clock", DesignTemplates.Battery to "Battery",
                 DesignTemplates.NextEvent to "Next event", DesignTemplates.Reminders to "Reminders", DesignTemplates.Weather to "Weather",
                 DesignTemplates.GitHubStars to "JSON value (GitHub stars)", DesignTemplates.PhotoFrame to "Photo frame",
+                DesignTemplates.DDay to "D-day",
             ),
             battery = "Battery",
             nextEvent = "Next event",
@@ -37,6 +42,7 @@ data class TemplateTexts(
             remindersLeft = "{value} left",
             clockDate = "MMM d",
             longDate = "EEEE, MMM d",
+            christmas = "Christmas",
         )
     }
 }
@@ -51,6 +57,7 @@ enum class DesignTemplates {
     Weather,
     GitHubStars,
     PhotoFrame,
+    DDay,
     ;
 
     /** The Korean title; the app shows its own translation. */
@@ -128,6 +135,15 @@ enum class DesignTemplates {
             children = listOf(
                 DesignSpacer(),
                 DesignText("{value}", data = DataBinding.DateText(texts.longDate), color = "#FFFFFFFF", size = 15f, weight = "semibold"),
+            ),
+        )
+        // Every year on Dec 25; change the date, or clear it to read "2026-12-25 Name" from the widget parameter.
+        DDay -> WidgetDesign(
+            refreshMinutes = 60,
+            background = DesignBackground(gradient = listOf("#FFB31217", "#FFE52D27")),
+            children = listOf(
+                DesignText(texts.christmas, color = "#FFFFFFFF", size = 15f, weight = "semibold"),
+                DesignText("{value}", data = DataBinding.Countdown("2026-12-25", yearly = true), color = "#FFFFFFFF", size = 40f, weight = "bold"),
             ),
         )
     }

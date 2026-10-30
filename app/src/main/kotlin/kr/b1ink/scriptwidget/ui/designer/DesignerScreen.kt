@@ -97,6 +97,8 @@ class DesignerActions(
     val onRemove: () -> Unit,
     /** Pick a photo, save it as a file bookmark and show it at the target. */
     val onPickPicture: (PictureTarget) -> Unit = {},
+    /** Pick a .ttf/.otf file; it is added to Documents/fonts and used by the selected text. */
+    val onPickFont: () -> Unit = {},
 )
 
 private enum class Panel(@StringRes val title: Int) { Outline(R.string.designer_panel_outline), Properties(R.string.designer_panel_properties) }
@@ -394,6 +396,9 @@ private fun dataLabel(b: DataBinding): String = stringResource(
         is DataBinding.Weather -> R.string.designer_data_weather
         is DataBinding.Json -> R.string.designer_data_json
         is DataBinding.Parameter -> R.string.designer_data_parameter
+        is DataBinding.Countdown -> R.string.designer_data_countdown
+        is DataBinding.Progress -> R.string.designer_data_progress
+        is DataBinding.WorldTime -> R.string.designer_data_world_time
     },
 )
 
@@ -443,6 +448,11 @@ private fun dataBlocks(): List<Pair<String, DesignElement>> = listOf(
     stringResource(R.string.designer_data_json_url) to DesignText("{value}", data = DataBinding.Json("https://", "")),
     stringResource(R.string.designer_data_parameter) to
         DesignText("{value}", data = DataBinding.Parameter(stringResource(R.string.designer_default_parameter_fallback))),
+    stringResource(R.string.designer_data_countdown) to DesignText("{value}", data = DataBinding.Countdown(), size = 30f, weight = "bold"),
+    stringResource(R.string.designer_data_progress) to
+        DesignText(stringResource(R.string.designer_default_progress_text), data = DataBinding.Progress(), size = 15f, weight = "semibold"),
+    stringResource(R.string.designer_data_world_time) to
+        DesignText("New York {value}", data = DataBinding.WorldTime(), size = 15f),
 )
 
 // --- properties ---
@@ -458,7 +468,7 @@ private fun Properties(state: DesignerUiState, actions: DesignerActions) {
         val type: ((DesignElement) -> DesignElement) -> Unit = { actions.onUpdateSelected(true, it) }
         when (element) {
             null -> WidgetProperties(state.design, state.bookmarks, actions.onUpdateDesign) { actions.onPickPicture(PictureTarget.Background) }
-            is DesignText -> TextProperties(element, update, type)
+            is DesignText -> TextProperties(element, state.fonts, actions.onPickFont, update, type)
             is DesignDate -> {
                 Chips(stringResource(R.string.designer_prop_display), dateStyles(), element.style, "prop-date") { s -> update { (it as DesignDate).copy(style = s) } }
                 FontProperties(element.size, element.weight) { size, weight -> update { (it as DesignDate).copy(size = size, weight = weight) } }
@@ -540,6 +550,8 @@ private fun Properties(state: DesignerUiState, actions: DesignerActions) {
 @Composable
 private fun TextProperties(
     element: DesignText,
+    fonts: List<String>,
+    onPickFont: () -> Unit,
     update: ((DesignElement) -> DesignElement) -> Unit,
     type: ((DesignElement) -> DesignElement) -> Unit,
 ) {
@@ -551,6 +563,7 @@ private fun TextProperties(
     ) { v -> type { (it as DesignText).copy(text = v) } }
     DataProperty(element.data, update, type)
     FontProperties(element.size, element.weight) { size, weight -> update { (it as DesignText).copy(size = size, weight = weight) } }
+    FontFamilyProperty(element.font, fonts, onPickFont) { f -> update { (it as DesignText).copy(font = f) } }
     ColorProperty(stringResource(R.string.designer_prop_color), element.color) { c -> update { (it as DesignText).copy(color = c) } }
     Chips(stringResource(R.string.designer_prop_align), aligns(), element.align, "prop-align") { a -> update { (it as DesignText).copy(align = a) } }
     Chips(
@@ -591,6 +604,9 @@ private fun DataProperty(
         "weather" to stringResource(R.string.designer_data_weather),
         "json" to "JSON",
         "parameter" to stringResource(R.string.designer_data_opt_parameter),
+        "countdown" to stringResource(R.string.designer_data_countdown),
+        "progress" to stringResource(R.string.designer_data_progress),
+        "world" to stringResource(R.string.designer_data_world_time),
     )
     val defaultDatePattern = stringResource(R.string.designer_default_date_pattern)
     val current = when (data) {
@@ -602,6 +618,9 @@ private fun DataProperty(
         is DataBinding.Weather -> "weather"
         is DataBinding.Json -> "json"
         is DataBinding.Parameter -> "parameter"
+        is DataBinding.Countdown -> "countdown"
+        is DataBinding.Progress -> "progress"
+        is DataBinding.WorldTime -> "world"
     }
     Chips(stringResource(R.string.designer_prop_data), options, current, "prop-data") { key ->
         val binding = when (key) {
@@ -612,6 +631,9 @@ private fun DataProperty(
             "weather" -> DataBinding.Weather()
             "json" -> DataBinding.Json("https://", "")
             "parameter" -> DataBinding.Parameter()
+            "countdown" -> DataBinding.Countdown()
+            "progress" -> DataBinding.Progress()
+            "world" -> DataBinding.WorldTime()
             else -> null
         }
         update { e ->
@@ -648,9 +670,74 @@ private fun DataProperty(
         is DataBinding.Parameter -> {
             Field(stringResource(R.string.designer_prop_parameter_fallback), data.fallback, "prop-parameter") { v -> type { (it as DesignText).copy(data = DataBinding.Parameter(v)) } }
         }
+        is DataBinding.Countdown -> {
+            Field(stringResource(R.string.designer_prop_countdown_date), data.date, "prop-countdown-date") { v ->
+                type { (it as DesignText).copy(data = data.copy(date = v.trim())) }
+            }
+            Text(stringResource(R.string.designer_countdown_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Chips(
+                stringResource(R.string.designer_prop_show_value),
+                listOf(
+                    DataBinding.Countdown.Field.Days.name to stringResource(R.string.designer_countdown_days),
+                    DataBinding.Countdown.Field.Name.name to stringResource(R.string.designer_countdown_name),
+                ),
+                data.field.name,
+                "prop-countdown-field",
+            ) { v -> update { (it as DesignText).copy(data = data.copy(field = DataBinding.Countdown.Field.valueOf(v))) } }
+            Chips(
+                stringResource(R.string.designer_prop_countdown_repeat),
+                listOf("false" to stringResource(R.string.designer_countdown_once), "true" to stringResource(R.string.designer_countdown_yearly)),
+                data.yearly.toString(),
+                "prop-countdown-yearly",
+            ) { v -> update { (it as DesignText).copy(data = data.copy(yearly = v.toBoolean())) } }
+        }
+        is DataBinding.Progress -> Chips(
+            stringResource(R.string.designer_prop_progress_period),
+            listOf(
+                DataBinding.Progress.Period.Day.name to stringResource(R.string.designer_progress_day),
+                DataBinding.Progress.Period.Week.name to stringResource(R.string.designer_progress_week),
+                DataBinding.Progress.Period.Month.name to stringResource(R.string.designer_progress_month),
+                DataBinding.Progress.Period.Year.name to stringResource(R.string.designer_progress_year),
+            ),
+            data.period.name,
+            "prop-progress",
+        ) { v -> update { (it as DesignText).copy(data = DataBinding.Progress(DataBinding.Progress.Period.valueOf(v))) } }
+        is DataBinding.WorldTime -> {
+            Field(stringResource(R.string.designer_prop_time_zone), data.zone, "prop-world-zone") { v -> type { (it as DesignText).copy(data = DataBinding.WorldTime(v.trim())) } }
+            Chips(stringResource(R.string.designer_prop_common_time_zones), TIME_ZONES.map { it to it.substringAfterLast('/').replace('_', ' ') }, data.zone, "prop-world") { v ->
+                update { (it as DesignText).copy(data = DataBinding.WorldTime(v)) }
+            }
+        }
         DataBinding.Battery, null -> Unit
     }
 }
+
+/** The text's typeface: system, serif, monospace, or a font file the user added. */
+@Composable
+private fun FontFamilyProperty(font: String?, fonts: List<String>, onPickFont: () -> Unit, onSelect: (String?) -> Unit) {
+    Labeled(stringResource(R.string.designer_prop_font)) {
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            val options = listOf(
+                null to stringResource(R.string.designer_font_system),
+                "serif" to stringResource(R.string.designer_font_serif),
+                "monospace" to stringResource(R.string.designer_font_monospace),
+            ) + (fonts + listOfNotNull(font?.takeIf { it !in fonts && it != "serif" && it != "monospace" })).map { it to it }
+            options.forEach { (value, title) ->
+                FilterChip(
+                    selected = value == font,
+                    onClick = { onSelect(value) },
+                    label = { Text(title) },
+                    modifier = Modifier.testTag("prop-font-${value ?: "system"}"),
+                )
+            }
+            FilterChip(selected = false, onClick = onPickFont, label = { Text(stringResource(R.string.designer_add_font)) }, modifier = Modifier.testTag("prop-font-new"))
+        }
+    }
+}
+
+private val TIME_ZONES = listOf(
+    "America/New_York", "America/Los_Angeles", "Europe/London", "Europe/Paris", "Asia/Seoul", "Asia/Tokyo", "Asia/Shanghai", "Australia/Sydney", "UTC",
+)
 
 @Composable
 private fun WidgetProperties(design: WidgetDesign, bookmarks: List<String>, update: ((WidgetDesign) -> WidgetDesign) -> Unit, onPickPicture: () -> Unit) {

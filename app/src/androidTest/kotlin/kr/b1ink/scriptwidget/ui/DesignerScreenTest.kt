@@ -62,6 +62,7 @@ class DesignerScreenTest {
         onWrap = { calls += "wrap:$it" },
         onRemove = { calls += "remove" },
         onPickPicture = { calls += "pick:$it" },
+        onPickFont = { calls += "font-file" },
     )
     private var designChange: ((WidgetDesign) -> WidgetDesign)? = null
 
@@ -171,6 +172,40 @@ class DesignerScreenTest {
         compose.onNodeWithTag("prop-bg-image-new").performScrollTo().performClick()
 
         assertEquals(listOf("design", "pick:Background"), calls)
+    }
+
+    @Test
+    fun dDayProgressAndWorldTimeAreDataBlocks() {
+        state = state.copy(selected = listOf(0))
+        show()
+
+        compose.onNodeWithTag("prop-data-countdown").performScrollTo().performClick()
+        assertEquals(DataBinding.Countdown(), (updated as DesignText).data)
+        state = state.copy(design = WidgetDesign(children = listOf(DesignText("{value}", data = DataBinding.Countdown()))))
+        compose.onNodeWithTag("prop-countdown-yearly-true").performScrollTo().performClick()
+        assertEquals(DataBinding.Countdown(yearly = true), (updated as DesignText).data)
+        compose.onNodeWithTag("prop-countdown-date").performScrollTo().performTextReplacement("2026-12-25")
+        assertEquals(DataBinding.Countdown("2026-12-25"), (updated as DesignText).data)
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+
+        compose.onNodeWithTag("prop-data-progress").performScrollTo().performClick()
+        assertEquals(DataBinding.Progress(), (updated as DesignText).data)
+        compose.onNodeWithTag("prop-data-world").performScrollTo().performClick()
+        assertEquals(DataBinding.WorldTime(), (updated as DesignText).data)
+    }
+
+    @Test
+    fun aTextPicksAFontOrAddsAFontFile() {
+        state = state.copy(selected = listOf(0), fonts = listOf("Pixel"))
+        show()
+
+        compose.onNodeWithTag("prop-font-serif").performScrollTo().performClick()
+        assertEquals("serif", (updated as DesignText).font)
+        compose.onNodeWithTag("prop-font-Pixel").performScrollTo().performClick()
+        assertEquals("Pixel", (updated as DesignText).font)
+        compose.onNodeWithTag("prop-font-new").performScrollTo().performClick()
+
+        assertEquals(listOf("font-file"), calls)
     }
 
     @Test

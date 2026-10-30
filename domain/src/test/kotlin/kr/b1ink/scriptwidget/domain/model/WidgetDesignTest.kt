@@ -129,4 +129,18 @@ class WidgetDesignTest {
             WidgetDesign.decode("""{"children":[{"type":"image","url":"https://a.b/c.png","size":40.0}]}"""),
         )
     }
+
+    @Test
+    fun `d-day, progress, world time and fonts survive a json round trip`() {
+        val design = WidgetDesign(
+            children = listOf(
+                DesignText("{value}", data = DataBinding.Countdown("2026-12-25", yearly = true), font = "serif"),
+                DesignText("{value}", data = DataBinding.Countdown(field = DataBinding.Countdown.Field.Name), font = "Pixel"),
+                DesignText("{value}%", data = DataBinding.Progress(DataBinding.Progress.Period.Month)),
+                DesignText("{value}", data = DataBinding.WorldTime("Europe/London")),
+            ),
+        )
+
+        assertEquals(design, WidgetDesign.decode(design.encode()))
+    }
 }

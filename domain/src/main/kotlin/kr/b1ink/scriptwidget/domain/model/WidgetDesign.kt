@@ -155,6 +155,8 @@ data class DesignText(
     val lineLimit: Int = 0,
     val minimumScaleFactor: Float = 1f,
     val url: String? = null,
+    /** null = the system font; "serif", "monospace", or the name of a font file in Documents/fonts. */
+    val font: String? = null,
 ) : DesignElement
 
 /** The current time or date, kept up to date by the launcher. */
@@ -252,6 +254,31 @@ sealed interface DataBinding {
     @Serializable
     @SerialName("parameter")
     data class Parameter(val fallback: String = "") : DataBinding
+
+    /**
+     * Days to [date] (`yyyy-MM-dd`): "D-12", "D-DAY", "D+3". [yearly] moves a past date to next year
+     * (birthdays). A blank [date] reads the widget parameter, "2026-12-25 Christmas", so one design
+     * serves many widgets; [Field.Name] is then the text after the date.
+     */
+    @Serializable
+    @SerialName("countdown")
+    data class Countdown(val date: String = "", val yearly: Boolean = false, val field: Field = Field.Days) : DataBinding {
+        @Serializable
+        enum class Field { Days, Name }
+    }
+
+    /** How much of the current day, week (from Monday), month or year has passed, 0–100. */
+    @Serializable
+    @SerialName("progress")
+    data class Progress(val period: Period = Period.Year) : DataBinding {
+        @Serializable
+        enum class Period { Day, Week, Month, Year }
+    }
+
+    /** The time ("HH:mm") in another time zone, e.g. "America/New_York". */
+    @Serializable
+    @SerialName("worldTime")
+    data class WorldTime(val zone: String = "America/New_York") : DataBinding
 }
 
 private val DesignJson = Json {

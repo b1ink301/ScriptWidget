@@ -12,6 +12,8 @@ import kotlinx.coroutines.launch
 import kr.b1ink.scriptwidget.domain.model.BookmarkResult
 import kr.b1ink.scriptwidget.domain.model.DesignElement
 import kr.b1ink.scriptwidget.domain.model.DesignImage
+import kr.b1ink.scriptwidget.domain.model.DesignText
+import kr.b1ink.scriptwidget.domain.model.FontResult
 import kr.b1ink.scriptwidget.domain.model.DesignRead
 import kr.b1ink.scriptwidget.domain.model.ScriptCommandResult
 import kr.b1ink.scriptwidget.domain.model.ScriptEnvironment
@@ -20,7 +22,9 @@ import kr.b1ink.scriptwidget.domain.model.WidgetDesign
 import kr.b1ink.scriptwidget.domain.model.WidgetFamily
 import kr.b1ink.scriptwidget.domain.repository.DesignScriptGenerator
 import kr.b1ink.scriptwidget.domain.repository.FileBookmarkRepository
+import kr.b1ink.scriptwidget.domain.repository.FontRepository
 import kr.b1ink.scriptwidget.domain.usecase.AddFileBookmarkUseCase
+import kr.b1ink.scriptwidget.domain.usecase.AddFontUseCase
 import kr.b1ink.scriptwidget.domain.usecase.OpenDesignUseCase
 import kr.b1ink.scriptwidget.domain.usecase.RunScriptUseCase
 import kr.b1ink.scriptwidget.domain.usecase.SaveDesignUseCase
@@ -43,6 +47,10 @@ data class DesignerUiState(
     val notDesigned: Boolean = false,
     /** File bookmark names, for pictures. */
     val bookmarks: List<String> = emptyList(),
+    /** Font files the user added (Documents/fonts). */
+    val fonts: List<String> = emptyList(),
+    /** Why the last picked font file wasn't added; null once shown. */
+    val fontProblem: FontResult? = null,
 )
 
 /** Where a newly picked picture goes. */
@@ -61,6 +69,8 @@ class DesignerViewModel(
     private val previewDelayMs: Long = 400,
     bookmarks: FileBookmarkRepository? = null,
     private val addBookmark: AddFileBookmarkUseCase? = null,
+    fonts: FontRepository? = null,
+    private val addFont: AddFontUseCase? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DesignerUiState(name = name))
@@ -82,12 +92,33 @@ class DesignerViewModel(
             }
             refreshPreview(immediately = true)
         }
+        fonts?.let { repo ->
+            viewModelScope.launch { repo.fonts.collect { all -> _state.update { it.copy(fonts = all) } } }
+        }
         bookmarks?.let { repo ->
             viewModelScope.launch {
                 repo.bookmarks.collect { all -> _state.update { it.copy(bookmarks = all.map { b -> b.name }) } }
             }
         }
     }
+
+    /** Adds the picked font file ([uri], shown as [fileName]) and uses it for the selected text. */
+    fun addFont(uri: String, fileName: String) {
+        val add = addFont ?: return
+        viewModelScope.launch {
+            when (val result = add(uri, fileName)) {
+                is FontResult.Saved -> {
+                    val before = _state.value.design
+                    updateSelected { (it as? DesignText)?.copy(font = result.name) ?: it }
+                    // Same name as before: only the file changed.
+                    if (_state.value.design == before) refreshPreview(immediately = true)
+                }
+                else -> _state.update { it.copy(fontProblem = result) }
+            }
+        }
+    }
+
+    fun fontProblemShown() = _state.update { it.copy(fontProblem = null) }
 
     /** Saves the picked picture ([uri]) as a new file bookmark and shows it at [target]. */
     fun addPicture(uri: String, target: PictureTarget) {

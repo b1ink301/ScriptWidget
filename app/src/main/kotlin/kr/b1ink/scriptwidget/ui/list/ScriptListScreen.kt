@@ -421,4 +421,5 @@ private val DesignTemplates.titleRes: Int
         DesignTemplates.Weather -> R.string.list_template_weather
         DesignTemplates.GitHubStars -> R.string.list_template_json
         DesignTemplates.PhotoFrame -> R.string.list_template_photo
+        DesignTemplates.DDay -> R.string.list_template_dday
     }

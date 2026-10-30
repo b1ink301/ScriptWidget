@@ -50,7 +50,16 @@ class DesignerViewModelTest {
         previewDelayMs = 0,
         bookmarks = bookmarks,
         addBookmark = kr.b1ink.scriptwidget.domain.usecase.AddFileBookmarkUseCase(bookmarks, documents),
+        fonts = fonts,
+        addFont = kr.b1ink.scriptwidget.domain.usecase.AddFontUseCase(fonts, documents),
     )
+
+    private val fonts = object : kr.b1ink.scriptwidget.domain.repository.FontRepository {
+        override val fonts = kotlinx.coroutines.flow.MutableStateFlow(emptyList<String>())
+        override suspend fun save(fileName: String, bytes: ByteArray) {
+            fonts.value = (fonts.value + fileName.substringBeforeLast('.')).sorted()
+        }
+    }
 
     @Test
     fun `opens the design and draws a preview of the generated script`() = runTest {
@@ -196,5 +205,29 @@ class DesignerViewModelTest {
 
         assertEquals("photo", vm.state.value.design.background.image)
         assertEquals(runs + 1, engine.calls.size)
+    }
+
+    @Test
+    fun `a picked font file is added and used by the selected text`() = runTest {
+        documents.bytes["content://font"] = byteArrayOf(0, 1, 0, 0, 7)
+        val vm = vm()
+        vm.select(listOf(0))
+
+        vm.addFont("content://font", "Pixel Sans.ttf")
+
+        assertEquals(listOf("Pixel Sans"), vm.state.value.fonts)
+        assertEquals("Pixel Sans", (vm.state.value.design.elementAt(listOf(0)) as DesignText).font)
+    }
+
+    @Test
+    fun `a file that is not a font is reported`() = runTest {
+        documents.bytes["content://font"] = "text".toByteArray()
+        val vm = vm()
+        vm.select(listOf(0))
+
+        vm.addFont("content://font", "notes.ttf")
+
+        assertEquals(kr.b1ink.scriptwidget.domain.model.FontResult.NotAFont, vm.state.value.fontProblem)
+        assertNull((vm.state.value.design.elementAt(listOf(0)) as DesignText).font)
     }
 }

@@ -36,7 +36,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import kr.b1ink.scriptwidget.widget.render.TextPlan
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -149,6 +151,7 @@ private fun Node(
             fontSize = node.size.sp,
             fontWeight = weight(node.weight),
             fontStyle = if (node.italic) FontStyle.Italic else FontStyle.Normal,
+            fontFamily = fontFamily(node),
             textAlign = align(node.align),
             maxLines = if (node.lineLimit > 0) node.lineLimit else Int.MAX_VALUE,
             overflow = TextOverflow.Ellipsis,
@@ -284,4 +287,18 @@ private fun align(a: String) = when (a) {
     "center" -> TextAlign.Center
     "right" -> TextAlign.End
     else -> TextAlign.Start
+}
+
+/** Like the widget: a font file the script installed, else the system family its name suggests. */
+@Composable
+private fun fontFamily(node: TextNode): FontFamily? {
+    node.fontFile?.let { path ->
+        remember(path) { runCatching { FontFamily(androidx.compose.ui.text.font.Typeface(android.graphics.Typeface.createFromFile(path))) }.getOrNull() }
+            ?.let { return it }
+    }
+    return when (TextPlan.familyOf(node.font)) {
+        TextPlan.Family.Serif -> FontFamily.Serif
+        TextPlan.Family.Monospace -> FontFamily.Monospace
+        TextPlan.Family.SansSerif -> null
+    }
 }

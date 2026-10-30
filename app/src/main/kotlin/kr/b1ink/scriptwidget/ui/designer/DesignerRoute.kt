@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -16,7 +17,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import kr.b1ink.scriptwidget.R
 import kr.b1ink.scriptwidget.di.AppContainer
+import kr.b1ink.scriptwidget.domain.model.FontResult
 import kr.b1ink.scriptwidget.domain.usecase.AddFileBookmarkUseCase
+import kr.b1ink.scriptwidget.domain.usecase.AddFontUseCase
 import kr.b1ink.scriptwidget.pin.WidgetPinner
 
 @Composable
@@ -33,13 +36,28 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
             container.runPreview,
             bookmarks = container.fileBookmarks,
             addBookmark = AddFileBookmarkUseCase(container.fileBookmarks, container.scriptDocuments),
+            fonts = container.fonts,
+            addFont = AddFontUseCase(container.fonts, container.scriptDocuments),
         )
+    }
+    val pickFont = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) vm.addFont(uri.toString(), displayName(context, uri) ?: "font.ttf")
     }
     var pictureTarget by remember { mutableStateOf(PictureTarget.SelectedImage) }
     val pickPicture = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) vm.addPicture(uri.toString(), pictureTarget)
     }
     val state by vm.state.collectAsStateWithLifecycle()
+    val notAFont = androidx.compose.ui.res.stringResource(R.string.designer_font_not_a_font)
+    val fontFailed = androidx.compose.ui.res.stringResource(R.string.designer_font_failed, "%s")
+    LaunchedEffect(state.fontProblem) {
+        when (val problem = state.fontProblem) {
+            FontResult.NotAFont -> Toast.makeText(context, notAFont, Toast.LENGTH_LONG).show()
+            is FontResult.Failed -> Toast.makeText(context, fontFailed.replace("%s", problem.message), Toast.LENGTH_LONG).show()
+            else -> return@LaunchedEffect
+        }
+        vm.fontProblemShown()
+    }
     DesignerScreen(
         state = state,
         actions = DesignerActions(
@@ -64,6 +82,7 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
             onDrop = vm::moveTo,
             onWrap = vm::wrapSelected,
             onRemove = vm::removeSelected,
+            onPickFont = { pickFont.launch(arrayOf("font/*", "application/x-font-ttf", "application/x-font-otf", "application/octet-stream", "*/*")) },
             onPickPicture = { target ->
                 pictureTarget = target
                 pickPicture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -71,3 +90,9 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
         ),
     )
 }
+
+/** The picked file's name ("Pixel Sans.ttf"), which becomes the font's name. */
+private fun displayName(context: android.content.Context, uri: android.net.Uri): String? =
+    context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+        if (cursor.moveToFirst()) cursor.getString(0) else null
+    }

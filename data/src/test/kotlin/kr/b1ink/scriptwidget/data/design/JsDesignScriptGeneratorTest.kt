@@ -224,6 +224,78 @@ class JsDesignScriptGeneratorTest {
     }
 
     @Test
+    fun `d-day counts whole days in the device time zone`() = runTest {
+        val today = java.time.LocalDate.now(SEOUL.toZoneId())
+        fun d(days: Long) = DataBinding.Countdown(today.plusDays(days).toString())
+        val lastYear = today.minusDays(1)
+        val nextTime = lastYear.plusYears(1)
+        val design = WidgetDesign(
+            children = listOf(
+                DesignText("{value}", data = d(10)),
+                DesignText("{value}", data = d(0)),
+                DesignText("{value}", data = d(-3)),
+                DesignText("{value}", data = DataBinding.Countdown(lastYear.toString(), yearly = true)),
+                DesignText("{value}", data = DataBinding.Countdown("")),
+                DesignText("{value}", data = DataBinding.Countdown("", field = DataBinding.Countdown.Field.Name)),
+            ),
+        )
+
+        val plain = run(design)
+        assertEquals(listOf("D-10", "D-DAY", "D+3"), listOf(plain.text(0), plain.text(1), plain.text(2)))
+        assertEquals("D-${java.time.temporal.ChronoUnit.DAYS.between(today, nextTime)}", plain.text(3))
+        assertEquals("–", plain.text(4))
+
+        val fromParameter = run(design, parameter = "${today.plusDays(5)} 크리스마스 파티")
+        assertEquals("D-5", fromParameter.text(4))
+        assertEquals("크리스마스 파티", fromParameter.text(5))
+    }
+
+    @Test
+    fun `progress and world time are worked out on the device`() = runTest {
+        val design = WidgetDesign(
+            children = listOf(
+                DesignText("{value}%", data = DataBinding.Progress(DataBinding.Progress.Period.Year)),
+                DesignText("{value}%", data = DataBinding.Progress(DataBinding.Progress.Period.Month)),
+                DesignText("{value}", data = DataBinding.WorldTime("UTC")),
+            ),
+        )
+        val now = java.time.ZonedDateTime.now(SEOUL.toZoneId())
+        val year = (now.dayOfYear - 1 + now.toLocalTime().toSecondOfDay() / 86400.0) / now.toLocalDate().lengthOfYear() * 100
+        val month = (now.dayOfMonth - 1 + now.toLocalTime().toSecondOfDay() / 86400.0) / now.toLocalDate().lengthOfMonth() * 100
+
+        val root = run(design)
+
+        assertEquals("${year.toInt()}%", root.text(0))
+        assertEquals("${month.toInt()}%", root.text(1))
+        val utc = java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
+        val fmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+        assertTrue(root.text(2) in setOf(utc.minusMinutes(1).format(fmt), utc.format(fmt)), root.text(2))
+    }
+
+    @Test
+    fun `texts use the chosen font, a font file when it is installed`() = runTest {
+        val files = tmp.newFolder()
+        files.resolve("Documents/fonts").mkdirs()
+        files.resolve("Documents/fonts/Pixel.ttf").writeBytes(byteArrayOf(0, 1, 0, 0))
+        val design = WidgetDesign(
+            children = listOf(
+                DesignText("a", font = "serif", weight = "bold", size = 20f),
+                DesignText("b", font = "monospace"),
+                DesignText("c", font = "Pixel"),
+                DesignText("d"),
+            ),
+        )
+
+        val root = run(design, files = files)
+
+        val texts = root.children.map { it as TextNode }
+        assertEquals(listOf("serif", "monospace", "Pixel", "system"), texts.map { it.font })
+        assertEquals(listOf("bold", 20f), listOf(texts[0].weight, texts[0].size))
+        assertEquals(files.resolve("Documents/fonts/Pixel.ttf").canonicalPath, java.io.File(texts[2].fontFile!!).canonicalPath)
+        assertNull(texts[0].fontFile)
+    }
+
+    @Test
     fun `every template draws in every size, one node per element`() = runTest {
         for (template in DesignTemplates.all) for (family in WidgetFamily.entries) {
             val root = run(template.design, family)

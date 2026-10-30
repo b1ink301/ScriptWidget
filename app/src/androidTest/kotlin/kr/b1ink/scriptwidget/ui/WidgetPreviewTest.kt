@@ -54,4 +54,20 @@ class WidgetPreviewTest {
         assertTrue(centerY("A") < Dp(180f), "A at ${centerY("A")}")
         assertTrue(centerY("D") > Dp(180f), "D at ${centerY("D")}")
     }
+
+    private fun fontOf(text: String): androidx.compose.ui.text.font.FontFamily? {
+        val results = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        compose.onNodeWithText(text).fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action!!(results)
+        return results.single().layoutInput.style.fontFamily
+    }
+
+    @Test
+    fun textsShowTheirFont() {
+        val root = WidgetRoot(children = listOf(TextNode("serif", font = "serif"), TextNode("mono", font = "Menlo"), TextNode("plain")))
+        compose.setContent { WidgetPreview(root, WidgetFamily.Medium) }
+
+        kotlin.test.assertEquals(androidx.compose.ui.text.font.FontFamily.Serif, fontOf("serif"))
+        kotlin.test.assertEquals(androidx.compose.ui.text.font.FontFamily.Monospace, fontOf("mono"))
+        kotlin.test.assertEquals(null, fontOf("plain"))
+    }
 }

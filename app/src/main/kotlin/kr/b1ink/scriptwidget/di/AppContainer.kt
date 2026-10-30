@@ -182,6 +182,8 @@ class AppContainer(
     val fileBookmarks by lazy {
         kr.b1ink.scriptwidget.data.files.FileBookmarkStore(File(rootDir, "script_storage/${SandboxedFileSystem.BOOKMARKS}"))
     }
+    /** Font files scripts and designs use by name: Documents/fonts. */
+    val fonts by lazy { kr.b1ink.scriptwidget.data.files.FontStore(File(rootDir, "script_storage/Documents/fonts")) }
     val importScripts by lazy { ImportScriptsUseCase(scriptRepository, scriptDocuments) }
     val scriptSummaries by lazy { kr.b1ink.scriptwidget.domain.usecase.ObserveScriptSummariesUseCase(scriptRepository) }
     val setScriptAppearance by lazy { kr.b1ink.scriptwidget.domain.usecase.SetScriptAppearanceUseCase(scriptRepository) }

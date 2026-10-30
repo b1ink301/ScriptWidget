@@ -122,4 +122,29 @@
     <string name="designer_none">None</string>
     <string name="designer_pick_picture">+ Pick a photo</string>
     <string name="designer_element_photo">Photo (file bookmark)</string>
+    <string name="designer_data_countdown">D-day</string>
+    <string name="designer_data_progress">Progress</string>
+    <string name="designer_data_world_time">World time</string>
+    <string name="designer_default_progress_text">{value}% of the year</string>
+    <string name="designer_prop_countdown_date">Date (yyyy-MM-dd, blank = widget parameter)</string>
+    <string name="designer_countdown_hint">Leave it blank to read the home screen widget\'s parameter, e.g. 2026-12-25 Christmas</string>
+    <string name="designer_countdown_days">D-number</string>
+    <string name="designer_countdown_name">Name (after the date in the parameter)</string>
+    <string name="designer_prop_countdown_repeat">Repeat</string>
+    <string name="designer_countdown_once">Once</string>
+    <string name="designer_countdown_yearly">Every year (birthdays)</string>
+    <string name="designer_prop_progress_period">Period</string>
+    <string name="designer_progress_day">Today</string>
+    <string name="designer_progress_week">This week</string>
+    <string name="designer_progress_month">This month</string>
+    <string name="designer_progress_year">This year</string>
+    <string name="designer_prop_time_zone">Time zone (e.g. Europe/London)</string>
+    <string name="designer_prop_common_time_zones">Common time zones</string>
+    <string name="designer_prop_font">Font</string>
+    <string name="designer_font_system">System</string>
+    <string name="designer_font_serif">Serif</string>
+    <string name="designer_font_monospace">Monospace</string>
+    <string name="designer_add_font">+ Font file</string>
+    <string name="designer_font_not_a_font">Not a TrueType (.ttf) or OpenType (.otf) font file.</string>
+    <string name="designer_font_failed">Couldn\'t read the font: %1$s</string>
 </resources>

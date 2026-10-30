@@ -26,6 +26,7 @@
     <string name="list_template_weather">날씨</string>
     <string name="list_template_json">JSON 값 (GitHub 별)</string>
     <string name="list_template_photo">사진 액자</string>
+    <string name="list_template_dday">D-day</string>
     <string name="list_shortcut_unsupported">이 런처는 바로가기 추가를 지원하지 않습니다.</string>
     <string name="list_widgets_none">위젯 없음</string>
     <string name="list_ran">%1$s 실행</string>
