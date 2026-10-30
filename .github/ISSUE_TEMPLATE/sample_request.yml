@@ -1,0 +1,22 @@
+name: 갤러리 샘플 제안
+description: 이런 위젯이 갤러리에 있으면 좋겠어요
+labels: [gallery]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: 어떤 위젯인가요
+      description: 무엇을 보여 주는지, 어떤 크기로 쓰고 싶은지
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: 데이터 출처 (있으면)
+      description: 공개 API, RSS 등. API 키가 필요한지도 알려 주세요.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: 직접 만들어 볼까요?
+      options:
+        - label: 제가 스크립트를 만들어 PR을 보낼게요 (CONTRIBUTING.md 참고)

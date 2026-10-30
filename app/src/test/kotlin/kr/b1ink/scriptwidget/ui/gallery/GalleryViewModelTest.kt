@@ -139,4 +139,11 @@ class GalleryViewModelTest {
 
         assertEquals("404", vm().uiState.value.sections[1].error)
     }
+
+    @Test
+    fun `an install preview flags permissions the code uses but the catalog does not show`() {
+        val preview = InstallPreview("u", entry("clock", "세계 시계", "정보", permissions = listOf("network")), "await Location.current(); new Request(u)")
+
+        assertEquals(setOf("location"), preview.undeclaredPermissions)
+    }
 }

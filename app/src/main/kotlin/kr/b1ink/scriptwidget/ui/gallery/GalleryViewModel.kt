@@ -23,7 +23,11 @@ import kr.b1ink.scriptwidget.domain.usecase.UpdateCatalogEntryUseCase
 import kotlin.coroutines.cancellation.CancellationException
 
 /** A downloaded script waiting for the user to confirm, after seeing its code and permissions. */
-data class InstallPreview(val sourceId: String, val entry: CatalogEntry, val code: String)
+data class InstallPreview(val sourceId: String, val entry: CatalogEntry, val code: String) {
+    /** What the code uses that the catalog doesn't show: a remote catalog can under-declare. */
+    val undeclaredPermissions: Set<String>
+        get() = kr.b1ink.scriptwidget.domain.model.CatalogValidator.usedPermissions(code) - entry.permissions.toSet()
+}
 
 data class GalleryUiState(
     val loading: Boolean = true,

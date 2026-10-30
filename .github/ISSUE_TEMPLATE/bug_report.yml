@@ -1,0 +1,27 @@
+name: 버그 신고
+description: 앱이나 위젯이 기대와 다르게 동작해요
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 무슨 일이 있었나요
+      description: 기대한 동작과 실제 동작
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 방법
+      placeholder: "1. ...\n2. ..."
+  - type: textarea
+    id: script
+    attributes:
+      label: 스크립트 (해당되면)
+      description: 문제가 되는 스크립트 또는 최소 재현 코드. 개인정보·API 키는 지워 주세요.
+      render: javascript
+  - type: input
+    id: version
+    attributes:
+      label: 앱 버전 / 기기 / Android 버전
+      placeholder: "0.2.0 / Galaxy S24 / Android 16"

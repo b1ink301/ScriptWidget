@@ -172,6 +172,9 @@ export ANDROID_SERIAL=emulator-5554
 ```
 `permissions` 값: `calendar` `contacts` `location` `network` `notification` `photos` (표시용). `version`을 올리면 설치한 사용자에게 업데이트가 보입니다.
 
+- **샘플 기여·카탈로그 검사**: 방법은 [CONTRIBUTING.md](CONTRIBUTING.md)에 있습니다. CI가 내장 카탈로그를 검사합니다: 필드, 그리고 **코드가 쓰는 API와 `permissions`가 맞는지**. 자기 카탈로그는 `./gradlew :data:test --tests '*CatalogFileCheck*' -Pcatalog=/path/to/index.json`으로 확인할 수 있습니다.
+- 원격 스크립트를 설치할 때, 카탈로그에 없는 권한을 코드가 쓰면 확인 창에 **⚠️ 경고**가 나옵니다.
+
 ### 위젯 디자이너
 
 **+ 새 스크립트** → **디자이너로 만들기**에서 템플릿(빈 위젯·시계·배터리·다음 일정·할 일·날씨·JSON 값)을 고르면 디자이너가 열립니다.

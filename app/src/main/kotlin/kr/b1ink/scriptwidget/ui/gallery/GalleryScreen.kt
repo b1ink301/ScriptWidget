@@ -134,6 +134,14 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() ->
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("다른 곳에서 받은 스크립트입니다. 코드를 확인한 뒤 설치하세요.", style = MaterialTheme.typography.bodySmall)
+                    if (preview.undeclaredPermissions.isNotEmpty()) {
+                        Text(
+                            "⚠️ 카탈로그에 표시되지 않았지만 코드가 사용하는 권한: " +
+                                preview.undeclaredPermissions.joinToString(", ") { PERMISSION_LABELS[it] ?: it },
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                     if (preview.entry.permissions.isNotEmpty()) {
                         Text("필요 권한: " + preview.entry.permissions.joinToString(", ") { PERMISSION_LABELS[it] ?: it }, style = MaterialTheme.typography.bodySmall)
                     }
