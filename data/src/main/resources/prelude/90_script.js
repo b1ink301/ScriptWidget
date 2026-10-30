@@ -15,6 +15,11 @@
     setShortcutOutput(value) { __setOutput(JSON.stringify(value ?? null)); },
   };
 
+  // ---------- module: Scriptable gives every script one (module.filename, module.exports) ----------
+  const fm = FileManager.local();
+  g.module = { filename: fm.joinPath(fm.documentsDirectory(), `${__env.scriptName ?? "script"}.js`), exports: {} };
+  g.exports = g.module.exports;
+
   // ---------- args that need Image / Notification ----------
   const share = __env.share ?? {};
   g.args.images = (share.images ?? []).map((path) => Image.fromFile(path)).filter((image) => image != null);

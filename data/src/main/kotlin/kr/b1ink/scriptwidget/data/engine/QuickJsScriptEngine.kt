@@ -95,7 +95,7 @@ class QuickJsScriptEngine(
 
                         scriptStart = System.nanoTime()
                         // Keep the user's first line on line 1 so error locations stay meaningful.
-                        evaluate<Any?>("(async () => {$script\n})()", typeOf<Any?>(), "$scriptName.js")
+                        evaluate<Any?>("(async function () {$script\n})()", typeOf<Any?>(), "$scriptName.js")
                     }
                     }
                     // Watchdog: cancels the run (which interrupts QuickJS) once its activity exceeds the limit.
@@ -285,7 +285,15 @@ class QuickJsScriptEngine(
                 else -> throw IllegalArgumentException("Unknown Location operation: ${args[0]}")
             }
         }
-        function("__module") { args -> services.modules.load(args[0] as String) }
+        // A saved script by name, else a .js file in the sandbox (a sub-folder of Documents, or an
+        // absolute path inside it), as Scriptable resolves importModule().
+        function("__module") { args ->
+            val key = args[0] as String
+            services.modules.load(key) ?: runCatching {
+                val path = if (key.startsWith("/")) "$key.js" else "${services.files.documentsDirectory}/$key.js"
+                path.takeIf { services.files.exists(it) && !services.files.isDirectory(it) }?.let(services.files::readString)
+            }.getOrNull()
+        }
         function("__notify") { args ->
             when (args[0] as String) {
                 "schedule" -> services.notifier.schedule(Json.decodeFromString<NotificationSpec>(args[1] as String)).let { null }

@@ -63,9 +63,14 @@ class CompatibilityReport {
             val referenced = scriptableGlobals.filter { Regex("""\b$it\s*[.(]|new\s+$it\b""").containsMatchIn(code) }
             referenced.forEach { staticCounts.merge(it, 1, Int::plus) }
 
+            val files = SandboxedFileSystem(tmp.newFolder())
+            // Optional `_docs/<script>/`: the rest of the script's repository, as a user who copied it
+            // into Scriptable's Documents folder would have it (for importModule and FileManager reads).
+            File(corpus, "_docs/${file.nameWithoutExtension}").takeIf { it.isDirectory }
+                ?.copyRecursively(File(files.documentsDirectory), overwrite = true)
             val engine = QuickJsScriptEngine(
                 prelude,
-                fakeServices(files = SandboxedFileSystem(tmp.newFolder())),
+                fakeServices(files = files),
                 timeoutMillis = 5_000,
             )
             val result = engine.execute(

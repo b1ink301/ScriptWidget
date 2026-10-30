@@ -315,7 +315,7 @@ export ANDROID_SERIAL=emulator-5554
 
 ## Scriptable 호환성 측정
 
-[awesome-scriptable](https://github.com/dersvenhesse/awesome-scriptable)에 등록된 커뮤니티 위젯 스크립트 33개를 실행해서, 위젯을 에러 없이 그리는 비율을 측정합니다. 스크립트는 저장소에 포함하지 않습니다.
+커뮤니티 위젯 스크립트를 실행해서, 위젯을 에러 없이 그리는 비율을 측정합니다. 스크립트는 저장소에 포함하지 않습니다.
 
 ```bash
 ./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=/path/to/scripts
@@ -323,17 +323,34 @@ cat data/build/compat-report.txt
 ```
 
 - 네트워크 응답은 하네스에서 "어떤 속성에 접근해도 진행되는 Proxy"로 대체합니다. 그래서 데이터 형태가 아니라 API 누락을 측정합니다.
+- `<corpus>/_docs/<스크립트 이름>/`이 있으면 그 내용을 Documents 폴더에 넣고 실행합니다. 저장소 전체를 Scriptable에 받아 둔 사용자와 같은 상태(모듈·설정 파일)로 측정하기 위해서입니다.
 
-| 시점 | 에러 없이 위젯을 그린 스크립트 |
+**측정 대상**: [awesome-scriptable](https://github.com/dersvenhesse/awesome-scriptable)에 등록된 스크립트 33개에, 2026-10-30에 GitHub의 Scriptable 위젯 저장소 71곳에서 모은 143개(`ListWidget`을 쓰는 파일, 저장소당 최대 4개, 중복 제거)를 더해 **176개**입니다.
+
+| 시점 | 대상 | 에러 없이 위젯을 그린 스크립트 |
+|---|---|---|
+| Track A 완료 후 | 33개 | 12 (36%) |
+| API 보강 후 (WidgetImage·SFSymbol·DrawContext·Device 등) | 33개 | 21 (64%) |
+| 앱 UI·WebView·시스템 연동·개인 데이터 구현 후 | 33개 | 23 (70%) |
+| 측정 대상 확대 (2026-10-30) | 176개 | 80 (45%) |
+| `module` 전역·`arguments`·`atob`/`btoa`·Documents 모듈 + 저장소 파일 제공 | 176개 | **101 (57%)** |
+
+측정 대상을 넓히면서 찾아 보강한 것:
+- **`module` 전역**: Scriptable은 모든 스크립트에 `module.filename`·`module.exports`를 줍니다. iCloud 사용 여부를 확인하거나 모듈 경로를 계산하는 데 씁니다(13개).
+- **최상위 `arguments`**: 스크립트를 함수 안에서 실행하므로 Scriptable처럼 존재합니다.
+- **`atob` / `btoa`**
+- **`importModule`이 Documents 폴더도 찾음**: 하위 폴더 경로나 Documents 안의 절대 경로로 부를 수 있고, 스크립트가 내려받아 저장한 모듈도 불러옵니다.
+
+남은 75개 실패는 API 누락이 아닙니다.
+
+| 원인 | 개수 |
 |---|---|
-| Track A 완료 후 | 12 / 33 (36%) |
-| API 보강 후 (WidgetImage·SFSymbol·DrawContext·Device 등) | 21 / 33 (64%) |
-| 앱 UI·WebView·시스템 연동·개인 데이터 구현 후 | **23 / 33 (70%)** |
-
-남은 10개 실패는 모두 API 누락이 아닙니다:
-- 위젯 파라미터를 입력해야 하는 스크립트 3개
-- 하네스의 가짜 데이터 형태 때문에 멈추는 스크립트 6개
-- 사용자 자체 모듈(`Cache`)이 필요한 스크립트 1개
+| 하네스의 가짜 응답 형태 때문에 멈춤 (실제 API 응답 필요) | 35 |
+| 위젯 파라미터·API 키·북마크 설정이 필요 | 14 |
+| 처음에 앱에서 실행해 설정해야 함 (위젯에서는 `Alert`를 띄울 수 없음, Scriptable도 같음) | 5 |
+| 스크립트 자체 버그 (정의되지 않은 변수, `ListWidget.centerAlignContent` 같은 없는 API 호출 등) | 7 |
+| 저장소에 없는 모듈·파일이 필요 | 4 |
+| 기타 (앱 전용 스크립트, 오프라인 처리 등) | 10 |
 
 [docs.scriptable.app](https://docs.scriptable.app/)의 API 60개를 모두 구현했습니다. iOS에만 있는 일부 기능(`Calendar.presentPicker`, `Photos.removeLatest*`, `Pasteboard.copyImage`)은 호출하면 명확한 에러를 냅니다.
 

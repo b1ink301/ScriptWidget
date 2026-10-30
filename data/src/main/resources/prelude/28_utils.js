@@ -4,6 +4,32 @@
 
   g.UUID = { string: () => __uuid() };
 
+  // ---------- atob / btoa (base64 of Latin-1 strings, as in browsers) ----------
+  const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  g.btoa = function btoa(input) {
+    const s = String(input);
+    let out = "";
+    for (let i = 0; i < s.length; i += 3) {
+      const a = s.charCodeAt(i), b = s.charCodeAt(i + 1), c = s.charCodeAt(i + 2);
+      if (a > 255 || b > 255 || c > 255) throw new Error("InvalidCharacterError: btoa() needs Latin-1 text");
+      const n = (a << 16) | ((b || 0) << 8) | (c || 0);
+      out += B64[(n >> 18) & 63] + B64[(n >> 12) & 63] + (i + 1 < s.length ? B64[(n >> 6) & 63] : "=") + (i + 2 < s.length ? B64[n & 63] : "=");
+    }
+    return out;
+  };
+  g.atob = function atob(input) {
+    const s = String(input).replace(/[\t\n\f\r ]/g, "").replace(/=+$/, "");
+    if (/[^A-Za-z0-9+/]/.test(s) || s.length % 4 === 1) throw new Error("InvalidCharacterError: atob() got invalid base64");
+    let out = "";
+    let bits = 0, value = 0;
+    for (const ch of s) {
+      value = (value << 6) | B64.indexOf(ch);
+      bits += 6;
+      if (bits >= 8) { bits -= 8; out += String.fromCharCode((value >> bits) & 255); }
+    }
+    return out;
+  };
+
   // ---------- Timer (backed by setTimeout) ----------
   class Timer {
     constructor() { this.timeInterval = 0; this.repeats = false; this._id = null; this._active = false; }
