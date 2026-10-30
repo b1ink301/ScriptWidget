@@ -49,4 +49,29 @@ class ApiCatalogTest {
         assertNotNull(request.member("loadJSON")).also { assertTrue(it.isAsync) }
         assertTrue(request.member("url")!!.kind == ApiMember.Kind.Property)
     }
+
+    @Test
+    fun `every entry has an English description and Korean stays the default`() = runTest {
+        val korean = catalog()
+        val english = ApiCatalog.load(QuickJsScriptEngine(Prelude.load(), fakeServices(files = kr.b1ink.scriptwidget.data.files.SandboxedFileSystem(kotlin.io.path.createTempDirectory().toFile())), timeoutMillis = 5_000), language = "en")
+
+        assertEquals(ApiCatalog.NAMES.toSet(), english.map { it.name }.toSet())
+        for (name in ApiCatalog.NAMES) {
+            val ko = ApiDocs.summary(name)
+            val en = ApiDocs.summary(name, "en")
+            assertTrue(ko.isNotBlank(), "$name has no Korean description")
+            assertTrue(en.isNotBlank(), "$name has no English description")
+            assertTrue(en != ko, "$name: English description equals the Korean one")
+            assertEquals(ko, korean.single { it.name == name }.summary)
+            assertEquals(en, english.single { it.name == name }.summary)
+        }
+    }
+
+    @Test
+    fun `a loaded catalog can be shown in another language`() = runTest {
+        val english = ApiCatalog.inLanguage(catalog(), "en")
+
+        assertEquals(ApiDocs.summary("ListWidget", "en"), english.single { it.name == "ListWidget" }.summary)
+        assertEquals(ApiDocs.summary("ListWidget"), ApiCatalog.inLanguage(english, "ko").single { it.name == "ListWidget" }.summary)
+    }
 }

@@ -54,14 +54,19 @@ object ApiCatalog {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun load(engine: ScriptEngine): List<ApiEntry> {
+    /** [language] "ko" (default) or "en" picks the descriptions. */
+    suspend fun load(engine: ScriptEngine, language: String = "ko"): List<ApiEntry> {
         val script = "const __names = ${json.encodeToString(NAMES)};\n" + resource("introspect.js")
         val result = engine.execute(script, ScriptEnvironment(runsInWidget = false), "api-introspection")
         val output = result.logs.lastOrNull()?.message
             ?: error("API introspection failed: ${result.error}")
         return json.decodeFromString<List<ApiEntry>>(output)
-            .map { it.copy(summary = ApiDocs.summary(it.name), members = it.members.sortedWith(compareBy({ !it.isStatic }, { it.name }))) }
+            .map { it.copy(summary = ApiDocs.summary(it.name, language), members = it.members.sortedWith(compareBy({ !it.isStatic }, { it.name }))) }
     }
+
+    /** The same entries with their descriptions in [language], e.g. after the app's language changed. */
+    fun inLanguage(entries: List<ApiEntry>, language: String): List<ApiEntry> =
+        entries.map { it.copy(summary = ApiDocs.summary(it.name, language)) }
 
     private fun resource(name: String): String =
         requireNotNull(ApiCatalog::class.java.getResourceAsStream("/api/$name")) { "api/$name not found" }

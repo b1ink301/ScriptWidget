@@ -28,4 +28,14 @@ class BuiltinCatalogValidationTest {
 
         assertEquals(emptySet(), files - listed, "samples missing from catalog.json")
     }
+
+    @Test
+    fun `every entry has an English title, description and category`() = runTest {
+        val missing = source.catalog().entries.filter { entry ->
+            val en = entry.translations["en"]
+            en == null || en.title.isBlank() || en.description.isBlank() || en.category.isBlank()
+        }
+
+        assertEquals(emptyList(), missing.map { it.id }, "entries without a complete English translation")
+    }
 }

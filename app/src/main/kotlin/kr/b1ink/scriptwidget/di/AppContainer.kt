@@ -224,8 +224,10 @@ class AppContainer(
 
     /** The script API read from the prelude (for completions and the API reference); built once. */
     suspend fun apiCatalog(): List<kr.b1ink.scriptwidget.data.api.ApiEntry> = apiCatalogLock.withLock {
-        apiCatalogCache ?: runCatching { kr.b1ink.scriptwidget.data.api.ApiCatalog.load(engine) }.getOrDefault(emptyList())
+        val entries = apiCatalogCache ?: runCatching { kr.b1ink.scriptwidget.data.api.ApiCatalog.load(engine) }.getOrDefault(emptyList())
             .also { if (it.isNotEmpty()) apiCatalogCache = it }
+        // Descriptions follow the app's current language, which can change while the cache lives.
+        kr.b1ink.scriptwidget.data.api.ApiCatalog.inLanguage(entries, kr.b1ink.scriptwidget.ui.text.AppLanguage.current(appContext))
     }
     val runScriptByName by lazy { kr.b1ink.scriptwidget.domain.usecase.RunScriptByNameUseCase(scriptRepository, runScript) }
     /** Whether widgets keep refreshing while the screen is off (settings tab). */
