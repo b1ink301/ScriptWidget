@@ -63,6 +63,9 @@ class JsDesignScriptGeneratorTest {
     /** The fake services run scripts in Asia/Seoul. */
     private val SEOUL = java.util.TimeZone.getTimeZone("Asia/Seoul")
 
+    /** A script's own `new Date()` works in the host's zone (UTC on CI), not the services' one. */
+    private val DEVICE = java.time.ZoneId.systemDefault()
+
     private fun ok(body: String) = HttpResponseSpec("u", 200, emptyMap(), "application/json", body)
 
     private suspend fun run(
@@ -225,7 +228,7 @@ class JsDesignScriptGeneratorTest {
 
     @Test
     fun `d-day counts whole days in the device time zone`() = runTest {
-        val today = java.time.LocalDate.now(SEOUL.toZoneId())
+        val today = java.time.LocalDate.now(DEVICE)
         fun d(days: Long) = DataBinding.Countdown(today.plusDays(days).toString())
         val lastYear = today.minusDays(1)
         val nextTime = lastYear.plusYears(1)
@@ -259,7 +262,7 @@ class JsDesignScriptGeneratorTest {
                 DesignText("{value}", data = DataBinding.WorldTime("UTC")),
             ),
         )
-        val now = java.time.ZonedDateTime.now(SEOUL.toZoneId())
+        val now = java.time.ZonedDateTime.now(DEVICE)
         val year = (now.dayOfYear - 1 + now.toLocalTime().toSecondOfDay() / 86400.0) / now.toLocalDate().lengthOfYear() * 100
         val month = (now.dayOfMonth - 1 + now.toLocalTime().toSecondOfDay() / 86400.0) / now.toLocalDate().lengthOfMonth() * 100
 
