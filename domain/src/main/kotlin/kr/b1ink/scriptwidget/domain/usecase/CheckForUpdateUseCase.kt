@@ -19,7 +19,7 @@ class CheckForUpdateUseCase(
             return UpdateStatus.Failed(e.message ?: e.toString())
         }
         val latest = AppVersion.parse(release.version)
-            ?: return UpdateStatus.Failed("알 수 없는 버전: ${release.version}")
+            ?: return UpdateStatus.Failed("unknown version ${release.version}")
         val current = AppVersion.parse(currentVersion)
         return if (current == null || latest > current) UpdateStatus.Available(currentVersion, release)
         else UpdateStatus.UpToDate(currentVersion)

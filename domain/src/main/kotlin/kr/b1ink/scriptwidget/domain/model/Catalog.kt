@@ -20,7 +20,16 @@ data class CatalogEntry(
     /** What the script asks for, e.g. "calendar", "location", "network". */
     val permissions: List<String> = emptyList(),
     val author: String? = null,
-)
+    /** Title, description and category in other languages, by language code ("en"). */
+    val translations: Map<String, CatalogText> = emptyMap(),
+) {
+    /** What to show for [language] ("en", "ko", ...): its translation, else the catalog's own text. */
+    fun textFor(language: String): CatalogText =
+        translations[language] ?: CatalogText(title = title, description = description, category = category)
+}
+
+@Serializable
+data class CatalogText(val title: String, val description: String = "", val category: String = "")
 
 @Serializable
 data class Catalog(val title: String, val entries: List<CatalogEntry>)
@@ -62,7 +71,8 @@ sealed interface UpdateResult {
 sealed interface AddUrlResult {
     data object Added : AddUrlResult
     data object AlreadyAdded : AddUrlResult
-    data class Invalid(val reason: String) : AddUrlResult
+    /** Not an https:// address. */
+    data object Invalid : AddUrlResult
 }
 
 object CodeHash {

@@ -18,19 +18,33 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import kr.b1ink.scriptwidget.domain.model.RenderState
 import kr.b1ink.scriptwidget.widget.RefreshAction
+import androidx.glance.LocalContext
+import kr.b1ink.scriptwidget.domain.model.WidgetError
+import kr.b1ink.scriptwidget.widget.R
+
+/** Shown on a widget whose last run failed but which still shows its last good content. */
+const val STALE_BADGE = "⚠"
 
 /** Everything a widget instance shows for a given [RenderState]. */
 @Composable
 fun ScriptWidgetContent(state: RenderState?) {
+    val context = LocalContext.current
     val tree = state?.tree
-    val error = state?.error
+    // App errors are codes; script errors are the script's own message.
+    val error = state?.error?.let { message ->
+        when (val appError = WidgetError.decode(message)) {
+            WidgetError.NotBound -> context.getString(R.string.widget_error_not_bound)
+            is WidgetError.ScriptNotFound -> context.getString(R.string.widget_error_script_not_found, appError.name)
+            null -> message
+        }
+    }
     when {
         tree != null -> Box(modifier = GlanceModifier.fillMaxSize()) {
             GlanceRenderer.Root(tree)
             if (error != null) {
                 Box(modifier = GlanceModifier.fillMaxSize().padding(6.dp), contentAlignment = Alignment.TopEnd) {
                     Text(
-                        text = WidgetMessages.STALE_BADGE,
+                        text = STALE_BADGE,
                         style = TextStyle(color = colorProvider(Color(0xFFFFCC00)), fontSize = 12.sp),
                         modifier = GlanceModifier.clickable(actionRunCallback<RefreshAction>()),
                     )
@@ -47,7 +61,7 @@ fun ScriptWidgetContent(state: RenderState?) {
 
         else -> Message(
             title = "ScriptWidget",
-            body = WidgetMessages.WAITING,
+            body = context.getString(R.string.widget_waiting),
             background = Styles.DEFAULT_BACKGROUND,
             bodyColor = Color(0xFF8E8E93),
         )

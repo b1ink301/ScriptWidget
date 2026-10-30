@@ -18,6 +18,7 @@ import kr.b1ink.scriptwidget.domain.model.ScriptEnvironment
 import kr.b1ink.scriptwidget.domain.model.ScriptRunResult
 import kr.b1ink.scriptwidget.domain.model.TextNode
 import kr.b1ink.scriptwidget.domain.model.WidgetBinding
+import kr.b1ink.scriptwidget.domain.model.WidgetError
 import kr.b1ink.scriptwidget.domain.model.WidgetFamily
 import kr.b1ink.scriptwidget.domain.model.WidgetRoot
 import kotlin.test.Test
@@ -100,7 +101,7 @@ class RefreshWidgetUseCaseTest {
 
         assertTrue(engine.calls.isEmpty())
         assertNull(state.scriptName)
-        assertEquals(RefreshWidgetUseCase.NOT_BOUND_ERROR, state.error)
+        assertEquals(WidgetError.NotBound, WidgetError.decode(state.error))
         assertEquals(state, renderStates.states[99])
     }
 

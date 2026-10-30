@@ -111,7 +111,7 @@ class AddCatalogUrlUseCase(private val urls: CatalogUrlRepository) {
     suspend operator fun invoke(input: String): AddUrlResult {
         val url = input.trim()
         val valid = Regex("""^https://[^\s/]+\.[^\s/]+(/\S*)?$""").matches(url)
-        if (!valid) return AddUrlResult.Invalid("https:// 로 시작하는 주소를 입력하세요")
+        if (!valid) return AddUrlResult.Invalid
         if (url in urls.urls.first()) return AddUrlResult.AlreadyAdded
         urls.add(url)
         return AddUrlResult.Added

@@ -18,6 +18,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
@@ -36,6 +40,8 @@ class SettingsActions(
     val onRefreshWhileScreenOff: (Boolean) -> Unit = {},
     val onCheckUpdate: () -> Unit = {},
     val onTriggers: () -> Unit = {},
+    /** "ko", "en", or null to follow the system. */
+    val onLanguage: (String?) -> Unit = {},
 )
 
 const val REPOSITORY_URL = "https://github.com/b1ink301/ScriptWidget"
@@ -48,7 +54,21 @@ fun SettingsScreen(
     actions: SettingsActions,
     refreshWhileScreenOff: Boolean = false,
     update: UpdateUiState = UpdateUiState.Idle,
+    /** The chosen app language ("ko" / "en"), or null when it follows the system. */
+    language: String? = null,
+    canChooseLanguage: Boolean = true,
 ) {
+    var choosingLanguage by remember { mutableStateOf(false) }
+    if (choosingLanguage) {
+        LanguageDialog(
+            current = language,
+            onChoose = {
+                choosingLanguage = false
+                actions.onLanguage(it)
+            },
+            onDismiss = { choosingLanguage = false },
+        )
+    }
     Scaffold(topBar = { TopAppBar(title = { Text("설정") }) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -74,6 +94,15 @@ fun SettingsScreen(
             }
             group("갤러리") {
                 Row("🌐", "카탈로그 관리", "기본 갤러리와 추가한 카탈로그(index.json)", actions.onCatalogs)
+            }
+            group("언어 · Language") {
+                Box(Modifier.testTag("language-row")) {
+                    Row(
+                        "🌐",
+                        "앱 언어 · App language",
+                        if (!canChooseLanguage) "기기 언어를 따릅니다 (Android 13 이상에서 선택 가능)" else languageLabel(language),
+                    ) { if (canChooseLanguage) choosingLanguage = true }
+                }
             }
             group("정보") {
                 UpdateRow(update, actions)
@@ -102,6 +131,33 @@ private fun GroupScope.UpdateRow(update: UpdateUiState, actions: SettingsActions
             else actions.onCheckUpdate()
         }
     }
+}
+
+private fun languageLabel(language: String?) = when (language) {
+    "ko" -> "한국어"
+    "en" -> "English"
+    else -> "기기 언어 · System"
+}
+
+@Composable
+private fun LanguageDialog(current: String?, onChoose: (String?) -> Unit, onDismiss: () -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("앱 언어 · App language") },
+        text = {
+            Column {
+                listOf(null to "system", "ko" to "ko", "en" to "en").forEach { (value, tag) ->
+                    ListItem(
+                        headlineContent = { Text(languageLabel(value)) },
+                        leadingContent = { androidx.compose.material3.RadioButton(selected = value == current, onClick = { onChoose(value) }) },
+                        modifier = Modifier.testTag("language-$tag").clickable { onChoose(value) },
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text("취소 · Cancel") } },
+    )
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.group(title: String, rows: @Composable GroupScope.() -> Unit) {

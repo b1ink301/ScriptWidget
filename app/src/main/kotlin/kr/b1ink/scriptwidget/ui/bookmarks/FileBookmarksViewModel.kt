@@ -33,7 +33,10 @@ class FileBookmarksViewModel(bookmarks: FileBookmarkRepository, documents: Scrip
         viewModelScope.launch {
             message.value = when (val result = addBookmark(name, uri)) {
                 is BookmarkResult.Saved -> "'${result.name}' 북마크를 저장했습니다"
-                is BookmarkResult.Invalid -> result.reason
+                is BookmarkResult.Invalid -> when (result.reason) {
+                    kr.b1ink.scriptwidget.domain.model.BookmarkName.Problem.Blank -> "이름을 입력하세요"
+                    kr.b1ink.scriptwidget.domain.model.BookmarkName.Problem.NotAFileName -> "이름에 / \\ 를 쓸 수 없습니다"
+                }
                 is BookmarkResult.Failed -> "파일을 읽지 못했습니다: ${result.message}"
             }
         }

@@ -3,6 +3,7 @@ package kr.b1ink.scriptwidget.domain.usecase
 import kr.b1ink.scriptwidget.domain.model.RefreshTrigger
 import kr.b1ink.scriptwidget.domain.model.RenderState
 import kr.b1ink.scriptwidget.domain.model.ScriptEnvironment
+import kr.b1ink.scriptwidget.domain.model.WidgetError
 import kr.b1ink.scriptwidget.domain.model.WidgetFamily
 import kr.b1ink.scriptwidget.domain.repository.RenderStateRepository
 import kr.b1ink.scriptwidget.domain.repository.ScriptRepository
@@ -122,7 +123,7 @@ class RefreshWidgetUseCase(
         val script = scripts.read(binding.scriptName)
             ?: return RenderState(
                 scriptName = binding.scriptName,
-                error = "스크립트 '${binding.scriptName}'를 찾을 수 없습니다.",
+                error = WidgetError.encode(WidgetError.ScriptNotFound(binding.scriptName)),
                 updatedAt = clock.now(),
             )
 
@@ -151,6 +152,6 @@ class RefreshWidgetUseCase(
     }
 
     companion object {
-        const val NOT_BOUND_ERROR = "스크립트가 지정되지 않았습니다. 위젯을 길게 눌러 설정하세요."
+        val NOT_BOUND_ERROR = WidgetError.encode(WidgetError.NotBound)
     }
 }

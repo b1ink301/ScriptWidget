@@ -135,6 +135,29 @@ class MainChromeTest {
         assertEquals(listOf("check", "url:https://apk"), calls)
     }
 
+    @Test
+    fun settingsChoosesTheAppLanguage() {
+        val chosen = mutableListOf<String?>()
+        compose.setContent {
+            SettingsScreen(
+                versionName = "0.1.0",
+                language = null,
+                actions = SettingsActions(
+                    onPermissions = {}, onBookmarks = {}, onImport = {}, onBackup = {}, onRestore = {}, onCatalogs = {}, onOpenUrl = {},
+                    onLanguage = { chosen += it },
+                ),
+            )
+        }
+
+        scrollSettingsTo(hasTestTag("language-row"))
+        compose.onNodeWithTag("language-row").performClick()
+        compose.onNodeWithTag("language-en").performClick()
+        compose.onNodeWithTag("language-row").performClick()
+        compose.onNodeWithTag("language-system").performClick()
+
+        assertEquals(listOf("en", null), chosen)
+    }
+
     /** The settings list is lazy: on short screens (CI emulators) the lower rows are not composed until scrolled to. */
     private fun scrollSettingsTo(matcher: SemanticsMatcher) {
         compose.onNode(hasScrollAction()).performScrollToNode(matcher)

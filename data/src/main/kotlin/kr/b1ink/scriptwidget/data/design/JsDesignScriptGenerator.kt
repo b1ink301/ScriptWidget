@@ -16,15 +16,14 @@ import kr.b1ink.scriptwidget.domain.repository.DesignScriptGenerator
  * so every element becomes exactly one node at the same path (the designer relies on it to select
  * elements by tapping the preview).
  */
-class JsDesignScriptGenerator : DesignScriptGenerator {
+class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts.KOREAN) : DesignScriptGenerator {
 
     override fun generate(design: WidgetDesign): String = buildString {
-        appendLine("// 디자이너로 만든 위젯입니다. 디자이너에서 열어 고치세요.")
-        appendLine("// 여기서 코드를 직접 고치면 디자이너에서 다시 열 때 고친 내용이 사라집니다.")
+        texts.header.forEach { appendLine("// $it") }
         val bindings = design.bindings()
         if (bindings.isNotEmpty()) {
             appendLine()
-            append(DATA_HELPERS)
+            append(dataHelpers(texts))
             bindings.forEachIndexed { i, binding -> appendLine("await load(\"d$i\", async () => ${loader(binding)});") }
         }
         appendLine()
@@ -120,12 +119,12 @@ class JsDesignScriptGenerator : DesignScriptGenerator {
             DataBinding.Weather.Field.Condition -> "weatherLabel((await weather()).weather_code)"
         }
         is DataBinding.NextEvent -> when (binding.field) {
-            DataBinding.NextEvent.Field.Title -> "(await nextEvent())?.title ?? \"일정 없음\""
+            DataBinding.NextEvent.Field.Title -> "(await nextEvent())?.title ?? ${str(texts.noEvents)}"
             DataBinding.NextEvent.Field.Time -> "eventTime(await nextEvent())"
         }
         is DataBinding.Reminders -> when (binding.field) {
             DataBinding.Reminders.Field.Count -> "(await openReminders()).length"
-            DataBinding.Reminders.Field.Next -> "(await openReminders())[0]?.title ?? \"할 일 없음\""
+            DataBinding.Reminders.Field.Next -> "(await openReminders())[0]?.title ?? ${str(texts.noReminders)}"
         }
     }
 
@@ -181,8 +180,8 @@ class JsDesignScriptGenerator : DesignScriptGenerator {
             return if (alpha >= 1f) "new Color($rgb)" else "new Color($rgb, ${"%.3f".format(java.util.Locale.ROOT, alpha).trimEnd('0').trimEnd('.')})"
         }
 
-        private val DATA_HELPERS = """
-            |// 데이터 블록: 실패하면 "–"를 보여 줍니다.
+        private fun dataHelpers(texts: GeneratorTexts) = """
+            |// ${texts.dataComment}
             |const data = {};
             |async function load(key, read) {
             |  try { data[key] = await read(); } catch (e) { console.warn(`${'$'}{key}: ${'$'}{e}`); data[key] = "–"; }
@@ -202,8 +201,9 @@ class JsDesignScriptGenerator : DesignScriptGenerator {
             |  return (_weather = (await new Request(url).loadJSON()).current);
             |}
             |function weatherLabel(code) {
-            |  const labels = [[[0], "맑음"], [[1, 2], "구름 조금"], [[3], "흐림"], [[45, 48], "안개"], [[51, 53, 55, 56, 57], "이슬비"],
-            |    [[61, 63, 65, 66, 67, 80, 81, 82], "비"], [[71, 73, 75, 77, 85, 86], "눈"], [[95, 96, 99], "뇌우"]];
+            |  const labels = [[[0], ${str(texts.weather[0])}], [[1, 2], ${str(texts.weather[1])}], [[3], ${str(texts.weather[2])}], [[45, 48], ${str(texts.weather[3])}],
+            |    [[51, 53, 55, 56, 57], ${str(texts.weather[4])}], [[61, 63, 65, 66, 67, 80, 81, 82], ${str(texts.weather[5])}],
+            |    [[71, 73, 75, 77, 85, 86], ${str(texts.weather[6])}], [[95, 96, 99], ${str(texts.weather[7])}]];
             |  return (labels.find(([codes]) => codes.includes(code)) ?? [null, "–"])[1];
             |}
             |let _event;
@@ -216,7 +216,7 @@ class JsDesignScriptGenerator : DesignScriptGenerator {
             |}
             |function eventTime(e) {
             |  if (!e) return "";
-            |  return e.isAllDay ? "하루 종일" : `${'$'}{formatDate(e.startDate, "HH:mm")} – ${'$'}{formatDate(e.endDate, "HH:mm")}`;
+            |  return e.isAllDay ? ${str(texts.allDay)} : `${'$'}{formatDate(e.startDate, "HH:mm")} – ${'$'}{formatDate(e.endDate, "HH:mm")}`;
             |}
             |let _reminders;
             |async function openReminders() {
@@ -227,5 +227,35 @@ class JsDesignScriptGenerator : DesignScriptGenerator {
             |}
             |
         """.trimMargin() + "\n"
+    }
+}
+
+/** Words the generated script contains, per language (chosen when the design is saved). */
+data class GeneratorTexts(
+    val header: List<String>,
+    val dataComment: String,
+    val noEvents: String,
+    val noReminders: String,
+    val allDay: String,
+    /** Clear, partly cloudy, cloudy, fog, drizzle, rain, snow, thunderstorm. */
+    val weather: List<String>,
+) {
+    companion object {
+        val KOREAN = GeneratorTexts(
+            header = listOf("디자이너로 만든 위젯입니다. 디자이너에서 열어 고치세요.", "여기서 코드를 직접 고치면 디자이너에서 다시 열 때 고친 내용이 사라집니다."),
+            dataComment = "데이터 블록: 실패하면 \"–\"를 보여 줍니다.",
+            noEvents = "일정 없음",
+            noReminders = "할 일 없음",
+            allDay = "하루 종일",
+            weather = listOf("맑음", "구름 조금", "흐림", "안개", "이슬비", "비", "눈", "뇌우"),
+        )
+        val ENGLISH = GeneratorTexts(
+            header = listOf("Made in the widget designer. Open it there to change it.", "Edits made to this code are lost when the designer saves again."),
+            dataComment = "Data blocks: show \"–\" when a value can't be loaded.",
+            noEvents = "No events",
+            noReminders = "Nothing to do",
+            allDay = "All day",
+            weather = listOf("Clear", "Partly cloudy", "Cloudy", "Fog", "Drizzle", "Rain", "Snow", "Thunderstorm"),
+        )
     }
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_waiting">Waiting to run… tap to refresh</string>
+    <string name="widget_error_not_bound">No script is set. Long-press the widget to choose one.</string>
+    <string name="widget_error_script_not_found">Script \'%1$s\' was not found.</string>
+</resources>

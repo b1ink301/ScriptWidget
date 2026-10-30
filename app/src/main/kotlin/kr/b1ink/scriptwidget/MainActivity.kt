@@ -161,7 +161,8 @@ class MainActivity : ComponentActivity() {
             }
         }
         val newDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = { template ->
-            scope.launch { onNav(nav.open(container.createDesign(template.design), designer = true)) }
+            val texts = kr.b1ink.scriptwidget.ui.text.AppLanguage.templateTexts(this@MainActivity)
+            scope.launch { onNav(nav.open(container.createDesign(template.design(texts)), designer = true)) }
         }
         when (nav.tab) {
             MainTab.Scripts -> {
@@ -191,9 +192,12 @@ class MainActivity : ComponentActivity() {
                 versionName = versionName(),
                 refreshWhileScreenOff = screenOff,
                 update = updates.state.collectAsState().value,
+                language = kr.b1ink.scriptwidget.ui.text.AppLanguage.chosen(this@MainActivity),
+                canChooseLanguage = kr.b1ink.scriptwidget.ui.text.AppLanguage.canChoose,
                 actions = SettingsActions(
                     onPermissions = { onNav(nav.show(Overlay.Permissions)) },
                     onTriggers = { onNav(nav.show(Overlay.Triggers)) },
+                    onLanguage = { kr.b1ink.scriptwidget.ui.text.AppLanguage.choose(this@MainActivity, it) },
                     onBookmarks = { onNav(nav.show(Overlay.Bookmarks)) },
                     onImport = { onNav(nav.request(ListAction.Import)) },
                     onBackup = { onNav(nav.request(ListAction.Backup)) },

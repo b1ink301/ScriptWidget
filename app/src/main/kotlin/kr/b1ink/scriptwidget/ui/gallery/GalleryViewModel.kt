@@ -109,7 +109,7 @@ class GalleryViewModel(
         when (val result = addCatalogUrl(url)) {
             AddUrlResult.Added -> done("카탈로그를 추가했습니다")
             AddUrlResult.AlreadyAdded -> _uiState.update { it.copy(message = "이미 추가된 주소입니다") }
-            is AddUrlResult.Invalid -> _uiState.update { it.copy(message = result.reason) }
+            AddUrlResult.Invalid -> _uiState.update { it.copy(message = "https:// 로 시작하는 주소를 입력하세요") }
         }
     }
 

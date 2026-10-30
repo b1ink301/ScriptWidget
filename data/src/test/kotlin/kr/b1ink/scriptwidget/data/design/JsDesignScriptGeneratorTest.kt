@@ -209,4 +209,25 @@ class JsDesignScriptGeneratorTest {
             assertEquals(template.design.children.size, root.children.size, template.title)
         }
     }
+
+    @Test
+    fun `fallback texts and weather words follow the chosen language`() = runTest {
+        val english = JsDesignScriptGenerator(GeneratorTexts.ENGLISH)
+        val design = WidgetDesign(
+            children = listOf(
+                DesignText("{value}", data = DataBinding.NextEvent(DataBinding.NextEvent.Field.Title)),
+                DesignText("{value}", data = DataBinding.Weather(DataBinding.Weather.Field.Condition)),
+            ),
+        )
+        val engine = QuickJsScriptEngine(
+            Prelude.load(),
+            fakeServices(http = http, files = SandboxedFileSystem(tmp.newFolder()), calendar = calendar, reminders = reminders),
+            timeoutMillis = 5_000,
+        )
+        val root = assertNotNull(engine.execute(english.generate(design), ScriptEnvironment(runsInWidget = true), "d").widget)
+
+        assertEquals("No events", root.text(0))
+        assertEquals("Rain", root.text(1))
+        assertTrue("디자이너" !in english.generate(design))
+    }
 }

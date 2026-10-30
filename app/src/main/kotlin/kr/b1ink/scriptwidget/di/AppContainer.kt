@@ -199,8 +199,10 @@ class AppContainer(
     val runScript by lazy { RunScriptUseCase(engine, runHistory) }
 
     // --- widget designer ---
-    val designGenerator: kr.b1ink.scriptwidget.domain.repository.DesignScriptGenerator =
-        kr.b1ink.scriptwidget.data.design.JsDesignScriptGenerator()
+    /** Generated scripts use the words of the app's language at the time they are saved. */
+    val designGenerator = kr.b1ink.scriptwidget.domain.repository.DesignScriptGenerator { design ->
+        kr.b1ink.scriptwidget.data.design.JsDesignScriptGenerator(kr.b1ink.scriptwidget.ui.text.AppLanguage.generatorTexts(appContext)).generate(design)
+    }
     val createDesign = kr.b1ink.scriptwidget.domain.usecase.CreateDesignedScriptUseCase(scriptRepository, designGenerator)
     val openDesign = kr.b1ink.scriptwidget.domain.usecase.OpenDesignUseCase(scriptRepository)
     val saveDesign by lazy { kr.b1ink.scriptwidget.domain.usecase.SaveDesignUseCase(saveScript, scriptRepository, designGenerator) }

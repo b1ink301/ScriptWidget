@@ -19,7 +19,7 @@ class AddFileBookmarkUseCase(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            return BookmarkResult.Failed(e.message ?: "파일을 읽을 수 없습니다")
+            return BookmarkResult.Failed(e.message ?: e.toString())
         }
         bookmarks.save(trimmed, bytes)
         return BookmarkResult.Saved(trimmed)

@@ -59,4 +59,17 @@ class DesignUseCasesTest {
         assertTrue(DesignTemplates.all.size >= 5)
         DesignTemplates.all.forEach { assertTrue(it.title.isNotBlank() && it.design.children.isNotEmpty() || it == DesignTemplates.Blank, it.title) }
     }
+
+    @Test
+    fun `templates come in English too`() {
+        val english = kr.b1ink.scriptwidget.domain.model.DesignTemplates.Battery.design(kr.b1ink.scriptwidget.domain.model.TemplateTexts.ENGLISH)
+        val texts = english.children.filterIsInstance<DesignText>().map { it.text }
+
+        assertEquals(listOf("Battery"), texts)
+        assertEquals(
+            kr.b1ink.scriptwidget.domain.model.DataBinding.DateText("EEEE"),
+            (kr.b1ink.scriptwidget.domain.model.DesignTemplates.Clock.design(kr.b1ink.scriptwidget.domain.model.TemplateTexts.ENGLISH).children.first() as DesignText).data,
+        )
+        assertEquals(DesignTemplates.Battery.design, DesignTemplates.Battery.design(kr.b1ink.scriptwidget.domain.model.TemplateTexts.KOREAN))
+    }
 }
