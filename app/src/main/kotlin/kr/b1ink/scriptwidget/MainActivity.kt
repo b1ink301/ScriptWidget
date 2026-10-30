@@ -24,6 +24,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -161,9 +162,14 @@ class MainActivity : ComponentActivity() {
             MainTab.Help -> kr.b1ink.scriptwidget.ui.api.ApiReferenceRoute(container = container)
             MainTab.Settings -> {
               var screenOff by remember { mutableStateOf(container.refreshSettings.refreshWhileScreenOff()) }
+              val updates = androidx.lifecycle.viewmodel.compose.viewModel {
+                  kr.b1ink.scriptwidget.ui.settings.UpdateViewModel(container.checkForUpdate(versionName())::invoke)
+              }
+              LaunchedEffect(Unit) { updates.checkOnce() }
               SettingsScreen(
                 versionName = versionName(),
                 refreshWhileScreenOff = screenOff,
+                update = updates.state.collectAsState().value,
                 actions = SettingsActions(
                     onPermissions = { onNav(nav.show(Overlay.Permissions)) },
                     onBookmarks = { onNav(nav.show(Overlay.Bookmarks)) },
@@ -172,6 +178,7 @@ class MainActivity : ComponentActivity() {
                     onRestore = { onNav(nav.request(ListAction.Restore)) },
                     onCatalogs = { onNav(nav.select(MainTab.Gallery)) },
                     onOpenUrl = { url -> runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } },
+                    onCheckUpdate = updates::check,
                     onRefreshWhileScreenOff = { enabled ->
                         container.refreshSettings.setRefreshWhileScreenOff(enabled)
                         screenOff = enabled

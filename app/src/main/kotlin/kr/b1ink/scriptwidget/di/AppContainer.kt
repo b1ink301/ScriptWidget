@@ -199,6 +199,12 @@ class AppContainer(
     val runScript by lazy { RunScriptUseCase(engine, runHistory) }
 
     /** Widget count and last run per script, for the script list. */
+    /** Compares [currentVersion] with the latest GitHub release, picking the APK for this device's ABI. */
+    fun checkForUpdate(currentVersion: String) = kr.b1ink.scriptwidget.domain.usecase.CheckForUpdateUseCase(
+        kr.b1ink.scriptwidget.data.update.GitHubReleaseSource(http, android.os.Build.SUPPORTED_ABIS.toList()),
+        currentVersion,
+    )
+
     fun scriptActivity() = kr.b1ink.scriptwidget.domain.usecase.ObserveScriptActivityUseCase(scriptRepository, bindingRepository, runHistory)()
 
     private val apiCatalogLock = kotlinx.coroutines.sync.Mutex()

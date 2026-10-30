@@ -1,6 +1,7 @@
 package kr.b1ink.scriptwidget.ui.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import kr.b1ink.scriptwidget.domain.model.UpdateStatus
 import kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace
 
 class SettingsActions(
@@ -32,6 +34,7 @@ class SettingsActions(
     val onCatalogs: () -> Unit,
     val onOpenUrl: (String) -> Unit,
     val onRefreshWhileScreenOff: (Boolean) -> Unit = {},
+    val onCheckUpdate: () -> Unit = {},
 )
 
 const val REPOSITORY_URL = "https://github.com/b1ink301/ScriptWidget"
@@ -39,7 +42,12 @@ const val REPOSITORY_URL = "https://github.com/b1ink301/ScriptWidget"
 /** Everything used now and then: permissions, files, backups, catalogs and about. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(versionName: String, actions: SettingsActions, refreshWhileScreenOff: Boolean = false) {
+fun SettingsScreen(
+    versionName: String,
+    actions: SettingsActions,
+    refreshWhileScreenOff: Boolean = false,
+    update: UpdateUiState = UpdateUiState.Idle,
+) {
     Scaffold(topBar = { TopAppBar(title = { Text("설정") }) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -66,9 +74,30 @@ fun SettingsScreen(versionName: String, actions: SettingsActions, refreshWhileSc
                 Row("🌐", "카탈로그 관리", "기본 갤러리와 추가한 카탈로그(index.json)", actions.onCatalogs)
             }
             group("정보") {
-                Row("ℹ️", "ScriptWidget $versionName", "GitHub에서 소스 보기 · 업데이트 받기") { actions.onOpenUrl(REPOSITORY_URL) }
+                UpdateRow(update, actions)
+                Row("ℹ️", "ScriptWidget $versionName", "GitHub에서 소스 보기") { actions.onOpenUrl(REPOSITORY_URL) }
                 Row("📄", "라이선스", "GPL-3.0 · 오픈소스 라이선스") { actions.onOpenUrl("$REPOSITORY_URL#라이선스") }
             }
+        }
+    }
+}
+
+@Composable
+private fun GroupScope.UpdateRow(update: UpdateUiState, actions: SettingsActions) {
+    val status = (update as? UpdateUiState.Done)?.status
+    val (title, subtitle) = when {
+        update == UpdateUiState.Checking -> "업데이트 확인 중…" to "GitHub 릴리스를 확인하고 있습니다"
+        status is UpdateStatus.Available ->
+            "새 버전 ${status.release.version}" to "현재 ${status.current} · 탭하면 ${if (status.release.apkUrl != null) "APK를 받습니다" else "릴리스 페이지를 엽니다"}"
+        status is UpdateStatus.UpToDate -> "최신 버전입니다" to "현재 ${status.current} · 탭하면 다시 확인"
+        status is UpdateStatus.Failed -> "업데이트 확인 실패" to "${status.message} · 탭하면 다시 시도"
+        else -> "업데이트 확인" to "GitHub 릴리스에서 새 버전 확인"
+    }
+    val emoji = if (status is UpdateStatus.Available) "⬆️" else "🔄"
+    Box(Modifier.testTag("update-row")) {
+        Row(emoji, title, subtitle) {
+            if (status is UpdateStatus.Available) actions.onOpenUrl(status.release.apkUrl ?: status.release.pageUrl)
+            else actions.onCheckUpdate()
         }
     }
 }

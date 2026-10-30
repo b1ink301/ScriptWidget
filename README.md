@@ -72,14 +72,14 @@ sequenceDiagram
 
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
-| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL) | `domain/src/test` | 123 |
-| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업 | `data/src/test` | 246 |
+| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교) | `domain/src/test` | 128 |
+| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기 | `data/src/test` | 249 |
 | widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
-| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동) | `app/src/test` | 116 |
+| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인) | `app/src/test` | 119 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
 | widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션) | `widget/src/androidTest` | 57 |
-| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기) | `app/src/androidTest` | 46 |
-| **합계** | | | **668** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행) | `app/src/androidTest` | 47 |
+| **합계** | | | **680** (+ 호환성 측정 하네스 1, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -104,7 +104,7 @@ export ANDROID_SERIAL=emulator-5554
 
 ## 설치
 
-[Releases](https://github.com/b1ink301/ScriptWidget/releases)에서 APK를 받아 설치합니다. 대부분의 휴대폰은 `-arm64-v8a.apk`, 잘 모르겠으면 `-universal.apk`. 처음 설치할 때 "출처를 알 수 없는 앱" 설치를 허용해야 합니다. 업데이트는 같은 서명 키로 만든 새 APK를 덮어 설치하면 됩니다.
+[Releases](https://github.com/b1ink301/ScriptWidget/releases)에서 APK를 받아 설치합니다. 대부분의 휴대폰은 `-arm64-v8a.apk`, 잘 모르겠으면 `-universal.apk`. 처음 설치할 때 "출처를 알 수 없는 앱" 설치를 허용해야 합니다. 업데이트는 같은 서명 키로 만든 새 APK를 덮어 설치하면 됩니다. **설정** 탭을 열면 최신 릴리스를 확인해 새 버전이 있으면 **새 버전 vX.Y.Z**를 보여 주고, 탭하면 이 기기에 맞는 APK를 받습니다(개발용 debug 빌드는 서명이 달라 덮어 설치할 수 없습니다).
 
 ## 화면 구성
 
@@ -116,7 +116,7 @@ export ANDROID_SERIAL=emulator-5554
 | **갤러리** | 샘플·카탈로그 설치·열기·업데이트, **+ 카탈로그** |
 | **기록** | 실행 기록 |
 | **도움말** | API 도움말 |
-| **설정** | 권한(자동화 앱 실행 포함), **화면이 꺼져 있어도 갱신**(기본 꺼짐), 파일 북마크, 가져오기, 전체 백업·복원, 카탈로그 관리, 버전·GitHub·라이선스 |
+| **설정** | 권한(자동화 앱 실행 포함), **화면이 꺼져 있어도 갱신**(기본 꺼짐), 파일 북마크, 가져오기, 전체 백업·복원, 카탈로그 관리, **앱 업데이트 확인**, 버전·GitHub·라이선스 |
 
 ## 빌드 & 실행
 
