@@ -52,7 +52,11 @@ class BuiltinCatalogSource : CatalogSource, SampleScriptSource {
  * A catalog published as `index.json` (e.g. in a GitHub repository); entry scripts are resolved
  * relative to it. Only https is used.
  */
-class RemoteCatalogSource(private val url: String, private val http: HttpGateway) : CatalogSource {
+class RemoteCatalogSource(
+    private val url: String,
+    private val http: HttpGateway,
+    private val timeoutSeconds: Double = 20.0,
+) : CatalogSource {
     override val id: String = url
 
     override suspend fun catalog(): Catalog =
@@ -62,7 +66,7 @@ class RemoteCatalogSource(private val url: String, private val http: HttpGateway
 
     private suspend fun fetch(target: String): String {
         if (!target.startsWith("https://")) throw IOException("https 주소만 사용할 수 있습니다: $target")
-        val response = http.loadString(HttpRequestSpec(url = target, timeout = 20.0))
+        val response = http.loadString(HttpRequestSpec(url = target, timeout = timeoutSeconds))
         if (response.statusCode !in 200..299) throw IOException("HTTP ${response.statusCode}: $target")
         return response.body
     }
@@ -111,5 +115,38 @@ class FileCatalogUrlRepository(private val file: File) : CatalogUrlRepository {
             file.writeText(CatalogJson.encodeToString(serializer, list))
         }
         state.value = list
+    }
+}
+
+/**
+ * The official gallery: the samples catalog in the GitHub repository, so fixed and new samples
+ * reach users without an app update. Offline (or when a download fails) the copy bundled with the
+ * app is used. It keeps the built-in id, so scripts installed from either stay one gallery entry.
+ */
+class OfficialCatalogSource(
+    private val online: CatalogSource,
+    private val bundled: CatalogSource,
+) : CatalogSource {
+    override val id: String = bundled.id
+
+    override suspend fun catalog(): Catalog = try {
+        online.catalog()
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        bundled.catalog()
+    }
+
+    override suspend fun code(entry: CatalogEntry): String = try {
+        online.code(entry)
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        val local = runCatching { bundled.catalog().entries.firstOrNull { it.id == entry.id } }.getOrNull() ?: throw e
+        bundled.code(local)
+    }
+
+    companion object {
+        const val URL = "https://raw.githubusercontent.com/b1ink301/ScriptWidget/main/data/src/main/resources/samples/catalog.json"
     }
 }

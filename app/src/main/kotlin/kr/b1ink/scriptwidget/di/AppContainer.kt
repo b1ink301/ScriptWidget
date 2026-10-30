@@ -147,7 +147,17 @@ class AppContainer(
     // --- use cases ---
     val observeScriptNames = ObserveScriptNamesUseCase(scriptRepository)
     // --- gallery ---
-    val builtinCatalog by lazy { kr.b1ink.scriptwidget.data.gallery.BuiltinCatalogSource() }
+    private val bundledCatalog by lazy { kr.b1ink.scriptwidget.data.gallery.BuiltinCatalogSource() }
+
+    /** The gallery from the GitHub repository (new and fixed samples), bundled copy when offline. */
+    val builtinCatalog: kr.b1ink.scriptwidget.domain.repository.CatalogSource by lazy {
+        kr.b1ink.scriptwidget.data.gallery.OfficialCatalogSource(
+            online = kr.b1ink.scriptwidget.data.gallery.RemoteCatalogSource(
+                kr.b1ink.scriptwidget.data.gallery.OfficialCatalogSource.URL, http, timeoutSeconds = 8.0,
+            ),
+            bundled = bundledCatalog,
+        )
+    }
     val installedScripts by lazy { kr.b1ink.scriptwidget.data.gallery.FileInstalledScriptRepository(File(rootDir, "gallery/installed.json")) }
     val catalogUrls by lazy { kr.b1ink.scriptwidget.data.gallery.FileCatalogUrlRepository(File(rootDir, "gallery/urls.json")) }
     val scriptRepositoryForGallery: kr.b1ink.scriptwidget.domain.repository.ScriptRepository get() = scriptRepository
@@ -157,7 +167,7 @@ class AppContainer(
     /** First launch: every gallery sample, remembered as installed so it can be updated later. */
     val seedSamples: suspend () -> Unit = {
         kr.b1ink.scriptwidget.domain.usecase.SeedFromCatalogUseCase(
-            scriptRepository, builtinCatalog,
+            scriptRepository, bundledCatalog,
             kr.b1ink.scriptwidget.domain.usecase.InstallCatalogEntryUseCase(scriptRepository, installedScripts),
         )()
     }
