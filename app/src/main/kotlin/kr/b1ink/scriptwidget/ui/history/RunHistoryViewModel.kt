@@ -69,5 +69,6 @@ class RunHistoryViewModel(private val history: RunHistoryRepository) : ViewModel
         RunSource.Notification -> "알림"
         RunSource.HomeScreen -> "홈 화면"
         RunSource.Automation -> "자동화"
+        RunSource.Trigger -> "트리거"
     }
 }

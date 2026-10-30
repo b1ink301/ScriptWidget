@@ -15,6 +15,7 @@ import kr.b1ink.scriptwidget.domain.usecase.RefreshWidgetUseCase
 class ScriptWorkerFactory(
     private val refreshWidget: () -> RefreshWidgetUseCase,
     private val families: () -> WidgetFamilyResolver,
+    private val handleEvent: () -> kr.b1ink.scriptwidget.domain.usecase.HandleEventUseCase,
 ) : WorkerFactory() {
 
     override fun createWorker(
@@ -23,6 +24,12 @@ class ScriptWorkerFactory(
         workerParameters: WorkerParameters,
     ): ListenableWorker? = when (workerClassName) {
         ScriptUpdateWorker::class.java.name -> ScriptUpdateWorker(appContext, workerParameters, refreshWidget(), families())
+        EventWorker::class.java.name -> EventWorker(
+            appContext,
+            workerParameters,
+            handle = { handleEvent()(it) },
+            rearm = { AndroidEventMonitor(appContext).rearm(it) },
+        )
         else -> null
     }
 }

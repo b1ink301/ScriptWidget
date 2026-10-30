@@ -251,9 +251,24 @@ class AppContainer(
     override val scheduleBoundWidgets by lazy { ScheduleBoundWidgetsUseCase(bindingRepository, scheduler) }
     override val resizeWidget by lazy { kr.b1ink.scriptwidget.domain.usecase.ResizeWidgetUseCase(renderStates, scheduler) }
 
+    // --- event triggers ---
+    val eventTriggers: kr.b1ink.scriptwidget.domain.repository.EventTriggerRepository by lazy {
+        kr.b1ink.scriptwidget.data.trigger.FileEventTriggerRepository(File(rootDir, "triggers/triggers.json"))
+    }
+    val eventMonitor: kr.b1ink.scriptwidget.domain.scheduler.EventMonitor by lazy {
+        kr.b1ink.scriptwidget.widget.work.AndroidEventMonitor(appContext)
+    }
+    override val handleEvent by lazy {
+        kr.b1ink.scriptwidget.domain.usecase.HandleEventUseCase(eventTriggers, bindingRepository, scheduler, runScriptByName)
+    }
+
+    /** Re-hooks the watched events (after an update or reboot; cheap when nothing changed). */
+    suspend fun syncEventMonitor() = kr.b1ink.scriptwidget.domain.usecase.SyncEventMonitorUseCase(eventTriggers, eventMonitor)()
+
     /** Built during WorkManager's initialization: must not resolve anything that needs WorkManager. */
     val workerFactory = ScriptWorkerFactory(
         refreshWidget = { refreshWidget },
         families = { AppWidgetManagerFamilyResolver(AppWidgetManager.getInstance(appContext)) },
+        handleEvent = { handleEvent },
     )
 }

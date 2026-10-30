@@ -4,7 +4,7 @@ package kr.b1ink.scriptwidget.ui.main
 enum class MainTab { Scripts, Gallery, History, Help, Settings }
 
 /** Full screens shown over a tab or the editor (the tab bar is hidden). */
-enum class Overlay { Permissions, Bookmarks, ApiReference }
+enum class Overlay { Permissions, Bookmarks, ApiReference, Triggers }
 
 /** Settings actions that run on "my scripts", where their result shows. */
 enum class ListAction { Import, Backup, Restore }

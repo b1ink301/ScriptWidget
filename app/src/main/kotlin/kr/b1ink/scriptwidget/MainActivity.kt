@@ -111,6 +111,8 @@ class MainActivity : ComponentActivity() {
                         PermissionsRoute(vm = permissions, onBack = { nav = nav.back() ?: nav }, automation = container.automationSettings)
                     nav.overlay == Overlay.Bookmarks ->
                         kr.b1ink.scriptwidget.ui.bookmarks.FileBookmarksRoute(container = container, onBack = { nav = nav.back() ?: nav })
+                    nav.overlay == Overlay.Triggers ->
+                        kr.b1ink.scriptwidget.ui.triggers.TriggersRoute(container = container, onBack = { nav = nav.back() ?: nav })
                     nav.overlay == Overlay.ApiReference ->
                         kr.b1ink.scriptwidget.ui.api.ApiReferenceRoute(container = container, onBack = { nav = nav.back() ?: nav })
                     editing != null && nav.designing -> kr.b1ink.scriptwidget.ui.designer.DesignerRoute(
@@ -191,6 +193,7 @@ class MainActivity : ComponentActivity() {
                 update = updates.state.collectAsState().value,
                 actions = SettingsActions(
                     onPermissions = { onNav(nav.show(Overlay.Permissions)) },
+                    onTriggers = { onNav(nav.show(Overlay.Triggers)) },
                     onBookmarks = { onNav(nav.show(Overlay.Bookmarks)) },
                     onImport = { onNav(nav.request(ListAction.Import)) },
                     onBackup = { onNav(nav.request(ListAction.Backup)) },

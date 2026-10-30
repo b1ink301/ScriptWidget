@@ -43,8 +43,13 @@ class RefreshWidgetUseCase(
             notYetDue(appWidgetId)?.let { return@withLock it }
         }
         if (trigger != RefreshTrigger.Manual) {
-            waitingForScreen(appWidgetId, isScheduled = trigger == RefreshTrigger.Scheduled)?.let { return@withLock it }
-            tooSoon(appWidgetId, isScheduled = trigger == RefreshTrigger.Scheduled)?.let { return@withLock it }
+            // Events and refreshAfterDate both retry when the screen turns on.
+            val retries = trigger == RefreshTrigger.Scheduled || trigger == RefreshTrigger.Event
+            waitingForScreen(appWidgetId, isScheduled = retries)?.let { return@withLock it }
+            // Something changed: an event doesn't wait out the minimum interval.
+            if (trigger != RefreshTrigger.Event) {
+                tooSoon(appWidgetId, isScheduled = trigger == RefreshTrigger.Scheduled)?.let { return@withLock it }
+            }
             waitingForNetwork(appWidgetId)?.let { return@withLock it }
         }
         val state = computeState(appWidgetId, family, action)

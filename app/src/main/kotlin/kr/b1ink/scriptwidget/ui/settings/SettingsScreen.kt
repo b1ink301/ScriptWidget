@@ -35,6 +35,7 @@ class SettingsActions(
     val onOpenUrl: (String) -> Unit,
     val onRefreshWhileScreenOff: (Boolean) -> Unit = {},
     val onCheckUpdate: () -> Unit = {},
+    val onTriggers: () -> Unit = {},
 )
 
 const val REPOSITORY_URL = "https://github.com/b1ink301/ScriptWidget"
@@ -55,6 +56,7 @@ fun SettingsScreen(
         ) {
             group("권한·위젯") {
                 Row("🔐", "권한", "알림·위치·캘린더·배터리 최적화, 자동화 앱에서 실행", actions.onPermissions)
+                Row("⚡", "자동 실행 트리거", "캘린더 변경·자정·충전·Wi-Fi 등에서 위젯 갱신 또는 스크립트 실행", actions.onTriggers)
                 ToggleRow(
                     "🌙", "화면이 꺼져 있어도 갱신",
                     if (refreshWhileScreenOff) "15분마다 폰을 깨워 갱신합니다 (배터리 사용 증가)"

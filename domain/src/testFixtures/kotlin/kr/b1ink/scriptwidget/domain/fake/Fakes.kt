@@ -107,6 +107,12 @@ class FakeRefreshScheduler : WidgetRefreshScheduler {
         refreshed += appWidgetId
     }
 
+    val eventRefreshed = mutableListOf<Int>()
+
+    override fun refreshForEvent(appWidgetId: Int) {
+        eventRefreshed += appWidgetId
+    }
+
     /** Whether each [refreshAt] request may wake the device. */
     val wakeUps = mutableListOf<Boolean>()
 
@@ -250,4 +256,26 @@ class FakeCatalogUrls : kr.b1ink.scriptwidget.domain.repository.CatalogUrlReposi
 
 class FakeRefreshSettings(var whileScreenOff: Boolean = false) : kr.b1ink.scriptwidget.domain.scheduler.RefreshSettings {
     override fun refreshWhileScreenOff(): Boolean = whileScreenOff
+}
+
+class FakeEventTriggerRepository : kr.b1ink.scriptwidget.domain.repository.EventTriggerRepository {
+    override val triggers = kotlinx.coroutines.flow.MutableStateFlow(emptyList<kr.b1ink.scriptwidget.domain.model.EventTrigger>())
+
+    override suspend fun all() = triggers.value
+
+    override suspend fun save(trigger: kr.b1ink.scriptwidget.domain.model.EventTrigger) {
+        triggers.value = if (triggers.value.any { it.id == trigger.id }) triggers.value.map { if (it.id == trigger.id) trigger else it } else triggers.value + trigger
+    }
+
+    override suspend fun remove(id: String) {
+        triggers.value = triggers.value.filterNot { it.id == id }
+    }
+}
+
+class FakeEventMonitor : kr.b1ink.scriptwidget.domain.scheduler.EventMonitor {
+    var watching: Set<kr.b1ink.scriptwidget.domain.model.TriggerEvent> = emptySet()
+
+    override fun watch(events: Set<kr.b1ink.scriptwidget.domain.model.TriggerEvent>) {
+        watching = events
+    }
 }

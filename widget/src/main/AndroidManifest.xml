@@ -16,5 +16,15 @@
         <receiver
             android:name=".work.RefreshAlarmReceiver"
             android:exported="false" />
+
+        <!-- Event triggers: the midnight alarm and time zone / clock changes. -->
+        <receiver
+            android:name=".work.EventReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

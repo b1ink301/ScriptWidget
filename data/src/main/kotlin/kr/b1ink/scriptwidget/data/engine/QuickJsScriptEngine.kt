@@ -568,6 +568,7 @@ class QuickJsScriptEngine(
             put("queryParameters", kotlinx.serialization.json.JsonObject(env.queryParameters.mapValues { kotlinx.serialization.json.JsonPrimitive(it.value) }))
             put("source", env.source.name)
             put("shortcutParameter", env.shortcutParameter)
+            put("trigger", env.trigger)
             put("share", buildJsonObject {
                 put("plainTexts", env.shareInput.plainTexts.toJsonArray())
                 put("urls", env.shareInput.urls.toJsonArray())

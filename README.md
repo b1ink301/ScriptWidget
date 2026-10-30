@@ -73,14 +73,14 @@ sequenceDiagram
 
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
-| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교, 디자인 모델·편집 규칙·헤더·템플릿) | `domain/src/test` | 142 |
-| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교) | `data/src/test` | 255 |
+| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교, 디자인 모델·편집 규칙·헤더·템플릿, 카탈로그 검사, 이벤트 트리거) | `domain/src/test` | 155 |
+| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교), 내장 카탈로그 검사, 트리거 저장소 | `data/src/test` | 261 |
 | widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
-| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인, 디자이너 편집·되돌리기·미리보기) | `app/src/test` | 129 |
+| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인, 디자이너 편집·되돌리기·미리보기, 설치 전 권한 경고, 트리거 화면) | `app/src/test` | 132 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
-| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션) | `widget/src/androidTest` | 57 |
-| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택) | `app/src/androidTest` | 53 |
-| **합계** | | | **716** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션, 이벤트 감시(콘텐츠 URI·조건·자정 알람)) | `widget/src/androidTest` | 64 |
+| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택, 트리거 화면) | `app/src/androidTest` | 55 |
+| **합계** | | | **747** (+ 호환성 측정 하네스 1, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -198,11 +198,28 @@ export ANDROID_SERIAL=emulator-5554
 | 스크립트가 예약한 알림을 탭 | `config.runsInNotification`, `args.notification` (`userInfo` 포함) |
 | 홈 화면 바로가기 (**⋮ → 홈 화면에 바로가기**) | `config.runsFromHomeScreen` |
 | 자동화 앱(Tasker·MacroDroid 등) | `config.runsFromAutomation`, `args.shortcutParameter` — 아래 참고 |
+| **자동 실행 트리거** (설정 탭) | 캘린더·연락처 변경, 새 사진, 자정, 시간대 변경, 충전 중, Wi-Fi — `config.runsFromTrigger`, `args.trigger` — [아래 참고](#자동-실행-트리거) |
 
 **자동화 앱 연동** (권한 화면에서 **자동화 앱에서 실행**을 켠 경우만):
 - 실행: 브로드캐스트 `kr.b1ink.scriptwidget.action.RUN_SCRIPT`, extra `scriptName`(필수)·`parameter`(선택). 화면 없이 백그라운드에서 실행합니다(UI API는 에러).
 - 결과: 끝나면 브로드캐스트 `kr.b1ink.scriptwidget.action.SCRIPT_RESULT`, extra `scriptName`·`output`(`Script.setShortcutOutput()` 값의 JSON)·`error`.
 - 결과 브로드캐스트는 다른 앱도 받을 수 있으니 민감한 값은 `setShortcutOutput`으로 넘기지 마세요.
+
+### 자동 실행 트리거
+
+**설정 → 자동 실행 트리거 → + 트리거**: "언제 / 어떤 스크립트 / 무엇을"을 고릅니다.
+
+| 언제 | 구현 (서비스를 계속 띄우지 않음) | `args.trigger` |
+|---|---|---|
+| 캘린더가 바뀌면 · 연락처가 바뀌면 · 새 사진이 생기면 | WorkManager 콘텐츠 URI 트리거 (여러 변경은 5초~1분 안에 한 번으로 묶음) | `calendar` `contacts` `photo` |
+| 날짜가 바뀌면 (자정) | 화면을 깨우지 않는 알람 → 화면이 꺼져 있으면 다음에 켜질 때 | `day` |
+| 시간대·시각이 바뀌면 | 시스템 브로드캐스트(`TIMEZONE_CHANGED`, `TIME_SET`) | `timezone` |
+| 충전 중일 때 · Wi-Fi에 연결돼 있을 때 | WorkManager 조건, 실행 뒤 1시간 쉼 | `charging` `wifi` |
+
+- **위젯 갱신**: 그 스크립트를 쓰는 위젯을 다시 그립니다. 최소 간격(5분)은 건너뛰지만, 화면이 꺼져 있으면 화면이 켜질 때 실행하고, 오프라인이면 건너뛰는 정책은 그대로입니다.
+- **스크립트 실행**: 백그라운드에서 바로 실행합니다(기록 탭에 "트리거"로 남음). `config.runsFromTrigger`가 `true`이고, `args.trigger`로 어떤 이벤트인지 알 수 있습니다.
+- 쓰지 않는 이벤트는 시스템에 등록하지 않습니다. 앱이 업데이트되거나 재부팅되면 다시 등록합니다.
+- 에뮬레이터 확인: 사진 추가와 시간대 변경(서울→도쿄→서울) 때 스크립트가 "트리거"로 실행됐습니다.
 
 ### 편집기·실행 기록·도움말
 - **편집기**: 줄 번호, 문법 색상(키워드·문자열·숫자·주석·API 이름), 키보드 위 자동완성(`Font.` 뒤에는 정적 멤버, `new ListWidget()`으로 만든 변수 뒤에는 그 클래스의 메서드, 그 밖에는 API·키워드·스크립트 안에서 선언한 이름), **찾기/바꾸기**(대소문자 무시, 모두 바꾸기).
@@ -250,7 +267,7 @@ export ANDROID_SERIAL=emulator-5554
 | `Reminder` | `all*` `allDue*` `allIncomplete*` `completed*` `incompleteDue*` `scheduled` `between` `save` `remove`, 리스트 `forReminders*` `createForReminders` |
 | `Contact` `ContactsContainer` `ContactsGroup` | `all` `inGroups` `add` `update` `delete` `persistChanges` `image` / `all` `default` `withIdentifier` / `all` `addMember` `removeMember` |
 | `Photos` | `latestPhoto(s)` `latestScreenshot(s)` `fromLibrary` `fromCamera` `save` |
-| `Script` `config` `args` | `setWidget` `complete` `setShortcutOutput`, `runsInWidget` `runsInApp` `runsInActionExtension` `runsInNotification` `runsFromHomeScreen` `runsFromAutomation`(Android 확장) `widgetFamily`, `args.widgetParameter` `args.widgetAction` `args.queryParameters` `args.plainTexts` `args.urls` `args.fileURLs` `args.images` `args.all` `args.notification` `args.shortcutParameter` |
+| `Script` `config` `args` | `setWidget` `complete` `setShortcutOutput`, `runsInWidget` `runsInApp` `runsInActionExtension` `runsInNotification` `runsFromHomeScreen` `runsFromAutomation` `runsFromTrigger`(Android 확장) `widgetFamily`, `args.widgetParameter` `args.widgetAction` `args.queryParameters` `args.plainTexts` `args.urls` `args.fileURLs` `args.images` `args.all` `args.notification` `args.shortcutParameter` `args.trigger`(Android 확장) |
 | 위젯 버튼 (Android 확장) | 요소의 `tapAction = "이름"` 또는 `widget.addButton(title, action)` — 탭하면 앱을 열지 않고 스크립트를 다시 실행하고, 스크립트는 `args.widgetAction`으로 어떤 버튼인지 알 수 있음 |
 | 전역 | `console.*` `log` `setTimeout` `clearTimeout` `sleep(ms)` |
 

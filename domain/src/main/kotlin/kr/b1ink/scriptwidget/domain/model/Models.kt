@@ -21,9 +21,11 @@ data class ScriptEnvironment(
     val notification: NotificationPayload? = null,
     /** Text an automation app passed along (`args.shortcutParameter`). */
     val shortcutParameter: String? = null,
+    /** The event that started the run (`args.trigger`), e.g. "calendar"; see TriggerEvent.key. */
+    val trigger: String? = null,
 )
 
-enum class RunSource { App, Widget, ShareSheet, Notification, HomeScreen, Automation }
+enum class RunSource { App, Widget, ShareSheet, Notification, HomeScreen, Automation, Trigger }
 
 /** Shared content. Files and images are paths inside the script sandbox. */
 data class ShareInput(
@@ -107,4 +109,7 @@ enum class RefreshTrigger {
 
     /** The one-time refresh requested by `refreshAfterDate`. */
     Scheduled,
+
+    /** A device event (calendar changed, ...): runs even shortly after the last run, but waits for the screen. */
+    Event,
 }

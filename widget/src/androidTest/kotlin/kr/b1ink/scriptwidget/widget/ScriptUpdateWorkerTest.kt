@@ -46,7 +46,7 @@ class ScriptUpdateWorkerTest {
         scheduler = FakeRefreshScheduler(),
         clock = clock,
     )
-    private val factory = ScriptWorkerFactory({ refresh }, { WidgetFamilyResolver { WidgetFamily.Medium } })
+    private val factory = ScriptWorkerFactory({ refresh }, { WidgetFamilyResolver { WidgetFamily.Medium } }, { error("no events in this test") })
 
     private fun worker(inputId: Int?, trigger: String? = null, action: String? = null) = TestListenableWorkerBuilder<ScriptUpdateWorker>(context)
         .setWorkerFactory(factory)

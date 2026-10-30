@@ -15,6 +15,7 @@ interface WidgetDependencies {
     val unbindWidgets: UnbindWidgetsUseCase
     val scheduleBoundWidgets: ScheduleBoundWidgetsUseCase
     val resizeWidget: ResizeWidgetUseCase
+    val handleEvent: kr.b1ink.scriptwidget.domain.usecase.HandleEventUseCase
 
     interface Provider {
         val widgetDependencies: WidgetDependencies
