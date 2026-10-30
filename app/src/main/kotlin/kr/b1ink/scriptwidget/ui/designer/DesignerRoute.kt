@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import kr.b1ink.scriptwidget.R
 import kr.b1ink.scriptwidget.di.AppContainer
 import kr.b1ink.scriptwidget.pin.WidgetPinner
 
@@ -30,7 +31,7 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
                 scope.launch {
                     vm.saveIfDirty()
                     if (!WidgetPinner.pin(context, scriptName, null)) {
-                        Toast.makeText(context, "이 런처는 위젯 고정을 지원하지 않습니다.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.designer_pin_unsupported), Toast.LENGTH_SHORT).show()
                     }
                 }
             },
