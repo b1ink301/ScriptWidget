@@ -6,6 +6,8 @@
         restricted to alarm/calendar apps on Google Play; this app is distributed outside Play.
     -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- Widgets that need the network skip their run while offline. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission
         android:name="android.permission.SCHEDULE_EXACT_ALARM"
         android:maxSdkVersion="32" />

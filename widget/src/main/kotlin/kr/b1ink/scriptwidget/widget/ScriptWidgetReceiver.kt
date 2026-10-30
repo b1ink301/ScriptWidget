@@ -1,5 +1,6 @@
 package kr.b1ink.scriptwidget.widget
 
+import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.os.Bundle
@@ -21,6 +22,7 @@ class ScriptWidgetReceiver : GlanceAppWidgetReceiver() {
 
     // onUpdate / onAppWidgetOptionsChanged skip super: Glance would start a session that idles ~45 s
     // per update. The widgets are drawn once from their saved state instead (see GlanceWidgetDrawer).
+    @SuppressLint("MissingSuperCall")
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         val drawer = GlanceWidgetDrawer(context, glanceAppWidget)
         val scheduleBound = WidgetDependencies.from(context).scheduleBoundWidgets
@@ -35,6 +37,7 @@ class ScriptWidgetReceiver : GlanceAppWidgetReceiver() {
         }
     }
 
+    @SuppressLint("MissingSuperCall")
     override fun onAppWidgetOptionsChanged(
         context: Context,
         appWidgetManager: AppWidgetManager,

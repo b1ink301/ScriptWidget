@@ -87,8 +87,8 @@ class FileRunHistoryRepositoryTest {
     fun `history from the old single JSON file is carried over`() = runTest {
         val legacy = tmp.root.resolve("history/runs.json").apply {
             parentFile.mkdirs()
-            writeText(kotlinx.serialization.json.Json.encodeToString(
-                kotlinx.serialization.builtins.ListSerializer(RunRecord.serializer()), listOf(record("old2", 2), record("old1", 1))))
+            val serializer = kotlinx.serialization.builtins.ListSerializer(RunRecord.serializer())
+            writeText(kotlinx.serialization.json.Json.encodeToString(serializer, listOf(record("old2", 2), record("old1", 1))))
         }
 
         val repo = FileRunHistoryRepository(file, legacyFile = legacy)

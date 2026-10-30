@@ -372,8 +372,15 @@ apksigner verify --print-certs app/build/outputs/apk/release/app-universal-relea
 
 | 워크플로 | 언제 | 하는 일 |
 |---|---|---|
-| [`ci.yml`](.github/workflows/ci.yml) | `main` 푸시, PR, 수동 | 단위 테스트(domain·data(QuickJS)·widget·app) → 디버그 APK(아티팩트) → 에뮬레이터(API 35)에서 기기 테스트 |
+| [`ci.yml`](.github/workflows/ci.yml) | `main`·`develop` 푸시, PR, 수동 | **테스트**: 단위 테스트(domain·data(QuickJS)·widget·app) → 디버그 APK(아티팩트) → 에뮬레이터(API 35)에서 기기 테스트<br>**검사**(동시에): 코드 스타일(ktlint) → Android Lint → R8 release 빌드(서명 없이)<br>실패한 테스트·검사는 이름과 메시지가 GitHub 주석으로 남습니다 |
 | [`release.yml`](.github/workflows/release.yml) | `v*` 태그 푸시 | 단위 테스트 → 서명된 release APK(arm64-v8a·armeabi-v7a·x86_64·universal) → 서명 검증·SHA-256 → GitHub 릴리스 생성 |
+
+| [`dependabot.yml`](.github/dependabot.yml) | 매주 월요일 | Gradle 의존성·GitHub 액션 업데이트를 묶어서 `develop`으로 PR |
+
+**코드 스타일·Lint**
+- `./gradlew spotlessCheck`로 검사하고 `./gradlew spotlessApply`로 고칩니다. 규칙은 IntelliJ 스타일 ktlint이고, 기존 코드의 한 줄 서명·식 본문·호출 체인을 바꾸는 줄 바꿈 규칙은 껐습니다(`build.gradle.kts`의 `ktlintRules`).
+- Android Lint는 모듈별 `lint-baseline.xml`에 기존 경고를 기록해 두고, **새로 생긴 오류만** 실패로 처리합니다. 기준선을 다시 만들려면 `./gradlew updateLintBaseline`을 실행합니다. Lint를 처음 붙이면서 찾은 Android 12 이하 딥링크 크래시(API 33 전용 `URLDecoder.decode`)는 고쳤습니다.
+- detekt는 아직 Kotlin 2.4를 지원하는 안정판이 없어(1.23.8은 미지원, 2.0은 알파) 넣지 않았습니다.
 
 릴리스 만들기:
 ```bash

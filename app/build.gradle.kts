@@ -35,6 +35,13 @@ val releaseSigning: Map<String, String>? = run {
 }
 
 android {
+    // Existing findings are recorded in lint-baseline.xml; new errors fail the build (CI runs lintDebug).
+    lint {
+        baseline = file("lint-baseline.xml")
+        abortOnError = true
+        checkDependencies = false
+    }
+
     namespace = "kr.b1ink.scriptwidget"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
