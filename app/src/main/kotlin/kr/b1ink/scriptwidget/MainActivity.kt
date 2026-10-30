@@ -2,6 +2,23 @@ package kr.b1ink.scriptwidget
 
 import android.content.Intent
 import android.os.Bundle
+import android.net.Uri
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import kr.b1ink.scriptwidget.ui.main.FloatingTabBar
+import kr.b1ink.scriptwidget.ui.main.FloatingTabBarSpace
+import kr.b1ink.scriptwidget.ui.main.ListAction
+import kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace
+import kr.b1ink.scriptwidget.ui.main.MainNavState
+import kr.b1ink.scriptwidget.ui.main.MainTab
+import kr.b1ink.scriptwidget.ui.main.Overlay
+import kr.b1ink.scriptwidget.ui.settings.SettingsActions
+import kr.b1ink.scriptwidget.ui.settings.SettingsScreen
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -50,40 +67,31 @@ class MainActivity : ComponentActivity() {
         val container = container
         setContent {
             ScriptWidgetTheme {
-                var editing by rememberSaveable { mutableStateOf<String?>(null) }
-                var showPermissions by rememberSaveable { mutableStateOf(false) }
-                var showHistory by rememberSaveable { mutableStateOf(false) }
-                var showApi by rememberSaveable { mutableStateOf(false) }
-                var showBookmarks by rememberSaveable { mutableStateOf(false) }
-                var showGallery by rememberSaveable { mutableStateOf(false) }
+                var nav by rememberSaveable(stateSaver = NavSaver) { mutableStateOf(MainNavState()) }
                 val permissions = viewModel { PermissionsViewModel(AndroidPermissionStatus(applicationContext)) }
                 val permissionState by permissions.uiState.collectAsStateWithLifecycle()
                 var autoRun by remember { mutableStateOf<RunRequest?>(null) }
 
                 LaunchedEffect(pendingRun) {
                     pendingRun?.let { (script, request) ->
-                        showPermissions = false
-                        editing = script
+                        nav = nav.open(script)
                         autoRun = request
                         pendingRun = null
                     }
                 }
 
                 LaunchedEffect(pendingImport) {
-                    if (pendingImport.isNotEmpty()) {
-                        editing = null
-                        showPermissions = false
-                    }
+                    if (pendingImport.isNotEmpty()) nav = nav.showScripts()
                 }
 
                 LaunchedEffect(pendingLink) {
                     when (val link = pendingLink) {
                         is DeepLink.Run -> {
-                            editing = link.scriptName
+                            nav = nav.open(link.scriptName)
                             autoRun = RunRequest(queryParameters = link.queryParameters)
                         }
-                        is DeepLink.Open -> editing = link.scriptName
-                        DeepLink.Home -> editing = null
+                        is DeepLink.Open -> nav = nav.open(link.scriptName)
+                        DeepLink.Home -> nav = nav.goHome()
                         // Replies to CallbackURL.open(): hand them to the waiting script, stay on screen.
                         is DeepLink.Callback -> container.callbacks.complete(link)
                         null -> Unit
@@ -91,55 +99,83 @@ class MainActivity : ComponentActivity() {
                     pendingLink = null
                 }
 
-                val current = editing
-                if (showApi) {
-                    BackHandler { showApi = false }
-                    kr.b1ink.scriptwidget.ui.api.ApiReferenceRoute(container = container, onBack = { showApi = false })
-                } else if (showGallery && current == null) {
-                    BackHandler { showGallery = false }
-                    kr.b1ink.scriptwidget.ui.gallery.GalleryRoute(
+                // Back closes what is on top, then returns to "my scripts", then leaves the app.
+                val back = nav.back()
+                BackHandler(enabled = back != null) { back?.let { nav = it } }
+
+                val editing = nav.editing
+                when {
+                    nav.overlay == Overlay.Permissions ->
+                        PermissionsRoute(vm = permissions, onBack = { nav = nav.back() ?: nav }, automation = container.automationSettings)
+                    nav.overlay == Overlay.Bookmarks ->
+                        kr.b1ink.scriptwidget.ui.bookmarks.FileBookmarksRoute(container = container, onBack = { nav = nav.back() ?: nav })
+                    nav.overlay == Overlay.ApiReference ->
+                        kr.b1ink.scriptwidget.ui.api.ApiReferenceRoute(container = container, onBack = { nav = nav.back() ?: nav })
+                    editing != null -> EditorRoute(
                         container = container,
-                        onBack = { showGallery = false },
-                        // Opening an installed script keeps the gallery underneath: back returns to it.
-                        onOpen = { editing = it },
-                    )
-                } else if (showBookmarks) {
-                    BackHandler { showBookmarks = false }
-                    kr.b1ink.scriptwidget.ui.bookmarks.FileBookmarksRoute(container = container, onBack = { showBookmarks = false })
-                } else if (showHistory) {
-                    BackHandler { showHistory = false }
-                    kr.b1ink.scriptwidget.ui.history.RunHistoryRoute(container = container, onBack = { showHistory = false })
-                } else if (showPermissions) {
-                    BackHandler { showPermissions = false }
-                    PermissionsRoute(vm = permissions, onBack = { showPermissions = false }, automation = container.automationSettings)
-                } else if (current == null) {
-                    PermissionActionHandler(permissions)
-                    ScriptListRoute(
-                        container = container,
-                        onOpen = { editing = it },
-                        widgetRecommendations = permissionState.widgetRecommendations,
-                        onOpenPermissions = { showPermissions = true },
-                        onOpenHistory = { showHistory = true },
-                        onOpenApiReference = { showApi = true },
-                        onOpenBookmarks = { showBookmarks = true },
-                        onOpenGallery = { showGallery = true },
-                        incomingFiles = pendingImport,
-                        onIncomingFilesConsumed = { pendingImport = emptyList() },
-                    )
-                } else {
-                    BackHandler { editing = null }
-                    EditorRoute(
-                        container = container,
-                        scriptName = current,
-                        onBack = { editing = null },
+                        scriptName = editing,
+                        onBack = { nav = nav.closeEditor() },
                         autoRun = autoRun,
-                        onOpenApiReference = { showApi = true },
+                        onOpenApiReference = { nav = nav.show(Overlay.ApiReference) },
                         onAutoRunConsumed = { autoRun = null },
                     )
+                    else -> Box(Modifier.fillMaxSize()) {
+                        CompositionLocalProvider(LocalBottomBarSpace provides FloatingTabBarSpace) {
+                            TabContent(nav, permissions, permissionState.widgetRecommendations, onNav = { nav = it })
+                        }
+                        FloatingTabBar(
+                            selected = nav.tab,
+                            onSelect = { nav = nav.select(it) },
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
+                    }
                 }
             }
         }
     }
+
+    @Composable
+    private fun TabContent(
+        nav: MainNavState,
+        permissions: PermissionsViewModel,
+        widgetRecommendations: List<kr.b1ink.scriptwidget.permissions.AppPermission>,
+        onNav: (MainNavState) -> Unit,
+    ) {
+        val open: (String) -> Unit = { onNav(nav.open(it)) }
+        when (nav.tab) {
+            MainTab.Scripts -> {
+                PermissionActionHandler(permissions)
+                ScriptListRoute(
+                    container = container,
+                    onOpen = open,
+                    widgetRecommendations = widgetRecommendations,
+                    onOpenPermissions = { onNav(nav.show(Overlay.Permissions)) },
+                    incomingFiles = pendingImport,
+                    onIncomingFilesConsumed = { pendingImport = emptyList() },
+                    listAction = nav.listAction,
+                    onListActionDone = { onNav(nav.actionDone()) },
+                )
+            }
+            MainTab.Gallery -> kr.b1ink.scriptwidget.ui.gallery.GalleryRoute(container = container, onBack = null, onOpen = open)
+            MainTab.History -> kr.b1ink.scriptwidget.ui.history.RunHistoryRoute(container = container)
+            MainTab.Help -> kr.b1ink.scriptwidget.ui.api.ApiReferenceRoute(container = container)
+            MainTab.Settings -> SettingsScreen(
+                versionName = versionName(),
+                actions = SettingsActions(
+                    onPermissions = { onNav(nav.show(Overlay.Permissions)) },
+                    onBookmarks = { onNav(nav.show(Overlay.Bookmarks)) },
+                    onImport = { onNav(nav.request(ListAction.Import)) },
+                    onBackup = { onNav(nav.request(ListAction.Backup)) },
+                    onRestore = { onNav(nav.request(ListAction.Restore)) },
+                    onCatalogs = { onNav(nav.select(MainTab.Gallery)) },
+                    onOpenUrl = { url -> runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } },
+                ),
+            )
+        }
+    }
+
+    private fun versionName(): String =
+        runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: ""
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -161,3 +197,5 @@ class MainActivity : ComponentActivity() {
 
     private fun Intent?.deepLink(): DeepLink? = this?.dataString?.let(DeepLink::parse)
 }
+
+private val NavSaver = listSaver<MainNavState, String?>(save = { it.save() }, restore = { MainNavState.restore(it) })

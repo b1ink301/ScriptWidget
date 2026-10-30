@@ -64,7 +64,7 @@ class GalleryActions(
 )
 
 @Composable
-fun GalleryRoute(container: AppContainer, onBack: () -> Unit, onOpen: (String) -> Unit) {
+fun GalleryRoute(container: AppContainer, onBack: (() -> Unit)?, onOpen: (String) -> Unit) {
     val vm = viewModel {
         GalleryViewModel(container.builtinCatalog, container::remoteCatalog, container.catalogUrls, container.installedScripts, container.scriptRepositoryForGallery)
     }
@@ -88,7 +88,7 @@ private val SIZE_LABELS = mapOf("small" to "S", "medium" to "M", "large" to "L")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: () -> Unit) {
+fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: (() -> Unit)? = null) {
     var addingUrl by rememberSaveable { mutableStateOf(false) }
     var removing by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
@@ -98,7 +98,7 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: () -> 
     Scaffold(
         topBar = {
             TopAppBar(
-                navigationIcon = { TextButton(onClick = onBack) { Text("←") } },
+                navigationIcon = { onBack?.let { TextButton(onClick = it) { Text("←") } } },
                 title = { Text("갤러리") },
                 actions = { TextButton(onClick = { addingUrl = true }) { Text("+ 카탈로그") } },
             )
@@ -109,7 +109,7 @@ fun GalleryScreen(state: GalleryUiState, actions: GalleryActions, onBack: () -> 
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             return@Scaffold
         }
-        LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace.current)) {
             item {
                 Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(selected = state.category == null, onClick = { actions.onCategory(null) }, label = { Text("전체") })

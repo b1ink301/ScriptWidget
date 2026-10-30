@@ -37,6 +37,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace
+import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -61,6 +66,9 @@ fun ScriptListRoute(
     onOpenGallery: () -> Unit = {},
     incomingFiles: List<String> = emptyList(),
     onIncomingFilesConsumed: () -> Unit = {},
+    /** Import / backup / restore asked for in settings; run here, where the result shows. */
+    listAction: kr.b1ink.scriptwidget.ui.main.ListAction? = null,
+    onListActionDone: () -> Unit = {},
 ) {
     val vm = viewModel {
         ScriptListViewModel(
@@ -73,6 +81,7 @@ fun ScriptListRoute(
             setAppearance = container.setScriptAppearance,
             backupScripts = container.backupScripts,
             restoreScripts = container.restoreScripts,
+            activity = container.scriptActivity(),
         )
     }
     val state by vm.uiState.collectAsStateWithLifecycle()
@@ -109,6 +118,16 @@ fun ScriptListRoute(
             }
         }
     }
+    LaunchedEffect(listAction) {
+        when (listAction) {
+            kr.b1ink.scriptwidget.ui.main.ListAction.Import -> importPicker.launch(arrayOf("*/*"))
+            kr.b1ink.scriptwidget.ui.main.ListAction.Backup -> vm.requestBackup()
+            kr.b1ink.scriptwidget.ui.main.ListAction.Restore ->
+                restorePicker.launch(arrayOf("application/zip", "application/octet-stream", "application/x-zip-compressed"))
+            null -> return@LaunchedEffect
+        }
+        onListActionDone()
+    }
     LaunchedEffect(incomingFiles) {
         if (incomingFiles.isNotEmpty()) {
             vm.importFiles(incomingFiles)
@@ -126,6 +145,7 @@ fun ScriptListRoute(
         onOpenBookmarks = onOpenBookmarks,
         onOpenGallery = onOpenGallery,
         onSetAppearance = vm::setAppearance,
+        onSearch = vm::search,
         onAddShortcut = { name ->
             val pinned = kr.b1ink.scriptwidget.automation.ScriptShortcuts.requestPin(context, name)
             if (!pinned) scope.launch { snackbar.showSnackbar("이 런처는 바로가기 추가를 지원하지 않습니다.") }
@@ -163,27 +183,37 @@ fun ScriptListScreen(
     onOpenBookmarks: () -> Unit = {},
     onOpenGallery: () -> Unit = {},
     onSetAppearance: (String, ScriptAppearance) -> Unit = { _, _ -> },
+    onSearch: (String) -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
 ) {
     var styling by remember { mutableStateOf<ScriptSummary?>(null) }
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("ScriptWidget") },
+                title = { Text("내 스크립트") },
                 actions = {
-                    TextButton(onClick = onOpenHistory) { Text("기록") }
-                    TextButton(onClick = onOpenPermissions) { Text("권한") }
-                    AppMenu(onImport, onBackup, onRestore, onOpenApiReference, onOpenBookmarks, onOpenGallery)
+                    FilledTonalButton(onClick = onCreate, modifier = Modifier.padding(end = 8.dp).testTag("new-script")) {
+                        Text("+ 새 스크립트")
+                    }
                 },
             )
         },
         snackbarHost = snackbarHost,
-        floatingActionButton = { ExtendedFloatingActionButton(onClick = onCreate) { Text("+ 새 스크립트") } },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(bottom = 96.dp),
+            contentPadding = PaddingValues(bottom = LocalBottomBarSpace.current + 16.dp),
         ) {
+            item {
+                OutlinedTextField(
+                    value = state.query,
+                    onValueChange = onSearch,
+                    placeholder = { Text("스크립트 검색") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(28.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).testTag("script-search"),
+                )
+            }
             if (widgetRecommendations.isNotEmpty()) {
                 item {
                     Card(
@@ -215,12 +245,14 @@ fun ScriptListScreen(
                     }
                 }
             }
-            items(state.scripts, key = { it.name }) { script ->
+            items(state.visible, key = { it.summary.name }) { row ->
+                val script = row.summary
                 val name = script.name
                 ListItem(
                     modifier = Modifier.clickable { onOpen(name) },
                     leadingContent = { ScriptIcon(script) },
                     headlineContent = { Text(name) },
+                    supportingContent = { Text(row.subtitle, style = MaterialTheme.typography.bodySmall) },
                     trailingContent = {
                         ScriptMenu(
                             onExport = { onExport(name) },
@@ -266,29 +298,6 @@ private fun ScriptMenu(onExport: () -> Unit, onAddShortcut: () -> Unit, onStyle:
             DropdownMenuItem(text = { Text("홈 화면에 바로가기") }, onClick = { open = false; onAddShortcut() })
             DropdownMenuItem(text = { Text("아이콘·색상") }, onClick = { open = false; onStyle() })
             DropdownMenuItem(text = { Text("삭제") }, onClick = { open = false; onDelete() })
-        }
-    }
-}
-
-@Composable
-private fun AppMenu(
-    onImport: () -> Unit,
-    onBackup: () -> Unit,
-    onRestore: () -> Unit,
-    onOpenApiReference: () -> Unit,
-    onOpenBookmarks: () -> Unit,
-    onOpenGallery: () -> Unit,
-) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        TextButton(onClick = { open = true }) { Text("⋮") }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(text = { Text("갤러리") }, onClick = { open = false; onOpenGallery() })
-            DropdownMenuItem(text = { Text("가져오기") }, onClick = { open = false; onImport() })
-            DropdownMenuItem(text = { Text("전체 백업") }, onClick = { open = false; onBackup() })
-            DropdownMenuItem(text = { Text("백업에서 복원") }, onClick = { open = false; onRestore() })
-            DropdownMenuItem(text = { Text("파일 북마크") }, onClick = { open = false; onOpenBookmarks() })
-            DropdownMenuItem(text = { Text("API 도움말") }, onClick = { open = false; onOpenApiReference() })
         }
     }
 }

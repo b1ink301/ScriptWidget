@@ -47,7 +47,11 @@ class ScriptListViewModelTest {
         backupScripts = kr.b1ink.scriptwidget.domain.usecase.BackupScriptsUseCase(scripts, codec, documents),
         restoreScripts = kr.b1ink.scriptwidget.domain.usecase.RestoreScriptsUseCase(scripts, codec, documents),
         today = { "2026-10-29" },
+        activity = activity,
+        now = { now },
     )
+    private val activity = kotlinx.coroutines.flow.MutableStateFlow<Map<String, kr.b1ink.scriptwidget.domain.model.ScriptActivity>>(emptyMap())
+    private var now = 10_000_000L
     private val summaries = kr.b1ink.scriptwidget.domain.usecase.ObserveScriptSummariesUseCase(scripts)
     private val codec = kr.b1ink.scriptwidget.domain.fake.FakeArchiveCodec()
 
@@ -188,5 +192,37 @@ class ScriptListViewModelTest {
         vm.restoreFrom("content://bad")
 
         assertTrue("복원 실패" in (vm.events.first() as ScriptListEvent.ShowMessage).text)
+    }
+
+    // --- search and activity ---
+
+    @Test
+    fun `search filters scripts by name, ignoring case`() = runTest {
+        listOf("Clock", "news", "world clock").forEach { scripts.write(it, "") }
+        val vm = viewModel()
+
+        vm.search("CLOCK")
+
+        assertEquals(listOf("Clock", "world clock"), vm.uiState.value.visible.map { it.summary.name })
+        vm.search("")
+        assertEquals(3, vm.uiState.value.visible.size)
+    }
+
+    @Test
+    fun `rows say how many widgets use the script and when it last ran`() = runTest {
+        listOf("a", "b", "c", "d").forEach { scripts.write(it, "") }
+        val minute = 60_000L
+        activity.value = mapOf(
+            "a" to kr.b1ink.scriptwidget.domain.model.ScriptActivity(widgets = 2, lastRunAt = now - 3 * minute),
+            "b" to kr.b1ink.scriptwidget.domain.model.ScriptActivity(widgets = 0, lastRunAt = now - 5 * 60 * minute),
+            "c" to kr.b1ink.scriptwidget.domain.model.ScriptActivity(widgets = 1, lastRunAt = now - 3 * 24 * 60 * minute),
+        )
+        val vm = viewModel()
+
+        val rows = vm.uiState.value.visible.associate { it.summary.name to it.subtitle }
+        assertEquals("위젯 2개 · 3분 전 실행", rows["a"])
+        assertEquals("위젯 없음 · 5시간 전 실행", rows["b"])
+        assertEquals("위젯 1개 · 3일 전 실행", rows["c"])
+        assertEquals("위젯 없음", rows["d"], "never ran: only the widget count")
     }
 }

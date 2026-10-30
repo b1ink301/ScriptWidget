@@ -72,14 +72,14 @@ sequenceDiagram
 
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
-| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL) | `domain/src/test` | 117 |
+| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL) | `domain/src/test` | 118 |
 | data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업 | `data/src/test` | 246 |
 | widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
-| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리) | `app/src/test` | 104 |
+| app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동) | `app/src/test` | 116 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
 | widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션) | `widget/src/androidTest` | 55 |
-| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치) | `app/src/androidTest` | 39 |
-| **합계** | | | **641** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정) | `app/src/androidTest` | 42 |
+| **합계** | | | **657** (+ 호환성 측정 하네스 1, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -106,6 +106,18 @@ export ANDROID_SERIAL=emulator-5554
 
 [Releases](https://github.com/b1ink301/ScriptWidget/releases)에서 APK를 받아 설치합니다. 대부분의 휴대폰은 `-arm64-v8a.apk`, 잘 모르겠으면 `-universal.apk`. 처음 설치할 때 "출처를 알 수 없는 앱" 설치를 허용해야 합니다. 업데이트는 같은 서명 키로 만든 새 APK를 덮어 설치하면 됩니다.
 
+## 화면 구성
+
+화면 아래에 떠 있는 탭바로 이동합니다. 편집기·권한·파일 북마크 같은 화면은 탭바 없이 전체 화면으로 열리고, 뒤로 가기로 원래 탭에 돌아옵니다. 다른 탭에서 뒤로 가기를 누르면 **내 스크립트**로, 거기서 한 번 더 누르면 앱을 닫습니다.
+
+| 탭 | 내용 |
+|---|---|
+| **내 스크립트** | 스크립트 목록·검색, 각 스크립트의 "위젯 n개 · n분 전 실행", 상단 **+ 새 스크립트**, 스크립트 **⋮**(내보내기·바로가기·아이콘·삭제) |
+| **갤러리** | 샘플·카탈로그 설치·열기·업데이트, **+ 카탈로그** |
+| **기록** | 실행 기록 |
+| **도움말** | API 도움말 |
+| **설정** | 권한(자동화 앱 실행 포함), 파일 북마크, 가져오기, 전체 백업·복원, 카탈로그 관리, 버전·GitHub·라이선스 |
+
 ## 빌드 & 실행
 
 ```bash
@@ -119,18 +131,18 @@ export ANDROID_SERIAL=emulator-5554
 
 ### 스크립트 가져오기 / 내보내기
 
-- **가져오기**: 목록 화면 오른쪽 위 **가져오기** → 시스템 파일 선택기에서 파일을 하나 이상 선택. 파일 앱·브라우저에서 `.js` 파일을 **ScriptWidget으로 열기**하거나 **공유**해도 가져옵니다.
+- **가져오기**: **설정** 탭 → **스크립트 가져오기** → 시스템 파일 선택기에서 파일을 하나 이상 선택. 파일 앱·브라우저에서 `.js` 파일을 **ScriptWidget으로 열기**하거나 **공유**해도 가져옵니다.
   - `.js` `.txt`: 파일 이름(확장자 제외)이 스크립트 이름이 됩니다.
   - `.scriptable` (iOS Scriptable 내보내기 파일): 안의 `name`·`script`를 꺼내고, `icon`(색상·아이콘)은 스크립트 맨 위 아이콘 주석으로 저장합니다. 파일 앱에서 `.scriptable` 파일을 **열기**·**공유**해도 ScriptWidget이 후보로 나옵니다(형식이 `application/octet-stream`이라 다른 알 수 없는 파일에도 후보로 보일 수 있고, 스크립트가 아니면 거부합니다).
   - 같은 이름이 있으면 덮어쓰지 않고 `이름 2`, `이름 3`…으로 저장합니다. 파일 하나만 가져오면 바로 편집기가 열립니다.
   - 바이너리 파일, 빈 파일, 1MB 초과 파일은 거부하고 이유를 알려 줍니다.
 - **내보내기**: 스크립트 옆 **⋮ → 내보내기** → 저장할 위치를 고르면 `이름.js`로 저장합니다.
-- **전체 백업 / 복원**: 오른쪽 위 **⋮ → 전체 백업**은 모든 스크립트를 zip 하나로 저장합니다. **백업에서 복원**은 없는 스크립트를 추가하고, 같은 내용은 건너뛰고, 이름이 같고 내용이 다르면 `이름 2`로 추가합니다(덮어쓰지 않음).
+- **전체 백업 / 복원**: **설정** 탭 → **전체 백업**은 모든 스크립트를 zip 하나로 저장합니다. **백업에서 복원**은 없는 스크립트를 추가하고, 같은 내용은 건너뛰고, 이름이 같고 내용이 다르면 `이름 2`로 추가합니다(덮어쓰지 않음).
 - **아이콘·색상**: 스크립트 옆 **⋮ → 아이콘·색상**. Scriptable과 같은 방식(파일 맨 위 `// icon-color: …; icon-glyph: …;` 주석)으로 저장해서, Scriptable에서 가져온 스크립트의 아이콘도 그대로 보입니다.
 
 ### 갤러리 (샘플·스크립트 마켓)
 
-목록 **⋮ → 갤러리**. 분류(일정·할 일 / 생활 / 정보 / 예제)별로 스크립트를 보고 **설치**·**열기**·**업데이트**합니다.
+**갤러리** 탭. 분류(일정·할 일 / 생활 / 정보 / 예제)별로 스크립트를 보고 **설치**·**열기**·**업데이트**합니다.
 
 | 분류 | 기본 샘플 |
 |---|---|
@@ -178,8 +190,8 @@ export ANDROID_SERIAL=emulator-5554
 
 ### 편집기·실행 기록·도움말
 - **편집기**: 줄 번호, 문법 색상(키워드·문자열·숫자·주석·API 이름), 키보드 위 자동완성(`Font.` 뒤에는 정적 멤버, `new ListWidget()`으로 만든 변수 뒤에는 그 클래스의 메서드, 그 밖에는 API·키워드·스크립트 안에서 선언한 이름), **찾기/바꾸기**(대소문자 무시, 모두 바꾸기).
-- **실행 기록**: 목록 화면 **기록**. 앱·위젯·알림·공유·자동화 실행이 최근 200개까지 남습니다(시간, 실행 위치, 걸린 시간, 에러·로그). **실패만** 필터.
-- **API 도움말**: 목록 **⋮ → API 도움말** 또는 편집기 **API** 버튼. 목록은 prelude를 QuickJS로 직접 조사해서 만들어서(생성자·메서드 인자·속성·async 여부) 구현과 항상 일치합니다. 각 항목에서 공식 문서로 이동할 수 있습니다.
+- **실행 기록**: **기록** 탭. 앱·위젯·알림·공유·자동화 실행이 최근 200개까지 남습니다(시간, 실행 위치, 걸린 시간, 에러·로그). **실패만** 필터.
+- **API 도움말**: **도움말** 탭 또는 편집기 **API** 버튼. 목록은 prelude를 QuickJS로 직접 조사해서 만들어서(생성자·메서드 인자·속성·async 여부) 구현과 항상 일치합니다. 각 항목에서 공식 문서로 이동할 수 있습니다.
 
 ## 지원 JS API
 
@@ -199,7 +211,7 @@ export ANDROID_SERIAL=emulator-5554
 | `XMLParser` | SAX 스타일 콜백 (`didStartElement` `foundCharacters` `didEndElement` `parseErrorOccurred` …), DTD·외부 엔티티 비활성 |
 | `Safari` `URLScheme` | `open` `openInApp`(위젯 갱신 중엔 불가) / `forRunningScript` `forOpeningScript` `forOpeningScriptSettings` `forOpeningApp` `parameter` `allParameters` — `scriptwidget://run?scriptName=…` 딥링크를 앱이 처리 |
 | `Request` | `url` `method` `headers` `body` `timeoutInterval` `load` `loadString` `loadJSON` `loadImage` `response` |
-| `FileManager` | `local()` `iCloud()`(=local) `documents/cache/temporaryDirectory` `joinPath` `read/write` `readString/writeString` `readImage/writeImage` `fileExists` `isDirectory` `createDirectory` `listContents` `remove` `fileName` `fileExtension` `modificationDate` `fileSize` — 앱 전용 샌드박스 밖 경로는 거부 · 파일 북마크 `bookmarkedPath` `bookmarkExists` `allFileBookmarks` (목록 화면 ⋮ → **파일 북마크**에서 이름을 정하고 파일을 고르면 앱 안으로 복사됨) |
+| `FileManager` | `local()` `iCloud()`(=local) `documents/cache/temporaryDirectory` `joinPath` `read/write` `readString/writeString` `readImage/writeImage` `fileExists` `isDirectory` `createDirectory` `listContents` `remove` `fileName` `fileExtension` `modificationDate` `fileSize` — 앱 전용 샌드박스 밖 경로는 거부 · 파일 북마크 `bookmarkedPath` `bookmarkExists` `allFileBookmarks` (**설정** 탭 → **파일 북마크**에서 이름을 정하고 파일을 고르면 앱 안으로 복사됨) |
 | `Keychain` | `set` `get`(없으면 throw) `contains` `remove` — Android Keystore AES-GCM으로 암호화 |
 | `Location` | `current()` `setAccuracyTo*()` `reverseGeocode()` — 실패 시 마지막 위치(권한이 있을 때만) |
 | `importModule` | 다른 스크립트를 CommonJS 모듈로 (`module.exports`, 캐시, 순환 참조) |
@@ -282,7 +294,7 @@ cat data/build/compat-report.txt
 
 ## 배포 정책과 권한
 
-ScriptWidget은 **Google Play가 아니라 GitHub로 배포**합니다. 그래서 Play 정책 때문에 쓰기 어려운 권한도 사용합니다. 사용자는 앱의 **권한** 화면(목록 화면 오른쪽 위)에서 각 권한의 상태와 용도를 보고 허용할 수 있습니다. 위젯에 중요한 권한이 빠져 있으면 목록 화면에 배너가 뜹니다.
+ScriptWidget은 **Google Play가 아니라 GitHub로 배포**합니다. 그래서 Play 정책 때문에 쓰기 어려운 권한도 사용합니다. 사용자는 앱의 **권한** 화면(**설정** 탭 → 권한)에서 각 권한의 상태와 용도를 보고 허용할 수 있습니다. 위젯에 중요한 권한이 빠져 있으면 목록 화면에 배너가 뜹니다.
 
 | 권한 | 용도 | 요청 방식 | Play 배포였다면 |
 |---|---|---|---|

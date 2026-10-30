@@ -34,7 +34,7 @@ import kr.b1ink.scriptwidget.data.api.ApiMember
 import kr.b1ink.scriptwidget.di.AppContainer
 
 @Composable
-fun ApiReferenceRoute(container: AppContainer, onBack: () -> Unit) {
+fun ApiReferenceRoute(container: AppContainer, onBack: (() -> Unit)? = null) {
     val vm = viewModel { ApiReferenceViewModel { container.apiCatalog() } }
     val state by vm.uiState.collectAsStateWithLifecycle()
     val selected = state.selected
@@ -48,13 +48,13 @@ fun ApiReferenceRoute(container: AppContainer, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ApiReferenceScreen(state: ApiReferenceUiState, onBack: () -> Unit, onSearch: (String) -> Unit, onSelect: (String) -> Unit) {
+fun ApiReferenceScreen(state: ApiReferenceUiState, onBack: (() -> Unit)?, onSearch: (String) -> Unit, onSelect: (String) -> Unit) {
     Scaffold(
         topBar = {
-            TopAppBar(navigationIcon = { TextButton(onClick = onBack) { Text("←") } }, title = { Text("API 도움말") })
+            TopAppBar(navigationIcon = { onBack?.let { TextButton(onClick = it) { Text("←") } } }, title = { Text("API 도움말") })
         },
     ) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace.current)) {
             item {
                 OutlinedTextField(
                     value = state.query,

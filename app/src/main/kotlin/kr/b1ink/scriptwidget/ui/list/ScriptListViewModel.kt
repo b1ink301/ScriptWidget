@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -16,6 +17,7 @@ import kr.b1ink.scriptwidget.domain.usecase.CreateScriptUseCase
 import kr.b1ink.scriptwidget.domain.usecase.DeleteScriptUseCase
 import kr.b1ink.scriptwidget.domain.usecase.ExportScriptUseCase
 import kr.b1ink.scriptwidget.domain.usecase.ImportScriptsUseCase
+import kr.b1ink.scriptwidget.domain.model.ScriptActivity
 import kr.b1ink.scriptwidget.domain.model.ScriptAppearance
 import kr.b1ink.scriptwidget.domain.model.ScriptSummary
 import kr.b1ink.scriptwidget.domain.usecase.BackupScriptsUseCase
@@ -23,11 +25,38 @@ import kr.b1ink.scriptwidget.domain.usecase.ObserveScriptSummariesUseCase
 import kr.b1ink.scriptwidget.domain.usecase.RestoreScriptsUseCase
 import kr.b1ink.scriptwidget.domain.usecase.SetScriptAppearanceUseCase
 
+/** A list row: the script and "위젯 2개 · 3분 전 실행". */
+data class ScriptRow(val summary: ScriptSummary, val subtitle: String)
+
 data class ScriptListUiState(
     val scripts: List<ScriptSummary> = emptyList(),
     val pendingDelete: String? = null,
+    val query: String = "",
+    val activity: Map<String, ScriptActivity> = emptyMap(),
+    val now: Long = 0,
 ) {
     val names: List<String> get() = scripts.map { it.name }
+
+    val visible: List<ScriptRow>
+        get() = scripts
+            .filter { query.isBlank() || it.name.contains(query.trim(), ignoreCase = true) }
+            .map { ScriptRow(it, subtitle(activity[it.name] ?: ScriptActivity())) }
+
+    private fun subtitle(a: ScriptActivity): String {
+        val widgets = if (a.widgets > 0) "위젯 ${a.widgets}개" else "위젯 없음"
+        val ran = a.lastRunAt?.let { "${ago(now - it)} 실행" }
+        return listOfNotNull(widgets, ran).joinToString(" · ")
+    }
+
+    private fun ago(ms: Long): String {
+        val minutes = (ms / 60_000).coerceAtLeast(0)
+        return when {
+            minutes < 1 -> "방금"
+            minutes < 60 -> "${minutes}분 전"
+            minutes < 24 * 60 -> "${minutes / 60}시간 전"
+            else -> "${minutes / (24 * 60)}일 전"
+        }
+    }
 }
 
 sealed interface ScriptListEvent {
@@ -53,18 +82,27 @@ class ScriptListViewModel(
     private val restoreScripts: RestoreScriptsUseCase,
     /** Today as yyyy-MM-dd, for backup file names. */
     private val today: () -> String = { java.time.LocalDate.now().toString() },
+    activity: Flow<Map<String, ScriptActivity>> = kotlinx.coroutines.flow.flowOf(emptyMap()),
+    private val now: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
     private val pendingDelete = MutableStateFlow<String?>(null)
+    private val query = MutableStateFlow("")
     private val _events = Channel<ScriptListEvent>(Channel.BUFFERED)
     val events: Flow<ScriptListEvent> = _events.receiveAsFlow()
 
     val uiState: StateFlow<ScriptListUiState> =
-        combine(summaries(), pendingDelete) { scripts, pending -> ScriptListUiState(scripts, pending) }
+        combine(summaries(), pendingDelete, query, activity.onStart { emit(emptyMap()) }) { scripts, pending, q, act ->
+            ScriptListUiState(scripts, pending, q, act, now())
+        }
             .stateIn(viewModelScope, SharingStarted.Eagerly, ScriptListUiState())
 
     init {
         viewModelScope.launch { seedSamples() }
+    }
+
+    fun search(text: String) {
+        query.value = text
     }
 
     fun createScript() {

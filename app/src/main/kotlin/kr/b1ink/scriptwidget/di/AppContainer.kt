@@ -198,6 +198,9 @@ class AppContainer(
     }
     val runScript by lazy { RunScriptUseCase(engine, runHistory) }
 
+    /** Widget count and last run per script, for the script list. */
+    fun scriptActivity() = kr.b1ink.scriptwidget.domain.usecase.ObserveScriptActivityUseCase(scriptRepository, bindingRepository, runHistory)()
+
     private val apiCatalogLock = kotlinx.coroutines.sync.Mutex()
     private var apiCatalogCache: List<kr.b1ink.scriptwidget.data.api.ApiEntry>? = null
 

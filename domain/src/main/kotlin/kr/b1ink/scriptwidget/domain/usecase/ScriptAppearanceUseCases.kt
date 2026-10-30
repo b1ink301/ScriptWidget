@@ -29,3 +29,16 @@ class SetScriptAppearanceUseCase(private val scripts: ScriptRepository) {
         scripts.write(name, appearance.applyTo(code))
     }
 }
+
+/** Per script: how many widgets use it and when it last ran (updated as scripts run). */
+class ObserveScriptActivityUseCase(
+    private val scripts: ScriptRepository,
+    private val bindings: kr.b1ink.scriptwidget.domain.repository.WidgetBindingRepository,
+    private val history: kr.b1ink.scriptwidget.domain.repository.RunHistoryRepository,
+) {
+    operator fun invoke(): Flow<Map<String, kr.b1ink.scriptwidget.domain.model.ScriptActivity>> =
+        combine(scripts.scriptNames, history.history) { names, records ->
+            val lastRun = records.groupBy { it.scriptName }.mapValues { (_, runs) -> runs.maxOf { it.startedAt } }
+            names.associateWith { kr.b1ink.scriptwidget.domain.model.ScriptActivity(bindings.widgetsUsing(it).size, lastRun[it]) }
+        }
+}

@@ -33,7 +33,7 @@ import java.text.DateFormat
 import java.util.Date
 
 @Composable
-fun RunHistoryRoute(container: AppContainer, onBack: () -> Unit) {
+fun RunHistoryRoute(container: AppContainer, onBack: (() -> Unit)? = null) {
     val vm = viewModel { RunHistoryViewModel(container.runHistory) }
     val state by vm.uiState.collectAsStateWithLifecycle()
     RunHistoryScreen(state, onBack, vm::setFailuresOnly, vm::clear)
@@ -43,7 +43,7 @@ fun RunHistoryRoute(container: AppContainer, onBack: () -> Unit) {
 @Composable
 fun RunHistoryScreen(
     state: RunHistoryUiState,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onFailuresOnly: (Boolean) -> Unit,
     onClear: () -> Unit,
 ) {
@@ -52,7 +52,7 @@ fun RunHistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                navigationIcon = { TextButton(onClick = onBack) { Text("←") } },
+                navigationIcon = { onBack?.let { TextButton(onClick = it) { Text("←") } } },
                 title = { Text("실행 기록") },
                 actions = {
                     FilterChip(selected = state.failuresOnly, onClick = { onFailuresOnly(!state.failuresOnly) }, label = { Text("실패만") })
@@ -67,7 +67,7 @@ fun RunHistoryScreen(
             }
             return@Scaffold
         }
-        LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = kr.b1ink.scriptwidget.ui.main.LocalBottomBarSpace.current)) {
             items(state.rows, key = { it.key }) { row ->
                 ListItem(
                     modifier = Modifier.clickable { expanded = if (expanded == row.key) null else row.key },

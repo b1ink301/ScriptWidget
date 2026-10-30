@@ -36,3 +36,6 @@ data class ScriptAppearance(val color: String, val glyph: String? = null) {
 
 /** A script in the list. */
 data class ScriptSummary(val name: String, val appearance: ScriptAppearance?)
+
+/** Shown under each script in the list. */
+data class ScriptActivity(val widgets: Int = 0, val lastRunAt: Long? = null)
