@@ -48,9 +48,6 @@ class SettingsActions(
 
 const val REPOSITORY_URL = "https://github.com/b1ink301/ScriptWidget"
 
-/** The README's license section (its Korean heading, percent-encoded). */
-private const val LICENSE_URL = "$REPOSITORY_URL#%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4"
-
 /** Everything used now and then: permissions, files, backups, catalogs and about. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,7 +109,9 @@ fun SettingsScreen(
             group(R.string.settings_group_about) {
                 UpdateRow(update, actions)
                 Row("ℹ️", stringResource(R.string.settings_app_version, versionName), stringResource(R.string.settings_view_source)) { actions.onOpenUrl(REPOSITORY_URL) }
-                Row("📄", stringResource(R.string.settings_license_title), stringResource(R.string.settings_license_subtitle)) { actions.onOpenUrl(LICENSE_URL) }
+                // The README in the app's language, at its License section.
+                val licenseUrl = REPOSITORY_URL + stringResource(R.string.settings_license_path)
+                Row("📄", stringResource(R.string.settings_license_title), stringResource(R.string.settings_license_subtitle)) { actions.onOpenUrl(licenseUrl) }
             }
         }
     }

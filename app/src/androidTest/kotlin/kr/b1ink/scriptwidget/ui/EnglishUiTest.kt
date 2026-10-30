@@ -11,6 +11,8 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
@@ -60,6 +62,17 @@ class EnglishUiTest {
         // The tab label and the screen title.
         compose.onAllNodesWithText("Settings").assertCountEquals(2)
         compose.onNodeWithText("Refresh while the screen is off").assertExists()
+    }
+
+    @Test
+    fun theLicenseRowOpensTheEnglishReadme() {
+        val opened = mutableListOf<String>()
+        inEnglish { SettingsScreen(versionName = "1.0", actions = SettingsActions({}, {}, {}, {}, {}, {}, { opened += it })) }
+
+        compose.onNode(androidx.compose.ui.test.hasScrollAction()).performScrollToNode(androidx.compose.ui.test.hasText("License"))
+        compose.onNodeWithText("License").performClick()
+
+        kotlin.test.assertEquals(listOf("https://github.com/b1ink301/ScriptWidget#license"), opened)
     }
 
     @Test
