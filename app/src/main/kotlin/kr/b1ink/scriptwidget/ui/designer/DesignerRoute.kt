@@ -1,6 +1,12 @@
 package kr.b1ink.scriptwidget.ui.designer
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -10,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import kr.b1ink.scriptwidget.R
 import kr.b1ink.scriptwidget.di.AppContainer
+import kr.b1ink.scriptwidget.domain.usecase.AddFileBookmarkUseCase
 import kr.b1ink.scriptwidget.pin.WidgetPinner
 
 @Composable
@@ -18,7 +25,19 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
     val designerPinUnsupported = androidx.compose.ui.res.stringResource(R.string.designer_pin_unsupported)
     val scope = rememberCoroutineScope()
     val vm = viewModel(key = "designer-$scriptName") {
-        DesignerViewModel(scriptName, container.openDesign, container.saveDesign, container.designGenerator, container.runPreview)
+        DesignerViewModel(
+            scriptName,
+            container.openDesign,
+            container.saveDesign,
+            container.designGenerator,
+            container.runPreview,
+            bookmarks = container.fileBookmarks,
+            addBookmark = AddFileBookmarkUseCase(container.fileBookmarks, container.scriptDocuments),
+        )
+    }
+    var pictureTarget by remember { mutableStateOf(PictureTarget.SelectedImage) }
+    val pickPicture = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) vm.addPicture(uri.toString(), pictureTarget)
     }
     val state by vm.state.collectAsStateWithLifecycle()
     DesignerScreen(
@@ -45,6 +64,10 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
             onDrop = vm::moveTo,
             onWrap = vm::wrapSelected,
             onRemove = vm::removeSelected,
+            onPickPicture = { target ->
+                pictureTarget = target
+                pickPicture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
         ),
     )
 }

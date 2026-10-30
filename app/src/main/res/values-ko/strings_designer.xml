@@ -115,4 +115,11 @@
     <string name="designer_date_style_timer">타이머</string>
     <string name="designer_pin_unsupported">이 런처는 위젯 고정을 지원하지 않습니다.</string>
     <string name="designer_drag_handle">끌어서 옮기기</string>
+    <string name="designer_prop_image_source">출처</string>
+    <string name="designer_image_source_bookmark">파일 북마크</string>
+    <string name="designer_prop_bookmark">사진 (파일 북마크)</string>
+    <string name="designer_prop_background_picture">배경 사진 (파일 북마크)</string>
+    <string name="designer_none">없음</string>
+    <string name="designer_pick_picture">+ 사진 고르기</string>
+    <string name="designer_element_photo">사진 (파일 북마크)</string>
 </resources>

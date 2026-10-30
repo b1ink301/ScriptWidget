@@ -98,6 +98,18 @@ data class WidgetDesign(
         return walk(children).distinct()
     }
 
+    /** Every file bookmark the design shows, once each: the background first. */
+    fun bookmarks(): List<String> {
+        fun walk(list: List<DesignElement>): List<String> = list.flatMap {
+            when (it) {
+                is DesignImage -> listOfNotNull(it.bookmark)
+                is DesignStack -> walk(it.children)
+                else -> emptyList()
+            }
+        }
+        return (listOfNotNull(background.image) + walk(children)).distinct()
+    }
+
     fun encode(): String = DesignJson.encodeToString(serializer(), this)
 
     private fun editChildren(parent: List<Int>, change: (List<DesignElement>) -> List<DesignElement>): WidgetDesign {
@@ -123,6 +135,8 @@ data class DesignBackground(
     val color: String? = null,
     /** Top-to-bottom colors; wins over [color]. */
     val gradient: List<String>? = null,
+    /** A file bookmark name: that picture fills the widget, over the colors. */
+    val image: String? = null,
 )
 
 @Serializable
@@ -166,7 +180,9 @@ data class DesignSymbol(
 @Serializable
 @SerialName("image")
 data class DesignImage(
-    val url: String,
+    val url: String = "",
+    /** A file bookmark name (Settings → File bookmarks); wins over [url]. */
+    val bookmark: String? = null,
     val size: Float? = null,
     val cornerRadius: Float = 0f,
 ) : DesignElement

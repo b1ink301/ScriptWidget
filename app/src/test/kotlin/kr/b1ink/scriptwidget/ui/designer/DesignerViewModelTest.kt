@@ -38,6 +38,9 @@ class DesignerViewModelTest {
     private val scripts = FakeScriptRepository(mapOf("clock" to DesignHeader.attach(start, generator.generate(start))))
     private val engine = FakeScriptEngine(result = ScriptRunResult(widget = WidgetRoot(children = listOf(TextNode("ok")))))
 
+    private val bookmarks = kr.b1ink.scriptwidget.domain.fake.FakeFileBookmarks()
+    private val documents = kr.b1ink.scriptwidget.domain.fake.FakeScriptDocuments().apply { bytes["content://pic.jpg"] = byteArrayOf(1) }
+
     private fun vm(name: String = "clock") = DesignerViewModel(
         name = name,
         openDesign = OpenDesignUseCase(scripts),
@@ -45,6 +48,8 @@ class DesignerViewModelTest {
         generator = generator,
         runScript = RunScriptUseCase(engine),
         previewDelayMs = 0,
+        bookmarks = bookmarks,
+        addBookmark = kr.b1ink.scriptwidget.domain.usecase.AddFileBookmarkUseCase(bookmarks, documents),
     )
 
     @Test
@@ -164,5 +169,32 @@ class DesignerViewModelTest {
         vm.undo()
 
         assertEquals(start, vm.state.value.design)
+    }
+
+    @Test
+    fun `a picked picture becomes a bookmark and fills the image or the background`() = runTest {
+        bookmarks.save("photo", byteArrayOf(0))
+        val vm = vm()
+        assertEquals(listOf("photo"), vm.state.value.bookmarks)
+
+        vm.add(kr.b1ink.scriptwidget.domain.model.DesignImage(bookmark = "photo"))
+        vm.addPicture("content://pic.jpg", PictureTarget.SelectedImage)
+        assertEquals(kr.b1ink.scriptwidget.domain.model.DesignImage(bookmark = "photo 2"), vm.state.value.design.elementAt(vm.state.value.selected!!))
+
+        vm.addPicture("content://pic.jpg", PictureTarget.Background)
+        assertEquals("photo 3", vm.state.value.design.background.image)
+        assertEquals(listOf("photo", "photo 2", "photo 3"), vm.state.value.bookmarks)
+    }
+
+    @Test
+    fun `a picture saved under the name the design already shows redraws the preview`() = runTest {
+        val vm = vm()
+        vm.updateDesign { it.copy(background = it.background.copy(image = "photo")) }
+        val runs = engine.calls.size
+
+        vm.addPicture("content://pic.jpg", PictureTarget.Background)
+
+        assertEquals("photo", vm.state.value.design.background.image)
+        assertEquals(runs + 1, engine.calls.size)
     }
 }

@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kr.b1ink.scriptwidget.domain.model.BookmarkResult
 import kr.b1ink.scriptwidget.domain.model.DesignElement
+import kr.b1ink.scriptwidget.domain.model.DesignImage
 import kr.b1ink.scriptwidget.domain.model.DesignRead
 import kr.b1ink.scriptwidget.domain.model.ScriptCommandResult
 import kr.b1ink.scriptwidget.domain.model.ScriptEnvironment
@@ -17,6 +19,8 @@ import kr.b1ink.scriptwidget.domain.model.ScriptRunResult
 import kr.b1ink.scriptwidget.domain.model.WidgetDesign
 import kr.b1ink.scriptwidget.domain.model.WidgetFamily
 import kr.b1ink.scriptwidget.domain.repository.DesignScriptGenerator
+import kr.b1ink.scriptwidget.domain.repository.FileBookmarkRepository
+import kr.b1ink.scriptwidget.domain.usecase.AddFileBookmarkUseCase
 import kr.b1ink.scriptwidget.domain.usecase.OpenDesignUseCase
 import kr.b1ink.scriptwidget.domain.usecase.RunScriptUseCase
 import kr.b1ink.scriptwidget.domain.usecase.SaveDesignUseCase
@@ -37,7 +41,12 @@ data class DesignerUiState(
     val editedByHand: Boolean = false,
     /** Not made in the designer at all. */
     val notDesigned: Boolean = false,
+    /** File bookmark names, for pictures. */
+    val bookmarks: List<String> = emptyList(),
 )
+
+/** Where a newly picked picture goes. */
+enum class PictureTarget { SelectedImage, Background }
 
 /**
  * Edits a [WidgetDesign]: every change regenerates the script and runs it in the real engine, so the
@@ -50,6 +59,8 @@ class DesignerViewModel(
     private val generator: DesignScriptGenerator,
     private val runScript: RunScriptUseCase,
     private val previewDelayMs: Long = 400,
+    bookmarks: FileBookmarkRepository? = null,
+    private val addBookmark: AddFileBookmarkUseCase? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DesignerUiState(name = name))
@@ -70,6 +81,26 @@ class DesignerViewModel(
                 DesignRead.Plain -> _state.update { it.copy(loaded = true, notDesigned = true) }
             }
             refreshPreview(immediately = true)
+        }
+        bookmarks?.let { repo ->
+            viewModelScope.launch {
+                repo.bookmarks.collect { all -> _state.update { it.copy(bookmarks = all.map { b -> b.name }) } }
+            }
+        }
+    }
+
+    /** Saves the picked picture ([uri]) as a new file bookmark and shows it at [target]. */
+    fun addPicture(uri: String, target: PictureTarget) {
+        val add = addBookmark ?: return
+        viewModelScope.launch {
+            val saved = add.underFreeName(PICTURE_NAME, uri) as? BookmarkResult.Saved ?: return@launch
+            val before = _state.value.design
+            when (target) {
+                PictureTarget.SelectedImage -> updateSelected { (it as? DesignImage)?.copy(bookmark = saved.name) ?: it }
+                PictureTarget.Background -> updateDesign { it.copy(background = it.background.copy(image = saved.name)) }
+            }
+            // The design may already name this bookmark (a template's "photo"): only the file is new.
+            if (_state.value.design == before) refreshPreview(immediately = true)
         }
     }
 
@@ -188,6 +219,7 @@ class DesignerViewModel(
 
     companion object {
         const val PREVIEW_CACHE_KEY = "designer-preview"
+        private const val PICTURE_NAME = "photo"
         private const val MAX_UNDO = 100
     }
 }

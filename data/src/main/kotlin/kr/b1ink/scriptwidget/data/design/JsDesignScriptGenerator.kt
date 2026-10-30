@@ -26,6 +26,10 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             append(dataHelpers(texts))
             bindings.forEachIndexed { i, binding -> appendLine("await load(\"d$i\", async () => ${loader(binding)});") }
         }
+        if (design.bookmarks().isNotEmpty()) {
+            appendLine()
+            append(bookmarkHelper(texts))
+        }
         appendLine()
         appendLine("const w = new ListWidget();")
         design.background.gradient?.takeIf { it.size >= 2 }?.let { colors ->
@@ -34,6 +38,7 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             appendLine("bg.locations = [${colors.indices.joinToString { num(it / (colors.size - 1f)) }}];")
             appendLine("w.backgroundGradient = bg;")
         } ?: design.background.color?.let { appendLine("w.backgroundColor = ${color(it)};") }
+        design.background.image?.let { appendLine("const bgImage = bookmarkImage(${str(it)});\nif (bgImage) w.backgroundImage = bgImage;") }
         design.padding?.let { appendLine("w.setPadding(${num(it)}, ${num(it)}, ${num(it)}, ${num(it)});") }
         if (design.spacing > 0) appendLine("w.spacing = ${num(design.spacing)};")
         design.url?.let { appendLine("w.url = ${str(it)};") }
@@ -79,7 +84,9 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             is DesignImage -> {
                 val v = names.next("image")
                 // A placeholder keeps the element's place when the image can't be loaded.
-                appendLine("const $v = $parent.addImage(await new Request(${str(element.url)}).loadImage().catch(() => SFSymbol.named(\"photo\").image));")
+                val image = element.bookmark?.let { "bookmarkImage(${str(it)}) ?? $PLACEHOLDER" }
+                    ?: "await new Request(${str(element.url)}).loadImage().catch(() => $PLACEHOLDER)"
+                appendLine("const $v = $parent.addImage($image);")
                 element.size?.let { appendLine("$v.imageSize = new Size(${num(it)}, ${num(it)});") }
                 if (element.cornerRadius > 0) appendLine("$v.cornerRadius = ${num(element.cornerRadius)};")
             }
@@ -136,6 +143,7 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
 
     companion object {
         private const val VALUE = "{value}"
+        private const val PLACEHOLDER = "SFSymbol.named(\"photo\").image"
 
         private val DATE_STYLES = mapOf(
             "time" to "applyTimeStyle",
@@ -179,6 +187,15 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             val rgb = str("#" + hex.substring(2))
             return if (alpha >= 1f) "new Color($rgb)" else "new Color($rgb, ${"%.3f".format(java.util.Locale.ROOT, alpha).trimEnd('0').trimEnd('.')})"
         }
+
+        private fun bookmarkHelper(texts: GeneratorTexts) = """
+            |// ${texts.bookmarkComment}
+            |function bookmarkImage(name) {
+            |  const fm = FileManager.local();
+            |  try { return fm.bookmarkExists(name) ? fm.readImage(fm.bookmarkedPath(name)) : null; } catch (e) { return null; }
+            |}
+            |
+        """.trimMargin() + "\n"
 
         private fun dataHelpers(texts: GeneratorTexts) = """
             |// ${texts.dataComment}
@@ -237,6 +254,7 @@ data class GeneratorTexts(
     val noEvents: String,
     val noReminders: String,
     val allDay: String,
+    val bookmarkComment: String,
     /** Clear, partly cloudy, cloudy, fog, drizzle, rain, snow, thunderstorm. */
     val weather: List<String>,
 ) {
@@ -247,6 +265,7 @@ data class GeneratorTexts(
             noEvents = "일정 없음",
             noReminders = "할 일 없음",
             allDay = "하루 종일",
+            bookmarkComment = "사진은 파일 북마크에서 읽습니다(설정 → 파일 북마크). 없으면 빈 자리로 둡니다.",
             weather = listOf("맑음", "구름 조금", "흐림", "안개", "이슬비", "비", "눈", "뇌우"),
         )
         val ENGLISH = GeneratorTexts(
@@ -255,6 +274,7 @@ data class GeneratorTexts(
             noEvents = "No events",
             noReminders = "Nothing to do",
             allDay = "All day",
+            bookmarkComment = "Pictures come from file bookmarks (Settings → File bookmarks); a missing one leaves a placeholder.",
             weather = listOf("Clear", "Partly cloudy", "Cloudy", "Fog", "Drizzle", "Rain", "Snow", "Thunderstorm"),
         )
     }

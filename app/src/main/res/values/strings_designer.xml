@@ -115,4 +115,11 @@
     <string name="designer_date_style_timer">Timer</string>
     <string name="designer_pin_unsupported">This launcher doesn\'t support pinning widgets.</string>
     <string name="designer_drag_handle">Drag to move</string>
+    <string name="designer_prop_image_source">Source</string>
+    <string name="designer_image_source_bookmark">File bookmark</string>
+    <string name="designer_prop_bookmark">Picture (file bookmark)</string>
+    <string name="designer_prop_background_picture">Background picture (file bookmark)</string>
+    <string name="designer_none">None</string>
+    <string name="designer_pick_picture">+ Pick a photo</string>
+    <string name="designer_element_photo">Photo (file bookmark)</string>
 </resources>

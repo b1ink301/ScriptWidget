@@ -16,7 +16,7 @@ data class TemplateTexts(
             titles = mapOf(
                 DesignTemplates.Blank to "빈 위젯", DesignTemplates.Clock to "시계", DesignTemplates.Battery to "배터리",
                 DesignTemplates.NextEvent to "다음 일정", DesignTemplates.Reminders to "할 일", DesignTemplates.Weather to "날씨",
-                DesignTemplates.GitHubStars to "JSON 값 (GitHub 별)",
+                DesignTemplates.GitHubStars to "JSON 값 (GitHub 별)", DesignTemplates.PhotoFrame to "사진 액자",
             ),
             battery = "배터리",
             nextEvent = "다음 일정",
@@ -29,7 +29,7 @@ data class TemplateTexts(
             titles = mapOf(
                 DesignTemplates.Blank to "Blank widget", DesignTemplates.Clock to "Clock", DesignTemplates.Battery to "Battery",
                 DesignTemplates.NextEvent to "Next event", DesignTemplates.Reminders to "Reminders", DesignTemplates.Weather to "Weather",
-                DesignTemplates.GitHubStars to "JSON value (GitHub stars)",
+                DesignTemplates.GitHubStars to "JSON value (GitHub stars)", DesignTemplates.PhotoFrame to "Photo frame",
             ),
             battery = "Battery",
             nextEvent = "Next event",
@@ -50,6 +50,7 @@ enum class DesignTemplates {
     Reminders,
     Weather,
     GitHubStars,
+    PhotoFrame,
     ;
 
     /** The Korean title; the app shows its own translation. */
@@ -117,6 +118,16 @@ enum class DesignTemplates {
                     size = 30f,
                     weight = "bold",
                 ),
+            ),
+        )
+        // The picture is the file bookmark "photo"; until there is one the widget shows its colors.
+        PhotoFrame -> WidgetDesign(
+            refreshMinutes = 60,
+            padding = 12f,
+            background = DesignBackground(color = "#FF1C1C1E", image = "photo"),
+            children = listOf(
+                DesignSpacer(),
+                DesignText("{value}", data = DataBinding.DateText(texts.longDate), color = "#FFFFFFFF", size = 15f, weight = "semibold"),
             ),
         )
     }

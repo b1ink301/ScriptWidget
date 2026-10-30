@@ -65,10 +65,15 @@ class JsDesignScriptGeneratorTest {
 
     private fun ok(body: String) = HttpResponseSpec("u", 200, emptyMap(), "application/json", body)
 
-    private suspend fun run(design: WidgetDesign, family: WidgetFamily = WidgetFamily.Medium, parameter: String? = null): WidgetRoot {
+    private suspend fun run(
+        design: WidgetDesign,
+        family: WidgetFamily = WidgetFamily.Medium,
+        parameter: String? = null,
+        files: java.io.File = tmp.newFolder(),
+    ): WidgetRoot {
         val engine = QuickJsScriptEngine(
             Prelude.load(),
-            fakeServices(http = http, files = SandboxedFileSystem(tmp.newFolder()), calendar = calendar, reminders = reminders),
+            fakeServices(http = http, files = SandboxedFileSystem(files), calendar = calendar, reminders = reminders),
             timeoutMillis = 5_000,
         )
         val result = engine.execute(
@@ -193,6 +198,29 @@ class JsDesignScriptGeneratorTest {
 
         assertIs<ImageNode>(root.children[0])
         assertEquals("뒤", root.text(1))
+    }
+
+    @Test
+    fun `bookmarked pictures fill images and the background, and a missing one leaves a placeholder`() = runTest {
+        val files = tmp.newFolder()
+        val png = java.io.ByteArrayOutputStream().also {
+            javax.imageio.ImageIO.write(java.awt.image.BufferedImage(7, 5, java.awt.image.BufferedImage.TYPE_INT_RGB), "png", it)
+        }.toByteArray()
+        files.resolve("${SandboxedFileSystem.BOOKMARKS}/photo").apply { parentFile.mkdirs() }.writeBytes(png)
+        val design = WidgetDesign(
+            background = DesignBackground(color = "#FF000000", image = "photo"),
+            children = listOf(DesignImage(bookmark = "photo", size = 50f), DesignImage(bookmark = "gone"), DesignText("뒤")),
+        )
+
+        val root = run(design, files = files)
+
+        assertNotNull(root.backgroundImage)
+        val picture = assertIs<ImageNode>(root.children[0])
+        assertEquals(listOf(50f, 50f), picture.size)
+        val placeholder = assertIs<ImageNode>(root.children[1])
+        assertTrue(picture.src != placeholder.src, "the bookmarked picture, not the placeholder")
+        assertEquals("뒤", root.text(2))
+        assertNull(run(design.copy(background = DesignBackground(image = "gone"))).backgroundImage)
     }
 
     @Test

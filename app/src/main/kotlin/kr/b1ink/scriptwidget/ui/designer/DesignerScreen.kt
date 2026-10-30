@@ -95,6 +95,8 @@ class DesignerActions(
     val onDrop: (List<Int>, List<Int>, Int) -> Unit,
     val onWrap: (String) -> Unit,
     val onRemove: () -> Unit,
+    /** Pick a photo, save it as a file bookmark and show it at the target. */
+    val onPickPicture: (PictureTarget) -> Unit = {},
 )
 
 private enum class Panel(@StringRes val title: Int) { Outline(R.string.designer_panel_outline), Properties(R.string.designer_panel_properties) }
@@ -372,7 +374,7 @@ private fun label(e: DesignElement): String = when (e) {
     is DesignText -> (e.data?.let { "📊 ${dataLabel(it)}" } ?: "🔤 ${stringResource(R.string.designer_element_text)}") + " · " + e.text.replace("\n", " ").take(24)
     is DesignDate -> "🕒 " + (dateStyles().firstOrNull { it.first == e.style }?.second ?: stringResource(R.string.designer_date_style_time))
     is DesignSymbol -> "⭐ ${stringResource(R.string.designer_element_symbol)} · ${e.name}"
-    is DesignImage -> "🖼 " + stringResource(R.string.designer_element_image)
+    is DesignImage -> "🖼 " + stringResource(R.string.designer_element_image) + (e.bookmark?.let { " · $it" } ?: "")
     is DesignSpacer -> "↕ " + stringResource(R.string.designer_element_spacer) +
         (e.length?.let { " ${it.toInt()}" } ?: (" " + stringResource(R.string.designer_label_spacer_flex)))
     is DesignStack -> if (e.dir == "v") {
@@ -422,6 +424,7 @@ private fun elements(): List<Pair<String, DesignElement>> = listOf(
     stringResource(R.string.designer_element_time_live) to DesignDate(style = "time", size = 28f, weight = "bold"),
     stringResource(R.string.designer_element_symbol) to DesignSymbol("star.fill", color = "#FFFFCC00"),
     stringResource(R.string.designer_element_image_url) to DesignImage("https://", size = 60f, cornerRadius = 8f),
+    "🖼 " + stringResource(R.string.designer_element_photo) to DesignImage(bookmark = "photo", size = 80f, cornerRadius = 12f),
     stringResource(R.string.designer_element_spacer) to DesignSpacer(),
     stringResource(R.string.designer_element_hstack) to DesignStack(dir = "h", spacing = 6f),
     stringResource(R.string.designer_element_vstack) to DesignStack(dir = "v", spacing = 4f),
@@ -454,7 +457,7 @@ private fun Properties(state: DesignerUiState, actions: DesignerActions) {
         val update: ((DesignElement) -> DesignElement) -> Unit = { actions.onUpdateSelected(false, it) }
         val type: ((DesignElement) -> DesignElement) -> Unit = { actions.onUpdateSelected(true, it) }
         when (element) {
-            null -> WidgetProperties(state.design, actions.onUpdateDesign)
+            null -> WidgetProperties(state.design, state.bookmarks, actions.onUpdateDesign) { actions.onPickPicture(PictureTarget.Background) }
             is DesignText -> TextProperties(element, update, type)
             is DesignDate -> {
                 Chips(stringResource(R.string.designer_prop_display), dateStyles(), element.style, "prop-date") { s -> update { (it as DesignDate).copy(style = s) } }
@@ -469,7 +472,28 @@ private fun Properties(state: DesignerUiState, actions: DesignerActions) {
                 ColorProperty(stringResource(R.string.designer_prop_color), element.color) { c -> update { (it as DesignSymbol).copy(color = c) } }
             }
             is DesignImage -> {
-                Field(stringResource(R.string.designer_prop_image_url), element.url, "prop-image") { v -> type { (it as DesignImage).copy(url = v) } }
+                Chips(
+                    stringResource(R.string.designer_prop_image_source),
+                    listOf("url" to "URL", "bookmark" to stringResource(R.string.designer_image_source_bookmark)),
+                    if (element.bookmark != null) "bookmark" else "url",
+                    "prop-image-source",
+                ) { source ->
+                    update {
+                        val image = it as DesignImage
+                        when {
+                            source == "bookmark" && image.bookmark == null -> image.copy(url = "", bookmark = state.bookmarks.firstOrNull() ?: "photo")
+                            source == "url" && image.bookmark != null -> image.copy(bookmark = null)
+                            else -> image
+                        }
+                    }
+                }
+                if (element.bookmark != null) {
+                    BookmarkChips(stringResource(R.string.designer_prop_bookmark), state.bookmarks, element.bookmark, "prop-bookmark", onPick = { actions.onPickPicture(PictureTarget.SelectedImage) }) { b ->
+                        update { (it as DesignImage).copy(bookmark = b) }
+                    }
+                } else {
+                    Field(stringResource(R.string.designer_prop_image_url), element.url, "prop-image") { v -> type { (it as DesignImage).copy(url = v) } }
+                }
                 Slide(stringResource(R.string.designer_prop_size), element.size ?: 60f, 16f..200f) { v -> update { (it as DesignImage).copy(size = v) } }
                 Slide(stringResource(R.string.designer_prop_corner), element.cornerRadius, 0f..40f) { v -> update { (it as DesignImage).copy(cornerRadius = v) } }
             }
@@ -629,9 +653,12 @@ private fun DataProperty(
 }
 
 @Composable
-private fun WidgetProperties(design: WidgetDesign, update: ((WidgetDesign) -> WidgetDesign) -> Unit) {
+private fun WidgetProperties(design: WidgetDesign, bookmarks: List<String>, update: ((WidgetDesign) -> WidgetDesign) -> Unit, onPickPicture: () -> Unit) {
     Text(stringResource(R.string.designer_widget_title), style = MaterialTheme.typography.titleSmall)
-    ColorProperty(stringResource(R.string.designer_prop_background), design.background.color, noneLabel = stringResource(R.string.designer_default)) { c -> update { it.copy(background = DesignBackground(color = c)) } }
+    // Colors and the picture are kept apart: a picture keeps showing over whichever color is chosen.
+    ColorProperty(stringResource(R.string.designer_prop_background), design.background.color, noneLabel = stringResource(R.string.designer_default)) { c ->
+        update { it.copy(background = it.background.copy(color = c, gradient = null)) }
+    }
     Labeled(stringResource(R.string.designer_prop_gradient)) {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             GRADIENTS.forEach { colors ->
@@ -644,11 +671,19 @@ private fun WidgetProperties(design: WidgetDesign, update: ((WidgetDesign) -> Wi
                             androidx.compose.ui.graphics.Brush.verticalGradient(colors.map(::parseColor)),
                             CircleShape,
                         )
-                        .clickable { update { it.copy(background = DesignBackground(gradient = colors)) } },
+                        .clickable { update { it.copy(background = it.background.copy(gradient = colors)) } },
                 )
             }
         }
     }
+    BookmarkChips(
+        stringResource(R.string.designer_prop_background_picture),
+        bookmarks,
+        design.background.image,
+        "prop-bg-image",
+        noneLabel = stringResource(R.string.designer_none),
+        onPick = onPickPicture,
+    ) { b -> update { it.copy(background = it.background.copy(image = b)) } }
     Slide(stringResource(R.string.designer_prop_edge_padding), design.padding ?: 16f, 0f..24f) { v -> update { it.copy(padding = v) } }
     Slide(stringResource(R.string.designer_prop_item_spacing), design.spacing, 0f..16f) { v -> update { it.copy(spacing = v) } }
     Chips(
@@ -699,6 +734,29 @@ private fun Chips(label: String, options: List<Pair<String, String>>, selected: 
                     modifier = Modifier.testTag("$tag-$value"),
                 )
             }
+        }
+    }
+}
+
+/** File bookmark names to choose from, "none" when [noneLabel] is given, and a button to add a new picture. */
+@Composable
+private fun BookmarkChips(
+    label: String,
+    names: List<String>,
+    selected: String?,
+    tag: String,
+    noneLabel: String? = null,
+    onPick: () -> Unit,
+    onSelect: (String?) -> Unit,
+) {
+    Labeled(label) {
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            noneLabel?.let { FilterChip(selected = selected == null, onClick = { onSelect(null) }, label = { Text(it) }, modifier = Modifier.testTag("$tag-none")) }
+            // A design can name a bookmark this device doesn't have (yet): show it all the same.
+            (names + listOfNotNull(selected?.takeIf { it !in names })).forEach { name ->
+                FilterChip(selected = name == selected, onClick = { onSelect(name) }, label = { Text("🖼 $name") }, modifier = Modifier.testTag("$tag-$name"))
+            }
+            FilterChip(selected = false, onClick = onPick, label = { Text(stringResource(R.string.designer_pick_picture)) }, modifier = Modifier.testTag("$tag-new"))
         }
     }
 }

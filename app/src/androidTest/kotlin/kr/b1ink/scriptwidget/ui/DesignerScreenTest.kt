@@ -8,11 +8,13 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kr.b1ink.scriptwidget.domain.model.DataBinding
 import kr.b1ink.scriptwidget.domain.model.DesignElement
+import kr.b1ink.scriptwidget.domain.model.DesignImage
 import kr.b1ink.scriptwidget.domain.model.DesignStack
 import kr.b1ink.scriptwidget.domain.model.DesignText
 import kr.b1ink.scriptwidget.domain.model.ScriptRunResult
@@ -51,7 +53,7 @@ class DesignerScreenTest {
         onFamily = { calls += "family:$it" },
         onAdd = { calls += "add:$it" },
         onUpdateSelected = { _, change -> updated = change(state.design.elementAt(state.selected!!)!!) },
-        onUpdateDesign = { calls += "design" },
+        onUpdateDesign = { calls += "design"; designChange = it },
         onMove = { calls += "move:$it" },
         onDrop = { from, parent, index ->
             calls += "drop:$from:$parent:$index"
@@ -59,7 +61,9 @@ class DesignerScreenTest {
         },
         onWrap = { calls += "wrap:$it" },
         onRemove = { calls += "remove" },
+        onPickPicture = { calls += "pick:$it" },
     )
+    private var designChange: ((WidgetDesign) -> WidgetDesign)? = null
 
     private fun show() = compose.setContent { DesignerScreen(state, actions) }
 
@@ -133,6 +137,40 @@ class DesignerScreenTest {
         assertEquals(listOf("drop:[0]:[1]:1", "drop:[1, 0]:[]:2"), calls)
         // Still on the outline, ready for the next move.
         compose.onNodeWithTag("drag-0").assertIsDisplayed()
+    }
+
+    @Test
+    fun anImageShowsABookmarkedPictureOrANewOne() {
+        state = state.copy(
+            design = WidgetDesign(children = listOf(DesignImage("https://a.b/c.png"))),
+            selected = listOf(0),
+            bookmarks = listOf("photo", "cat"),
+        )
+        show()
+
+        compose.onNodeWithTag("prop-image-source-bookmark").performScrollTo().performClick()
+        assertEquals(DesignImage(bookmark = "photo"), updated)
+        state = state.copy(design = WidgetDesign(children = listOf(DesignImage(bookmark = "photo"))))
+        compose.onNodeWithTag("prop-bookmark-cat").performScrollTo().performClick()
+        assertEquals(DesignImage(bookmark = "cat"), updated)
+        compose.onNodeWithTag("prop-bookmark-new").performScrollTo().performClick()
+        compose.onNodeWithTag("prop-image-source-url").performScrollTo().performClick()
+        assertEquals(DesignImage(), updated)
+
+        assertEquals(listOf("pick:SelectedImage"), calls)
+    }
+
+    @Test
+    fun theWidgetBackgroundCanBeABookmarkedPicture() {
+        state = state.copy(bookmarks = listOf("photo"))
+        show()
+        compose.onNodeWithTag("panel-Properties").performClick()
+
+        compose.onNodeWithTag("prop-bg-image-photo").performScrollTo().performClick()
+        assertEquals("photo", designChange!!(design).background.image)
+        compose.onNodeWithTag("prop-bg-image-new").performScrollTo().performClick()
+
+        assertEquals(listOf("design", "pick:Background"), calls)
     }
 
     @Test

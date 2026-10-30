@@ -114,4 +114,19 @@ class WidgetDesignTest {
         assertEquals(full, WidgetDesign.decode(full.encode()))
         assertTrue('\n' !in full.encode())
     }
+
+    @Test
+    fun `images can come from a file bookmark, and older designs still read`() {
+        val design = WidgetDesign(
+            background = DesignBackground(image = "wallpaper"),
+            children = listOf(DesignImage(bookmark = "photo"), DesignStack(children = listOf(DesignImage(bookmark = "photo"), DesignImage("https://a.b/c.png")))),
+        )
+
+        assertEquals(design, WidgetDesign.decode(design.encode()))
+        assertEquals(listOf("wallpaper", "photo"), design.bookmarks())
+        assertEquals(
+            WidgetDesign(children = listOf(DesignImage("https://a.b/c.png", size = 40f))),
+            WidgetDesign.decode("""{"children":[{"type":"image","url":"https://a.b/c.png","size":40.0}]}"""),
+        )
+    }
 }

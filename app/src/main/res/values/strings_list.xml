@@ -25,6 +25,7 @@
     <string name="list_template_reminders">Reminders</string>
     <string name="list_template_weather">Weather</string>
     <string name="list_template_json">JSON value (GitHub stars)</string>
+    <string name="list_template_photo">Photo frame</string>
     <string name="list_shortcut_unsupported">This launcher doesn\'t support adding shortcuts.</string>
     <string name="list_widgets_none">No widgets</string>
     <string name="list_ran">Ran %1$s</string>
