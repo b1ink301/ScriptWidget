@@ -114,4 +114,5 @@
     <string name="designer_date_style_relative">Relative</string>
     <string name="designer_date_style_timer">Timer</string>
     <string name="designer_pin_unsupported">This launcher doesn\'t support pinning widgets.</string>
+    <string name="designer_drag_handle">Drag to move</string>
 </resources>

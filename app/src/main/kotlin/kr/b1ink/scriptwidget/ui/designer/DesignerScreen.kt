@@ -43,9 +43,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -79,6 +91,8 @@ class DesignerActions(
     val onUpdateSelected: (Boolean, (DesignElement) -> DesignElement) -> Unit,
     val onUpdateDesign: ((WidgetDesign) -> WidgetDesign) -> Unit,
     val onMove: (Int) -> Unit,
+    /** `(from, toParent, index)`: an outline row dropped somewhere else, see `WidgetDesign.moveTo`. */
+    val onDrop: (List<Int>, List<Int>, Int) -> Unit,
     val onWrap: (String) -> Unit,
     val onRemove: () -> Unit,
 )
@@ -92,8 +106,11 @@ fun DesignerScreen(state: DesignerUiState, actions: DesignerActions) {
     var panel by remember { mutableStateOf(if (state.selected != null) Panel.Properties else Panel.Outline) }
     // Selecting something (in the preview or the outline) shows its properties.
     var lastSelected by remember { mutableStateOf(state.selected) }
+    // ...except a row dropped in the outline, which stays there to keep arranging.
+    var dropped by remember { mutableStateOf(false) }
     LaunchedEffect(state.selected) {
-        if (state.selected != lastSelected && state.selected != null) panel = Panel.Properties
+        if (state.selected != lastSelected && state.selected != null && !dropped) panel = Panel.Properties
+        dropped = false
         lastSelected = state.selected
     }
 
@@ -128,7 +145,7 @@ fun DesignerScreen(state: DesignerUiState, actions: DesignerActions) {
             if (state.selected != null) Toolbar(actions)
             Box(Modifier.weight(1f)) {
                 when (panel) {
-                    Panel.Outline -> Outline(state, actions)
+                    Panel.Outline -> Outline(state, actions, onDropped = { dropped = true })
                     Panel.Properties -> Properties(state, actions)
                 }
             }
@@ -201,13 +218,54 @@ private fun Toolbar(actions: DesignerActions) {
 // --- outline ---
 
 @Composable
-private fun Outline(state: DesignerUiState, actions: DesignerActions) {
+private fun Outline(state: DesignerUiState, actions: DesignerActions, onDropped: () -> Unit) {
+    // Row positions inside the scrolling column, for working out where a dragged row lands.
+    val bounds = remember { mutableStateMapOf<List<Int>, Pair<Float, Float>>() }
+    var dragged by remember { mutableStateOf<List<Int>?>(null) }
+    var dragY by remember { mutableFloatStateOf(0f) }
+
+    fun rows(list: List<DesignElement>, path: List<Int>): List<Pair<List<Int>, DesignElement>> =
+        list.flatMapIndexed { i, e -> listOf((path + i) to e) + if (e is DesignStack) rows(e.children, path + i) else emptyList() }
+    val all = rows(state.design.children, emptyList())
+    fun target(): OutlineDrop.Target? {
+        val from = dragged ?: return null
+        val dropRows = all.mapNotNull { (path, e) ->
+            bounds[path]?.let { (top, bottom) -> OutlineDrop.Row(path, top, bottom, (e as? DesignStack)?.children?.size) }
+        }
+        return OutlineDrop.at(dropRows, from, dragY)
+    }
+    val target = target()
+
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
         OutlineRow(stringResource(R.string.designer_outline_widget), depth = 0, selected = state.selected == null, tag = "outline-widget") { actions.onSelect(null) }
-        fun rows(list: List<DesignElement>, path: List<Int>): List<Pair<List<Int>, DesignElement>> =
-            list.flatMapIndexed { i, e -> listOf((path + i) to e) + if (e is DesignStack) rows(e.children, path + i) else emptyList() }
-        rows(state.design.children, emptyList()).forEach { (path, element) ->
-            OutlineRow(label(element), depth = path.size, selected = state.selected == path, tag = "outline-" + path.joinToString("-")) {
+        all.forEach { (path, element) ->
+            val key = path.joinToString("-")
+            val drag = OutlineDrag(
+                tag = "drag-$key",
+                onStart = { y ->
+                    dragged = path
+                    dragY = (bounds[path]?.first ?: 0f) + y
+                },
+                onMove = { y -> dragY = (bounds[path]?.first ?: 0f) + y },
+                onEnd = {
+                    target()?.let {
+                        onDropped()
+                        actions.onDrop(path, it.parent, it.index)
+                    }
+                    dragged = null
+                },
+                onCancel = { dragged = null },
+            )
+            OutlineRow(
+                label(element),
+                depth = path.size,
+                selected = state.selected == path,
+                tag = "outline-$key",
+                marker = target?.takeIf { it.row == path }?.place,
+                lifted = dragged == path,
+                drag = drag,
+                modifier = Modifier.onGloballyPositioned { bounds[path] = it.positionInParent().y to it.positionInParent().y + it.size.height },
+            ) {
                 actions.onSelect(path)
             }
         }
@@ -222,19 +280,91 @@ private fun Outline(state: DesignerUiState, actions: DesignerActions) {
     }
 }
 
+/** Callbacks of a row's drag handle; [onStart] and [onMove] get the finger's y inside the row. */
+private class OutlineDrag(
+    val tag: String,
+    val onStart: (Float) -> Unit,
+    val onMove: (Float) -> Unit,
+    val onEnd: () -> Unit,
+    val onCancel: () -> Unit,
+)
+
 @Composable
-private fun OutlineRow(text: String, depth: Int, selected: Boolean, tag: String, onClick: () -> Unit) {
-    Text(
-        text,
-        maxLines = 1,
-        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-        modifier = Modifier
+private fun OutlineRow(
+    text: String,
+    depth: Int,
+    selected: Boolean,
+    tag: String,
+    marker: OutlineDrop.Place? = null,
+    /** Being dragged; it stays in place (moving it would move the handle's touch coordinates too). */
+    lifted: Boolean = false,
+    drag: OutlineDrag? = null,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val accent = MaterialTheme.colorScheme.primary
+    Row(
+        modifier
             .fillMaxWidth()
-            .testTag(tag)
-            .background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(start = (16 + depth * 20).dp, end = 16.dp, top = 10.dp, bottom = 10.dp),
-    )
+            .graphicsLayer { alpha = if (lifted) 0.6f else 1f }
+            .background(
+                when {
+                    marker == OutlineDrop.Place.Inside -> MaterialTheme.colorScheme.tertiaryContainer
+                    lifted -> MaterialTheme.colorScheme.surfaceContainerHighest
+                    selected -> MaterialTheme.colorScheme.secondaryContainer
+                    else -> Color.Transparent
+                },
+            )
+            .drawWithContent {
+                drawContent()
+                val y = when (marker) {
+                    OutlineDrop.Place.Before -> 0f
+                    OutlineDrop.Place.After -> size.height
+                    else -> null
+                }
+                if (y != null) drawLine(accent, Offset((16 + depth * 20).dp.toPx(), y), Offset(size.width, y), strokeWidth = 3.dp.toPx())
+            },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text,
+            maxLines = 1,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            modifier = Modifier
+                .weight(1f)
+                .testTag(tag)
+                .clickable(onClick = onClick)
+                .padding(start = (16 + depth * 20).dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
+        )
+        if (drag != null) {
+            val description = stringResource(R.string.designer_drag_handle)
+            var handleTop by remember { mutableFloatStateOf(0f) }
+            // Starting a drag recomposes the outline; the gesture must survive that, so it is keyed on
+            // the row and reads the newest callbacks.
+            val current by rememberUpdatedState(drag)
+            Text(
+                "≡",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .testTag(drag.tag)
+                    .onGloballyPositioned { handleTop = it.positionInParent().y }
+                    .semantics { contentDescription = description }
+                    .pointerInput(drag.tag) {
+                        detectDragGestures(
+                            onDragStart = { current.onStart(handleTop + it.y) },
+                            onDrag = { change, _ ->
+                                change.consume()
+                                // The row stays put while dragged, so the finger's own position is exact.
+                                current.onMove(handleTop + change.position.y)
+                            },
+                            onDragEnd = { current.onEnd() },
+                            onDragCancel = { current.onCancel() },
+                        )
+                    }
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+        }
+    }
 }
 
 @Composable

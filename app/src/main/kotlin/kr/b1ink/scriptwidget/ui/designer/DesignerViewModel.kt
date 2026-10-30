@@ -99,6 +99,12 @@ class DesignerViewModel(
         edit(design, selected = moved)
     }
 
+    /** Drag and drop in the outline: see [WidgetDesign.moveTo]. The moved element ends up selected. */
+    fun moveTo(from: List<Int>, toParent: List<Int>, index: Int) {
+        val (design, moved) = _state.value.design.moveTo(from, toParent, index)
+        edit(design, selected = moved)
+    }
+
     fun wrapSelected(dir: String) {
         val path = _state.value.selected ?: return
         val (design, wrapped) = _state.value.design.wrapInStack(path, dir)

@@ -114,4 +114,5 @@
     <string name="designer_date_style_relative">상대 시간</string>
     <string name="designer_date_style_timer">타이머</string>
     <string name="designer_pin_unsupported">이 런처는 위젯 고정을 지원하지 않습니다.</string>
+    <string name="designer_drag_handle">끌어서 옮기기</string>
 </resources>

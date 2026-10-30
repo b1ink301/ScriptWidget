@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kr.b1ink.scriptwidget.domain.model.DataBinding
 import kr.b1ink.scriptwidget.domain.model.DesignElement
@@ -52,6 +53,10 @@ class DesignerScreenTest {
         onUpdateSelected = { _, change -> updated = change(state.design.elementAt(state.selected!!)!!) },
         onUpdateDesign = { calls += "design" },
         onMove = { calls += "move:$it" },
+        onDrop = { from, parent, index ->
+            calls += "drop:$from:$parent:$index"
+            state = state.copy(selected = parent + index)
+        },
         onWrap = { calls += "wrap:$it" },
         onRemove = { calls += "remove" },
     )
@@ -103,6 +108,31 @@ class DesignerScreenTest {
         compose.onNodeWithTag("tool-remove").performClick()
 
         assertEquals(listOf("move:-1", "move:1", "wrap:v", "remove"), calls)
+    }
+
+    @Test
+    fun aRowDraggedByItsHandleIsDroppedIntoAStackOrBetweenRows() {
+        show()
+        val row = compose.onNodeWithTag("outline-0").fetchSemanticsNode().size.height.toFloat()
+
+        // Down onto the middle of the stack row: inside it, at the end.
+        compose.onNodeWithTag("drag-0").performTouchInput {
+            down(center)
+            moveBy(androidx.compose.ui.geometry.Offset(0f, row / 2))
+            moveBy(androidx.compose.ui.geometry.Offset(0f, row / 2))
+            up()
+        }
+        // The inner row down below the last row: the end of the widget.
+        compose.onNodeWithTag("drag-1-0").performTouchInput {
+            down(center)
+            moveBy(androidx.compose.ui.geometry.Offset(0f, row))
+            moveBy(androidx.compose.ui.geometry.Offset(0f, row * 2))
+            up()
+        }
+
+        assertEquals(listOf("drop:[0]:[1]:1", "drop:[1, 0]:[]:2"), calls)
+        // Still on the outline, ready for the next move.
+        compose.onNodeWithTag("drag-0").assertIsDisplayed()
     }
 
     @Test

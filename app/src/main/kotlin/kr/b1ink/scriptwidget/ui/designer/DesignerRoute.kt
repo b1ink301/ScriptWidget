@@ -42,6 +42,7 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
             onUpdateSelected = { coalesce, change -> vm.updateSelected(coalesce, change) },
             onUpdateDesign = vm::updateDesign,
             onMove = vm::moveSelected,
+            onDrop = vm::moveTo,
             onWrap = vm::wrapSelected,
             onRemove = vm::removeSelected,
         ),

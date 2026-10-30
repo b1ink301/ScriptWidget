@@ -45,6 +45,48 @@ class WidgetDesignTest {
     }
 
     @Test
+    fun `moving to a place among the siblings counts the place before the element is taken out`() {
+        val (later, path) = design.moveTo(listOf(0), toParent = emptyList(), index = 3)
+        assertEquals(listOf(row, clock, title), later.children)
+        assertEquals(listOf(2), path)
+
+        val (earlier, back) = design.moveTo(listOf(2), toParent = emptyList(), index = 0)
+        assertEquals(listOf(clock, title, row), earlier.children)
+        assertEquals(listOf(0), back)
+
+        assertEquals(design to listOf(1), design.moveTo(listOf(1), toParent = emptyList(), index = 2))
+    }
+
+    @Test
+    fun `elements move into and out of stacks`() {
+        val (inside, path) = design.moveTo(listOf(0), toParent = listOf(1), index = 2)
+        assertEquals(listOf(row.copy(children = row.children + title), clock), inside.children)
+        assertEquals(listOf(0, 2), path)
+
+        val (outside, out) = design.moveTo(listOf(1, 0), toParent = emptyList(), index = 3)
+        assertEquals(listOf(title, row.copy(children = row.children.drop(1)), clock, DesignSymbol("battery.100")), outside.children)
+        assertEquals(listOf(3), out)
+    }
+
+    @Test
+    fun `a stack after the moved element keeps receiving it at its new path`() {
+        val (moved, path) = design.moveTo(listOf(0), toParent = listOf(1), index = 0)
+
+        assertEquals(title, moved.elementAt(listOf(0, 0)))
+        assertEquals(listOf(0, 0), path)
+    }
+
+    @Test
+    fun `a stack cannot move into itself and the target must be a stack`() {
+        val nested = WidgetDesign(children = listOf(DesignStack(children = listOf(DesignStack(), title))))
+
+        assertEquals(nested to listOf(0), nested.moveTo(listOf(0), toParent = listOf(0), index = 0))
+        assertEquals(nested to listOf(0), nested.moveTo(listOf(0), toParent = listOf(0, 0), index = 0))
+        assertEquals(design to listOf(2), design.moveTo(listOf(2), toParent = listOf(0), index = 0))
+        assertEquals(design to listOf(2), design.moveTo(listOf(2), toParent = emptyList(), index = 9))
+    }
+
+    @Test
     fun `a stack can be wrapped around an element`() {
         val (wrapped, path) = design.wrapInStack(listOf(0), dir = "v")
 

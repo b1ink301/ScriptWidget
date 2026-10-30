@@ -93,6 +93,18 @@ class DesignerViewModelTest {
     }
 
     @Test
+    fun `dragging moves an element into a stack, selects it and is undone in one step`() = runTest {
+        val vm = vm()
+
+        vm.moveTo(listOf(0), toParent = listOf(1), index = 0)
+
+        assertEquals(listOf(DesignStack(children = listOf(DesignText("제목"), DesignText("안")))), vm.state.value.design.children)
+        assertEquals(listOf(0, 0), vm.state.value.selected)
+        vm.undo()
+        assertEquals(start, vm.state.value.design)
+    }
+
+    @Test
     fun `undo and redo step through the edits`() = runTest {
         val vm = vm()
         assertFalse(vm.state.value.canUndo)

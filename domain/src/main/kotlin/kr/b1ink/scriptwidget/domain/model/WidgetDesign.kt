@@ -55,13 +55,30 @@ data class WidgetDesign(
 
     /** Moves an element [by] places among its siblings; returns the design and its new path. */
     fun move(path: List<Int>, by: Int): Pair<WidgetDesign, List<Int>> {
-        val parent = path.dropLast(1)
-        val siblings = if (parent.isEmpty()) children else (elementAt(parent) as? DesignStack)?.children ?: return this to path
-        val from = path.last()
-        val to = from + by
-        if (from !in siblings.indices || to !in siblings.indices) return this to path
-        val moved = editChildren(parent) { it.toMutableList().apply { add(to, removeAt(from)) } }
-        return moved to parent + to
+        val to = path.last() + by
+        if (to < 0) return this to path
+        return moveTo(path, path.dropLast(1), if (by > 0) to + 1 else to)
+    }
+
+    /**
+     * Moves the element at [from] into the stack at [toParent] (empty = the widget), before the child
+     * now at [index] — counted before the element is taken out. Returns the design and the new path;
+     * moves that make no sense (into itself, into a non-stack, out of range) change nothing.
+     */
+    fun moveTo(from: List<Int>, toParent: List<Int>, index: Int): Pair<WidgetDesign, List<Int>> {
+        val element = elementAt(from) ?: return this to from
+        if (toParent.size >= from.size && toParent.take(from.size) == from) return this to from
+        val targets = if (toParent.isEmpty()) children else (elementAt(toParent) as? DesignStack)?.children ?: return this to from
+        if (index !in 0..targets.size) return this to from
+        val sameParent = from.dropLast(1) == toParent
+        val at = if (sameParent && from.last() < index) index - 1 else index
+        if (sameParent && at == from.last()) return this to from
+        // Taking the element out shifts a later sibling on the way to the target.
+        val parent = toParent.toMutableList()
+        val depth = from.size - 1
+        if (parent.size > depth && parent.take(depth) == from.dropLast(1) && parent[depth] > from.last()) parent[depth]--
+        val moved = remove(from).editChildren(parent) { it.toMutableList().apply { add(at, element) } }
+        return moved to parent + at
     }
 
     fun wrapInStack(path: List<Int>, dir: String): Pair<WidgetDesign, List<Int>> {
