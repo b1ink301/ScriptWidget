@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="triggers_title">자동 실행 트리거</string>
+    <string name="triggers_add_button">+ 트리거</string>
+    <string name="triggers_intro">기기에서 일이 생기면 스크립트를 실행합니다. 위젯 갱신은 화면이 꺼져 있으면 화면이 켜질 때 실행되고, 스크립트 실행은 백그라운드에서 바로 실행됩니다(스크립트에서는 args.trigger로 이벤트를 알 수 있습니다).</string>
+    <string name="triggers_empty">아직 트리거가 없습니다. 오른쪽 위 + 트리거로 추가하세요.</string>
+    <string name="triggers_action_refresh_row">→ \'%1$s\' 위젯 갱신</string>
+    <string name="triggers_action_run_row">→ \'%1$s\' 스크립트 실행</string>
+    <string name="triggers_delete">삭제</string>
+    <string name="triggers_new_title">새 트리거</string>
+    <string name="triggers_when">언제</string>
+    <string name="triggers_which_script">어떤 스크립트</string>
+    <string name="triggers_what">무엇을</string>
+    <string name="triggers_action_refresh">위젯 갱신</string>
+    <string name="triggers_action_run">스크립트 실행</string>
+    <string name="triggers_add">추가</string>
+    <string name="triggers_cancel">취소</string>
+    <string name="triggers_event_calendar_title">캘린더 변경</string>
+    <string name="triggers_event_contacts_title">연락처 변경</string>
+    <string name="triggers_event_photo_title">새 사진</string>
+    <string name="triggers_event_day_title">날짜 바뀜</string>
+    <string name="triggers_event_timezone_title">시간대 변경</string>
+    <string name="triggers_event_charging_title">충전 중</string>
+    <string name="triggers_event_wifi_title">Wi-Fi 연결</string>
+    <string name="triggers_event_calendar_when">캘린더가 바뀌면</string>
+    <string name="triggers_event_contacts_when">연락처가 바뀌면</string>
+    <string name="triggers_event_photo_when">새 사진이 생기면</string>
+    <string name="triggers_event_day_when">날짜가 바뀌면 (자정)</string>
+    <string name="triggers_event_timezone_when">시간대·시각이 바뀌면</string>
+    <string name="triggers_event_charging_when">충전 중일 때 (최대 1시간에 한 번)</string>
+    <string name="triggers_event_wifi_when">Wi-Fi에 연결돼 있을 때 (최대 1시간에 한 번)</string>
+    <string name="triggers_event_calendar_contacts_note">일정·연락처를 추가하거나 고치면 몇 초 안에 실행됩니다. 해당 권한이 있어야 합니다.</string>
+    <string name="triggers_event_photo_note">사진을 찍거나 저장하면 실행됩니다. 사진 권한이 있어야 합니다.</string>
+    <string name="triggers_event_day_note">자정에 실행됩니다. 화면이 꺼져 있으면 다음에 켜질 때 실행됩니다.</string>
+    <string name="triggers_event_timezone_note">여행 등으로 시간대가 바뀌거나 시각을 직접 바꾸면 실행됩니다.</string>
+    <string name="triggers_event_charging_note">충전을 시작하면 실행되고, 계속 충전 중이면 1시간마다 다시 실행됩니다.</string>
+    <string name="triggers_event_wifi_note">Wi-Fi(데이터 요금이 없는 네트워크)에 연결되면 실행되고, 연결이 유지되면 1시간마다 다시 실행됩니다.</string>
+</resources>

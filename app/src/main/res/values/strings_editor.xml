@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="editor_pin_unsupported">This launcher doesn\'t support pinning widgets.</string>
+    <string name="editor_design">Design</string>
+    <string name="editor_rename">Rename</string>
+    <string name="editor_pin">Pin</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_run">▶ Run</string>
+    <string name="editor_tab_code">Code</string>
+    <string name="editor_tab_result">Result</string>
+    <string name="editor_rename_title">Rename</string>
+    <string name="editor_rename_confirm">Rename</string>
+    <string name="editor_cancel">Cancel</string>
+    <string name="editor_ok">OK</string>
+    <string name="editor_run_hint">Tap ▶ Run to run the script.</string>
+    <string name="editor_timings">⏱ runtime %1$dms · prelude %2$dms · script %3$dms · total %4$dms</string>
+    <string name="editor_console">Console</string>
+    <string name="editor_no_output">(no output)</string>
+    <string name="editor_name_taken">A script with this name already exists.</string>
+    <string name="editor_name_invalid">This name can\'t be used. (no /, \\, or leading ., up to 64 characters)</string>
+    <string name="editor_not_found">Script not found.</string>
+    <string name="editor_find">Find</string>
+    <string name="editor_find_close">Close find</string>
+    <string name="editor_replace">Replace</string>
+    <string name="editor_replace_all">All</string>
+</resources>

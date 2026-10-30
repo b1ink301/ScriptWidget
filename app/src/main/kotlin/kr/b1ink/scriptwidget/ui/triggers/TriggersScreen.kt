@@ -39,6 +39,8 @@ import kr.b1ink.scriptwidget.di.AppContainer
 import kr.b1ink.scriptwidget.domain.model.EventTrigger
 import kr.b1ink.scriptwidget.domain.model.TriggerAction
 import kr.b1ink.scriptwidget.domain.model.TriggerEvent
+import androidx.compose.ui.res.stringResource
+import kr.b1ink.scriptwidget.R
 
 class TriggersActions(
     val onBack: () -> Unit,
@@ -73,10 +75,10 @@ fun TriggersScreen(state: TriggersUiState, actions: TriggersActions) {
         topBar = {
             TopAppBar(
                 navigationIcon = { TextButton(onClick = actions.onBack) { Text("←") } },
-                title = { Text("자동 실행 트리거") },
+                title = { Text(stringResource(R.string.triggers_title)) },
                 actions = {
                     FilledTonalButton(onClick = { adding = true }, modifier = Modifier.padding(end = 8.dp).testTag("add-trigger")) {
-                        Text("+ 트리거")
+                        Text(stringResource(R.string.triggers_add_button))
                     }
                 },
             )
@@ -89,15 +91,14 @@ fun TriggersScreen(state: TriggersUiState, actions: TriggersActions) {
         ) {
             item {
                 Text(
-                    "기기에서 일이 생기면 스크립트를 실행합니다. 위젯 갱신은 화면이 꺼져 있으면 화면이 켜질 때 실행되고, " +
-                        "스크립트 실행은 백그라운드에서 바로 실행됩니다(스크립트에서는 args.trigger로 이벤트를 알 수 있습니다).",
+                    stringResource(R.string.triggers_intro),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(4.dp),
                 )
             }
             if (state.triggers.isEmpty()) {
-                item { Text("아직 트리거가 없습니다. 오른쪽 위 + 트리거로 추가하세요.", modifier = Modifier.padding(16.dp)) }
+                item { Text(stringResource(R.string.triggers_empty), modifier = Modifier.padding(16.dp)) }
             }
             items(state.triggers, key = { it.id }) { trigger -> TriggerRow(trigger, actions) }
         }
@@ -109,12 +110,12 @@ private fun TriggerRow(trigger: EventTrigger, actions: TriggersActions) {
     ListItem(
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         leadingContent = { Text(trigger.event.emoji, style = MaterialTheme.typography.titleLarge) },
-        headlineContent = { Text(trigger.event.whenText) },
+        headlineContent = { Text(trigger.event.whenText()) },
         supportingContent = {
             Text(
                 when (trigger.action) {
-                    TriggerAction.RefreshWidgets -> "→ '${trigger.scriptName}' 위젯 갱신"
-                    TriggerAction.RunScript -> "→ '${trigger.scriptName}' 스크립트 실행"
+                    TriggerAction.RefreshWidgets -> stringResource(R.string.triggers_action_refresh_row, trigger.scriptName)
+                    TriggerAction.RunScript -> stringResource(R.string.triggers_action_run_row, trigger.scriptName)
                 },
             )
         },
@@ -126,7 +127,7 @@ private fun TriggerRow(trigger: EventTrigger, actions: TriggersActions) {
                     modifier = Modifier.testTag("trigger-switch-${trigger.id}"),
                 )
                 TextButton(onClick = { actions.onRemove(trigger.id) }, modifier = Modifier.testTag("trigger-remove-${trigger.id}")) {
-                    Text("삭제", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.triggers_delete), color = MaterialTheme.colorScheme.error)
                 }
             }
         },
@@ -141,39 +142,39 @@ private fun NewTriggerDialog(scripts: List<String>, onAdd: (TriggerEvent, String
     var action by remember { mutableStateOf(TriggerAction.RefreshWidgets) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("새 트리거") },
+        title = { Text(stringResource(R.string.triggers_new_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("언제", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.triggers_when), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     TriggerEvent.entries.forEach { e ->
                         FilterChip(
                             selected = e == event,
                             onClick = { event = e },
-                            label = { Text("${e.emoji} ${e.title}") },
+                            label = { Text("${e.emoji} ${e.title()}") },
                             modifier = Modifier.testTag("event-${e.name}"),
                         )
                     }
                 }
-                Text(event.note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("어떤 스크립트", style = MaterialTheme.typography.labelLarge)
+                Text(event.note(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.triggers_which_script), style = MaterialTheme.typography.labelLarge)
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     scripts.forEach { name ->
                         FilterChip(selected = name == script, onClick = { script = name }, label = { Text(name) }, modifier = Modifier.testTag("script-$name"))
                     }
                 }
-                Text("무엇을", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.triggers_what), style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FilterChip(
                         selected = action == TriggerAction.RefreshWidgets,
                         onClick = { action = TriggerAction.RefreshWidgets },
-                        label = { Text("위젯 갱신") },
+                        label = { Text(stringResource(R.string.triggers_action_refresh)) },
                         modifier = Modifier.testTag("action-RefreshWidgets"),
                     )
                     FilterChip(
                         selected = action == TriggerAction.RunScript,
                         onClick = { action = TriggerAction.RunScript },
-                        label = { Text("스크립트 실행") },
+                        label = { Text(stringResource(R.string.triggers_action_run)) },
                         modifier = Modifier.testTag("action-RunScript"),
                     )
                 }
@@ -184,9 +185,9 @@ private fun NewTriggerDialog(scripts: List<String>, onAdd: (TriggerEvent, String
                 onClick = { script?.let { onAdd(event, it, action) } },
                 enabled = script != null,
                 modifier = Modifier.testTag("confirm-trigger"),
-            ) { Text("추가") }
+            ) { Text(stringResource(R.string.triggers_add)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.triggers_cancel)) } },
     )
 }
 
@@ -201,35 +202,40 @@ private val TriggerEvent.emoji: String
         TriggerEvent.WifiConnected -> "📶"
     }
 
-private val TriggerEvent.title: String
-    get() = when (this) {
-        TriggerEvent.CalendarChanged -> "캘린더 변경"
-        TriggerEvent.ContactsChanged -> "연락처 변경"
-        TriggerEvent.NewPhoto -> "새 사진"
-        TriggerEvent.DayChanged -> "날짜 바뀜"
-        TriggerEvent.TimeZoneChanged -> "시간대 변경"
-        TriggerEvent.Charging -> "충전 중"
-        TriggerEvent.WifiConnected -> "Wi-Fi 연결"
-    }
+@Composable
+private fun TriggerEvent.title(): String = stringResource(
+    when (this) {
+        TriggerEvent.CalendarChanged -> R.string.triggers_event_calendar_title
+        TriggerEvent.ContactsChanged -> R.string.triggers_event_contacts_title
+        TriggerEvent.NewPhoto -> R.string.triggers_event_photo_title
+        TriggerEvent.DayChanged -> R.string.triggers_event_day_title
+        TriggerEvent.TimeZoneChanged -> R.string.triggers_event_timezone_title
+        TriggerEvent.Charging -> R.string.triggers_event_charging_title
+        TriggerEvent.WifiConnected -> R.string.triggers_event_wifi_title
+    },
+)
 
-private val TriggerEvent.whenText: String
-    get() = when (this) {
-        TriggerEvent.CalendarChanged -> "캘린더가 바뀌면"
-        TriggerEvent.ContactsChanged -> "연락처가 바뀌면"
-        TriggerEvent.NewPhoto -> "새 사진이 생기면"
-        TriggerEvent.DayChanged -> "날짜가 바뀌면 (자정)"
-        TriggerEvent.TimeZoneChanged -> "시간대·시각이 바뀌면"
-        TriggerEvent.Charging -> "충전 중일 때 (최대 1시간에 한 번)"
-        TriggerEvent.WifiConnected -> "Wi-Fi에 연결돼 있을 때 (최대 1시간에 한 번)"
-    }
+@Composable
+private fun TriggerEvent.whenText(): String = stringResource(
+    when (this) {
+        TriggerEvent.CalendarChanged -> R.string.triggers_event_calendar_when
+        TriggerEvent.ContactsChanged -> R.string.triggers_event_contacts_when
+        TriggerEvent.NewPhoto -> R.string.triggers_event_photo_when
+        TriggerEvent.DayChanged -> R.string.triggers_event_day_when
+        TriggerEvent.TimeZoneChanged -> R.string.triggers_event_timezone_when
+        TriggerEvent.Charging -> R.string.triggers_event_charging_when
+        TriggerEvent.WifiConnected -> R.string.triggers_event_wifi_when
+    },
+)
 
-private val TriggerEvent.note: String
-    get() = when (this) {
-        TriggerEvent.CalendarChanged, TriggerEvent.ContactsChanged ->
-            "일정·연락처를 추가하거나 고치면 몇 초 안에 실행됩니다. 해당 권한이 있어야 합니다."
-        TriggerEvent.NewPhoto -> "사진을 찍거나 저장하면 실행됩니다. 사진 권한이 있어야 합니다."
-        TriggerEvent.DayChanged -> "자정에 실행됩니다. 화면이 꺼져 있으면 다음에 켜질 때 실행됩니다."
-        TriggerEvent.TimeZoneChanged -> "여행 등으로 시간대가 바뀌거나 시각을 직접 바꾸면 실행됩니다."
-        TriggerEvent.Charging -> "충전을 시작하면 실행되고, 계속 충전 중이면 1시간마다 다시 실행됩니다."
-        TriggerEvent.WifiConnected -> "Wi-Fi(데이터 요금이 없는 네트워크)에 연결되면 실행되고, 연결이 유지되면 1시간마다 다시 실행됩니다."
-    }
+@Composable
+private fun TriggerEvent.note(): String = stringResource(
+    when (this) {
+        TriggerEvent.CalendarChanged, TriggerEvent.ContactsChanged -> R.string.triggers_event_calendar_contacts_note
+        TriggerEvent.NewPhoto -> R.string.triggers_event_photo_note
+        TriggerEvent.DayChanged -> R.string.triggers_event_day_note
+        TriggerEvent.TimeZoneChanged -> R.string.triggers_event_timezone_note
+        TriggerEvent.Charging -> R.string.triggers_event_charging_note
+        TriggerEvent.WifiConnected -> R.string.triggers_event_wifi_note
+    },
+)

@@ -24,9 +24,11 @@ import kr.b1ink.scriptwidget.domain.usecase.BackupScriptsUseCase
 import kr.b1ink.scriptwidget.domain.usecase.ObserveScriptSummariesUseCase
 import kr.b1ink.scriptwidget.domain.usecase.RestoreScriptsUseCase
 import kr.b1ink.scriptwidget.domain.usecase.SetScriptAppearanceUseCase
+import kr.b1ink.scriptwidget.R
+import kr.b1ink.scriptwidget.ui.text.UiText
 
-/** A list row: the script and "위젯 2개 · 3분 전 실행". */
-data class ScriptRow(val summary: ScriptSummary, val subtitle: String)
+/** A list row: the script and "2 widgets · ran 3 min ago". */
+data class ScriptRow(val summary: ScriptSummary, val subtitle: UiText)
 
 data class ScriptListUiState(
     val scripts: List<ScriptSummary> = emptyList(),
@@ -42,26 +44,33 @@ data class ScriptListUiState(
             .filter { query.isBlank() || it.name.contains(query.trim(), ignoreCase = true) }
             .map { ScriptRow(it, subtitle(activity[it.name] ?: ScriptActivity())) }
 
-    private fun subtitle(a: ScriptActivity): String {
-        val widgets = if (a.widgets > 0) "위젯 ${a.widgets}개" else "위젯 없음"
-        val ran = a.lastRunAt?.let { "${ago(now - it)} 실행" }
-        return listOfNotNull(widgets, ran).joinToString(" · ")
+    private fun subtitle(a: ScriptActivity): UiText {
+        val widgets = when (a.widgets) {
+            0 -> UiText.res(R.string.list_widgets_none)
+            1 -> UiText.res(R.string.list_widgets_one)
+            else -> UiText.res(R.string.list_widgets_count, a.widgets)
+        }
+        val ran = a.lastRunAt?.let { UiText.res(R.string.list_ran, ago(now - it)) } ?: return widgets
+        return UiText.res(R.string.list_subtitle_joined, widgets, ran)
     }
 
-    private fun ago(ms: Long): String {
-        val minutes = (ms / 60_000).coerceAtLeast(0)
+    private fun ago(ms: Long): UiText {
+        val minutes = (ms / 60_000).coerceAtLeast(0).toInt()
         return when {
-            minutes < 1 -> "방금"
-            minutes < 60 -> "${minutes}분 전"
-            minutes < 24 * 60 -> "${minutes / 60}시간 전"
-            else -> "${minutes / (24 * 60)}일 전"
+            minutes < 1 -> UiText.res(R.string.list_ago_just_now)
+            minutes < 60 -> UiText.res(R.string.list_ago_minutes, minutes)
+            minutes < 24 * 60 -> UiText.res(R.string.list_ago_hours, minutes / 60)
+            else -> UiText.res(R.string.list_ago_days, minutes / (24 * 60))
         }
     }
 }
 
 sealed interface ScriptListEvent {
     data class OpenEditor(val name: String) : ScriptListEvent
-    data class ShowMessage(val text: String) : ScriptListEvent
+    /** A message of one or more [lines], shown one per line. */
+    data class ShowMessage(val lines: List<UiText>) : ScriptListEvent {
+        constructor(line: UiText) : this(listOf(line))
+    }
 
     /** Ask the user where to save [scriptName] (system "create document" picker, suggesting [fileName]). */
     data class ChooseExportTarget(val scriptName: String, val fileName: String) : ScriptListEvent
@@ -129,10 +138,10 @@ class ScriptListViewModel(
                 return@launch
             }
             val lines = buildList {
-                if (imported.isNotEmpty()) add("${imported.size}개를 가져왔습니다: ${imported.joinToString { it.name }}")
-                rejected.forEach { add("가져오지 못함: ${it.source} (${it.reason.label()})") }
+                if (imported.isNotEmpty()) add(UiText.res(R.string.list_imported, imported.size, imported.joinToString { it.name }))
+                rejected.forEach { add(UiText.res(R.string.list_import_failed, it.source, it.reason.label())) }
             }
-            _events.send(ScriptListEvent.ShowMessage(lines.joinToString("\n")))
+            _events.send(ScriptListEvent.ShowMessage(lines))
         }
     }
 
@@ -143,19 +152,19 @@ class ScriptListViewModel(
     fun exportTo(name: String, uri: String) {
         viewModelScope.launch {
             val text = try {
-                if (exportScript(name, uri)) "'$name'을(를) 내보냈습니다." else "'$name' 스크립트를 찾을 수 없습니다."
+                if (exportScript(name, uri)) UiText.res(R.string.list_exported, name) else UiText.res(R.string.list_script_not_found, name)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                "내보내기 실패: ${e.message}"
+                UiText.res(R.string.list_export_failed, e.message.toString())
             }
             _events.send(ScriptListEvent.ShowMessage(text))
         }
     }
 
     private fun ImportOutcome.Reason.label() = when (this) {
-        ImportOutcome.Reason.NotAScript -> "스크립트 파일이 아님"
-        ImportOutcome.Reason.Unreadable -> "파일을 열 수 없음"
+        ImportOutcome.Reason.NotAScript -> UiText.res(R.string.list_reason_not_a_script)
+        ImportOutcome.Reason.Unreadable -> UiText.res(R.string.list_reason_unreadable)
     }
 
     fun setAppearance(name: String, appearance: ScriptAppearance) {
@@ -172,11 +181,11 @@ class ScriptListViewModel(
     fun backupTo(uri: String) {
         viewModelScope.launch {
             val text = try {
-                "${backupScripts(uri)}개 스크립트를 백업했습니다."
+                UiText.res(R.string.list_backed_up, backupScripts(uri))
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                "백업 실패: ${e.message}"
+                UiText.res(R.string.list_backup_failed, e.message.toString())
             }
             _events.send(ScriptListEvent.ShowMessage(text))
         }
@@ -188,13 +197,19 @@ class ScriptListViewModel(
                 val result = restoreScripts(uri)
                 summaries.refresh()
                 buildList {
-                    add("${result.added.size}개를 복원했습니다" + if (result.added.isEmpty()) "." else ": ${result.added.joinToString()}")
-                    if (result.unchanged.isNotEmpty()) add("이미 같은 내용이 있어 건너뜀: ${result.unchanged.size}개")
-                }.joinToString("\n")
+                    add(
+                        if (result.added.isEmpty()) {
+                            UiText.res(R.string.list_restored_none)
+                        } else {
+                            UiText.res(R.string.list_restored, result.added.size, result.added.joinToString())
+                        },
+                    )
+                    if (result.unchanged.isNotEmpty()) add(UiText.res(R.string.list_restore_skipped, result.unchanged.size))
+                }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                "복원 실패: ${e.message}"
+                listOf(UiText.res(R.string.list_restore_failed, e.message.toString()))
             }
             _events.send(ScriptListEvent.ShowMessage(text))
         }

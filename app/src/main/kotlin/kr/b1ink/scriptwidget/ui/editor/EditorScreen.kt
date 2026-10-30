@@ -62,6 +62,9 @@ import kr.b1ink.scriptwidget.domain.model.WidgetFamily
 import kr.b1ink.scriptwidget.pin.WidgetPinner
 import kr.b1ink.scriptwidget.ui.preview.WidgetPreview
 import kr.b1ink.scriptwidget.ui.scriptui.ScriptUiOverlay
+import androidx.compose.ui.res.stringResource
+import kr.b1ink.scriptwidget.R
+import kr.b1ink.scriptwidget.ui.text.asString
 
 @Composable
 fun EditorRoute(
@@ -149,7 +152,7 @@ fun EditorRoute(
             scope.launch {
                 vm.saveIfDirty()
                 if (!WidgetPinner.pin(context, state.name, state.parameter.ifBlank { null })) {
-                    Toast.makeText(context, "이 런처는 위젯 고정을 지원하지 않습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.editor_pin_unsupported), Toast.LENGTH_SHORT).show()
                 }
             }
         },
@@ -195,11 +198,11 @@ fun EditorScreen(
                 navigationIcon = { TextButton(onClick = onBack) { Text("←") } },
                 title = { Text(text = state.name + if (state.dirty) " •" else "", maxLines = 1) },
                 actions = {
-                    onOpenDesigner?.let { TextButton(onClick = it, modifier = Modifier.testTag("open-designer")) { Text("디자인") } }
-                    TextButton(onClick = { renaming = true }) { Text("이름") }
-                    TextButton(onClick = onPin) { Text("고정") }
-                    TextButton(onClick = onSave, enabled = state.dirty) { Text("저장") }
-                    TextButton(onClick = onRun, enabled = !state.running && state.code != null) { Text("▶ 실행") }
+                    onOpenDesigner?.let { TextButton(onClick = it, modifier = Modifier.testTag("open-designer")) { Text(stringResource(R.string.editor_design)) } }
+                    TextButton(onClick = { renaming = true }) { Text(stringResource(R.string.editor_rename)) }
+                    TextButton(onClick = onPin) { Text(stringResource(R.string.editor_pin)) }
+                    TextButton(onClick = onSave, enabled = state.dirty) { Text(stringResource(R.string.editor_save)) }
+                    TextButton(onClick = onRun, enabled = !state.running && state.code != null) { Text(stringResource(R.string.editor_run)) }
                 },
             )
         },
@@ -207,8 +210,8 @@ fun EditorScreen(
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (state.running) LinearProgressIndicator(Modifier.fillMaxWidth())
             PrimaryTabRow(selectedTabIndex = state.tab.ordinal) {
-                Tab(selected = state.tab == EditorTab.Code, onClick = { onSelectTab(EditorTab.Code) }, text = { Text("코드") })
-                Tab(selected = state.tab == EditorTab.Result, onClick = { onSelectTab(EditorTab.Result) }, text = { Text("실행 결과") })
+                Tab(selected = state.tab == EditorTab.Code, onClick = { onSelectTab(EditorTab.Code) }, text = { Text(stringResource(R.string.editor_tab_code)) })
+                Tab(selected = state.tab == EditorTab.Result, onClick = { onSelectTab(EditorTab.Result) }, text = { Text(stringResource(R.string.editor_tab_result)) })
             }
             when (state.tab) {
                 EditorTab.Code -> kr.b1ink.scriptwidget.ui.editor.code.CodeEditor(
@@ -233,23 +236,23 @@ fun EditorScreen(
         var newName by remember { mutableStateOf(state.name) }
         AlertDialog(
             onDismissRequest = { renaming = false },
-            title = { Text("이름 변경") },
+            title = { Text(stringResource(R.string.editor_rename_title)) },
             text = { OutlinedTextField(value = newName, onValueChange = { newName = it }, singleLine = true) },
             confirmButton = {
                 TextButton(onClick = {
                     onRename(newName)
                     renaming = false
-                }) { Text("변경") }
+                }) { Text(stringResource(R.string.editor_rename_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { renaming = false }) { Text("취소") } },
+            dismissButton = { TextButton(onClick = { renaming = false }) { Text(stringResource(R.string.editor_cancel)) } },
         )
     }
 
     state.message?.let { message ->
         AlertDialog(
             onDismissRequest = onDismissMessage,
-            text = { Text(message) },
-            confirmButton = { TextButton(onClick = onDismissMessage) { Text("확인") } },
+            text = { Text(message.asString()) },
+            confirmButton = { TextButton(onClick = onDismissMessage) { Text(stringResource(R.string.editor_ok)) } },
         )
     }
 }
@@ -284,7 +287,7 @@ private fun ResultPanel(
         )
 
         if (result == null) {
-            Text("▶ 실행을 눌러 스크립트를 실행하세요.", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.editor_run_hint), style = MaterialTheme.typography.bodyMedium)
             return@Column
         }
 
@@ -303,14 +306,14 @@ private fun ResultPanel(
 
         val t = result.timings
         Text(
-            "⏱ 런타임 생성 ${t.createMs}ms · prelude ${t.preludeMs}ms · 스크립트 ${t.scriptMs}ms · 전체 ${t.totalMs}ms",
+            stringResource(R.string.editor_timings, t.createMs, t.preludeMs, t.scriptMs, t.totalMs),
             style = MaterialTheme.typography.labelMedium,
         )
 
         HorizontalDivider()
-        Text("콘솔", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(R.string.editor_console), style = MaterialTheme.typography.titleSmall)
         if (result.logs.isEmpty()) {
-            Text("(출력 없음)", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.editor_no_output), style = MaterialTheme.typography.bodySmall)
         }
         result.logs.forEach { line ->
             Text(
