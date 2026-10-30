@@ -92,7 +92,8 @@ class GallerySamplesTest {
     fun `every new sample draws a widget in every size`() = runTest {
         seed()
         val ids = catalog.catalog().entries.map { it.id }.filterNot { it.matches(Regex("""0\d_.*""")) }
-        assertEquals(14, ids.size, ids.toString())
+        assertEquals(14, ids.count { !it.startsWith("design_") }, ids.toString())
+        assertEquals(8, ids.count { it.startsWith("design_") }, "the designer templates, see DesignSamplesTest")
         for (id in ids) for (family in WidgetFamily.entries) run(id, family)
     }
 

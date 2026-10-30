@@ -109,6 +109,19 @@ class GalleryUseCaseTest {
     }
 
     @Test
+    fun `entries that opt out (designs) are not installed on first launch`() = runTest {
+        val withDesign = FakeCatalogSource(
+            id = "builtin", title = "기본 갤러리",
+            entries = listOf(entry("events", "오늘 일정"), entry("design_clock", "디자인 시계").copy(seed = false)),
+            code = mapOf("events" to "// e", "design_clock" to "// d"),
+        )
+
+        SeedFromCatalogUseCase(scripts, withDesign, install)()
+
+        assertEquals(setOf("오늘 일정"), scripts.files.keys)
+    }
+
+    @Test
     fun `seeding does nothing once there are scripts`() = runTest {
         scripts.files["mine"] = "x"
 

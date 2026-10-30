@@ -22,9 +22,21 @@ class BuiltinCatalogValidationTest {
     }
 
     @Test
+    fun `scripts in other languages need the same permissions`() = runTest {
+        val english = BuiltinCatalogSource(language = { "en" })
+        val catalog = source.catalog()
+        val code = catalog.entries.associate { it.id to runCatching { english.code(it) }.getOrNull() }
+
+        val problems = CatalogValidator.validate(catalog, code::get)
+
+        assertEquals(emptyList<CatalogProblem>(), problems, problems.joinToString("\n") { "${it.entryId}: ${it.message}" })
+    }
+
+    @Test
     fun `every sample script is listed in the catalog`() = runTest {
-        val listed = source.catalog().entries.map { it.script }.toSet()
-        val files = File("src/main/resources/samples").listFiles { f -> f.extension == "js" }.orEmpty().map { it.name }.toSet()
+        val listed = source.catalog().entries.flatMap { it.allScripts() }.toSet()
+        val root = File("src/main/resources/samples")
+        val files = root.walk().filter { it.extension == "js" }.map { it.relativeTo(root).path }.toSet()
 
         assertEquals(emptySet(), files - listed, "samples missing from catalog.json")
     }

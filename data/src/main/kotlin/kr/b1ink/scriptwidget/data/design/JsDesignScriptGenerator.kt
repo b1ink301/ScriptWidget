@@ -23,7 +23,7 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
         val bindings = design.bindings()
         if (bindings.isNotEmpty()) {
             appendLine()
-            append(dataHelpers(texts))
+            append(dataHelpers(texts, bindings))
             bindings.forEachIndexed { i, binding -> appendLine("await load(\"d$i\", async () => ${loader(binding)});") }
         }
         if (design.bookmarks().isNotEmpty()) {
@@ -208,7 +208,20 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             |
         """.trimMargin() + "\n"
 
-        private fun dataHelpers(texts: GeneratorTexts) = """
+        /** Helpers for [bindings] only: a design that shows the date has no weather or calendar code. */
+        private fun dataHelpers(texts: GeneratorTexts, bindings: List<DataBinding>): String = buildString {
+            append(commonHelpers(texts))
+            if (bindings.any { it is DataBinding.Json }) append(pickHelper)
+            if (bindings.any { it is DataBinding.Weather }) append(weatherHelpers(texts))
+            if (bindings.any { it is DataBinding.NextEvent }) append(eventHelpers(texts))
+            if (bindings.any { it is DataBinding.Reminders }) append(reminderHelpers)
+            if (bindings.any { it is DataBinding.Countdown }) append(countdownHelpers)
+            if (bindings.any { it is DataBinding.Progress }) append(progressHelper)
+            if (bindings.any { it is DataBinding.WorldTime }) append(worldTimeHelper)
+            appendLine()
+        }
+
+        private fun commonHelpers(texts: GeneratorTexts) = """
             |// ${texts.dataComment}
             |const data = {};
             |async function load(key, read) {
@@ -216,10 +229,16 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             |  if (data[key] === undefined || data[key] === null) data[key] = "–";
             |}
             |function formatDate(date, pattern) { const f = new DateFormatter(); f.dateFormat = pattern; return f.string(date); }
+        """.trimMargin() + "\n"
+
+        private val pickHelper = """
             |function pick(json, path) {
             |  const value = path.split(".").filter(Boolean).reduce((o, k) => (o == null ? undefined : o[k]), json);
             |  return value !== null && typeof value === "object" ? JSON.stringify(value) : value;
             |}
+        """.trimMargin() + "\n"
+
+        private fun weatherHelpers(texts: GeneratorTexts) = """
             |let _weather;
             |async function weather() {
             |  if (_weather) return _weather;
@@ -234,6 +253,9 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             |    [[71, 73, 75, 77, 85, 86], ${str(texts.weather[6])}], [[95, 96, 99], ${str(texts.weather[7])}]];
             |  return (labels.find(([codes]) => codes.includes(code)) ?? [null, "–"])[1];
             |}
+        """.trimMargin() + "\n"
+
+        private fun eventHelpers(texts: GeneratorTexts) = """
             |let _event;
             |async function nextEvent() {
             |  if (_event !== undefined) return _event;
@@ -246,6 +268,19 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             |  if (!e) return "";
             |  return e.isAllDay ? ${str(texts.allDay)} : `${'$'}{formatDate(e.startDate, "HH:mm")} – ${'$'}{formatDate(e.endDate, "HH:mm")}`;
             |}
+        """.trimMargin() + "\n"
+
+        private val reminderHelpers = """
+            |let _reminders;
+            |async function openReminders() {
+            |  if (_reminders) return _reminders;
+            |  const list = await Reminder.allIncomplete();
+            |  list.sort((a, b) => (a.dueDate ? a.dueDate.getTime() : Infinity) - (b.dueDate ? b.dueDate.getTime() : Infinity));
+            |  return (_reminders = list);
+            |}
+        """.trimMargin() + "\n"
+
+        private val countdownHelpers = """
             |function countdownTarget(date) {
             |  const m = (date || (args.widgetParameter || "")).trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})\s*(.*)$/);
             |  return m ? { date: new Date(+m[1], +m[2] - 1, +m[3]), name: m[4] } : null;
@@ -261,6 +296,9 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             |  return days === 0 ? "D-DAY" : days > 0 ? `D-${'$'}{days}` : `D+${'$'}{-days}`;
             |}
             |function countdownName(date) { const target = countdownTarget(date); return target ? target.name : null; }
+        """.trimMargin() + "\n"
+
+        private val progressHelper = """
             |function progress(period) {
             |  const now = new Date();
             |  const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
@@ -273,17 +311,12 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             |  }[period];
             |  return Math.floor(((now - start) / (end - start)) * 100);
             |}
+        """.trimMargin() + "\n"
+
+        private val worldTimeHelper = """
             |function worldTime(zone) {
             |  return new Intl.DateTimeFormat("en-GB", { timeZone: zone, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
             |}
-            |let _reminders;
-            |async function openReminders() {
-            |  if (_reminders) return _reminders;
-            |  const list = await Reminder.allIncomplete();
-            |  list.sort((a, b) => (a.dueDate ? a.dueDate.getTime() : Infinity) - (b.dueDate ? b.dueDate.getTime() : Infinity));
-            |  return (_reminders = list);
-            |}
-            |
         """.trimMargin() + "\n"
     }
 }

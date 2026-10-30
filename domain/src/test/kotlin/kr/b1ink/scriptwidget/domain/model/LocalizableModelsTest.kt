@@ -36,6 +36,17 @@ class LocalizableModelsTest {
     }
 
     @Test
+    fun `an entry can ship its script in other languages`() {
+        val entry = CatalogEntry(id = "clock", name = "디자인 시계", script = "designs/clock.js", localizedScripts = mapOf("en" to "designs/clock.en.js"))
+
+        assertEquals("designs/clock.en.js", entry.scriptFor("en"))
+        assertEquals("designs/clock.js", entry.scriptFor("ko"))
+        assertEquals("designs/clock.js", entry.scriptFor(null))
+        assertEquals(listOf("designs/clock.js", "designs/clock.en.js"), entry.allScripts())
+        assertEquals(true, CatalogEntry(id = "a", name = "a", script = "a.js").seed, "samples are installed on first launch unless they opt out")
+    }
+
+    @Test
     fun `catalog titles can be translated too`() {
         val catalog = Catalog("기본 갤러리", emptyList(), titles = mapOf("en" to "Built-in gallery"))
 

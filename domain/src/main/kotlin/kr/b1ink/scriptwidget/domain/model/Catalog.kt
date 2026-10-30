@@ -22,7 +22,16 @@ data class CatalogEntry(
     val author: String? = null,
     /** Title, description and category in other languages, by language code ("en"). */
     val translations: Map<String, CatalogText> = emptyMap(),
+    /** The script in other languages, by language code: `{"en": "designs/clock.en.js"}`. */
+    val localizedScripts: Map<String, String> = emptyMap(),
+    /** Installed with the other samples on first launch. */
+    val seed: Boolean = true,
 ) {
+    /** The script path for [language], else [script]. */
+    fun scriptFor(language: String?): String = language?.let(localizedScripts::get) ?: script
+
+    fun allScripts(): List<String> = listOf(script) + localizedScripts.values
+
     /** What to show for [language] ("en", "ko", ...): its translation, else the catalog's own text. */
     fun textFor(language: String): CatalogText =
         translations[language] ?: CatalogText(title = title, description = description, category = category)

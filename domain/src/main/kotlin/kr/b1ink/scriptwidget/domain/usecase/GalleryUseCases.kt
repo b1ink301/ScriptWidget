@@ -131,6 +131,6 @@ class SeedFromCatalogUseCase(
 ) {
     suspend operator fun invoke() {
         if (scripts.list().isNotEmpty()) return
-        catalog.catalog().entries.forEach { install(catalog, it) }
+        catalog.catalog().entries.filter { it.seed }.forEach { install(catalog, it) }
     }
 }

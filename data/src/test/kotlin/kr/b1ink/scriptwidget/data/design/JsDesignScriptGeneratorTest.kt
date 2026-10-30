@@ -296,6 +296,18 @@ class JsDesignScriptGeneratorTest {
     }
 
     @Test
+    fun `a script only contains the data helpers it uses, so it asks for nothing more`() {
+        fun code(vararg bindings: DataBinding) = generator.generate(WidgetDesign(children = bindings.map { DesignText("{value}", data = it) }))
+
+        val clock = code(DataBinding.DateText("HH:mm"))
+        assertEquals(emptySet(), kr.b1ink.scriptwidget.domain.model.CatalogValidator.usedPermissions(clock))
+        assertTrue("function weather" !in clock && "nextEvent" !in clock && "Reminder." !in clock && "countdown" !in clock, clock)
+        assertEquals(setOf("location", "network"), kr.b1ink.scriptwidget.domain.model.CatalogValidator.usedPermissions(code(DataBinding.Weather())))
+        assertEquals(setOf("calendar"), kr.b1ink.scriptwidget.domain.model.CatalogValidator.usedPermissions(code(DataBinding.NextEvent())))
+        assertEquals(setOf("network"), kr.b1ink.scriptwidget.domain.model.CatalogValidator.usedPermissions(code(DataBinding.Json("https://a.b", "x"))))
+    }
+
+    @Test
     fun `every template draws in every size, one node per element`() = runTest {
         for (template in DesignTemplates.all) for (family in WidgetFamily.entries) {
             val root = run(template.design, family)

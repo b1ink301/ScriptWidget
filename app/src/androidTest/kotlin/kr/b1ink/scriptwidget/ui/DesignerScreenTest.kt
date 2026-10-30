@@ -63,6 +63,7 @@ class DesignerScreenTest {
         onRemove = { calls += "remove" },
         onPickPicture = { calls += "pick:$it" },
         onPickFont = { calls += "font-file" },
+        onExportForGallery = { calls += "export" },
     )
     private var designChange: ((WidgetDesign) -> WidgetDesign)? = null
 
@@ -206,6 +207,16 @@ class DesignerScreenTest {
         compose.onNodeWithTag("prop-font-new").performScrollTo().performClick()
 
         assertEquals(listOf("font-file"), calls)
+    }
+
+    @Test
+    fun theMoreMenuExportsTheDesignForAGallery() {
+        show()
+
+        compose.onNodeWithTag("designer-more").performClick()
+        compose.onNodeWithTag("export-gallery").performClick()
+
+        assertEquals(listOf("export"), calls)
     }
 
     @Test

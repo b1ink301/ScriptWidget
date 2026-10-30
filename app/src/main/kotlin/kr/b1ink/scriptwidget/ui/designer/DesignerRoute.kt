@@ -20,6 +20,7 @@ import kr.b1ink.scriptwidget.di.AppContainer
 import kr.b1ink.scriptwidget.domain.model.FontResult
 import kr.b1ink.scriptwidget.domain.usecase.AddFileBookmarkUseCase
 import kr.b1ink.scriptwidget.domain.usecase.AddFontUseCase
+import kr.b1ink.scriptwidget.domain.usecase.ExportForGalleryUseCase
 import kr.b1ink.scriptwidget.pin.WidgetPinner
 
 @Composable
@@ -48,6 +49,17 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
         if (uri != null) vm.addPicture(uri.toString(), pictureTarget)
     }
     val state by vm.state.collectAsStateWithLifecycle()
+    val exported = androidx.compose.ui.res.stringResource(R.string.designer_exported_gallery, "%s")
+    val exportFailed = androidx.compose.ui.res.stringResource(R.string.designer_export_failed, "%s")
+    val exportForGallery = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            vm.saveIfDirty()
+            val message = runCatching { container.exportForGallery(scriptName, uri.toString()) }
+                .fold({ exported.replace("%s", ExportForGalleryUseCase.fileName(scriptName)) }, { exportFailed.replace("%s", it.message ?: it.toString()) })
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
     val notAFont = androidx.compose.ui.res.stringResource(R.string.designer_font_not_a_font)
     val fontFailed = androidx.compose.ui.res.stringResource(R.string.designer_font_failed, "%s")
     LaunchedEffect(state.fontProblem) {
@@ -82,6 +94,7 @@ fun DesignerRoute(container: AppContainer, scriptName: String, onBack: () -> Uni
             onDrop = vm::moveTo,
             onWrap = vm::wrapSelected,
             onRemove = vm::removeSelected,
+            onExportForGallery = { exportForGallery.launch(ExportForGalleryUseCase.fileName(scriptName)) },
             onPickFont = { pickFont.launch(arrayOf("font/*", "application/x-font-ttf", "application/x-font-otf", "application/octet-stream", "*/*")) },
             onPickPicture = { target ->
                 pictureTarget = target

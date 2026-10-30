@@ -147,4 +147,7 @@
     <string name="designer_add_font">+ Font file</string>
     <string name="designer_font_not_a_font">Not a TrueType (.ttf) or OpenType (.otf) font file.</string>
     <string name="designer_font_failed">Couldn\'t read the font: %1$s</string>
+    <string name="designer_export_gallery">Export for a gallery (.zip)</string>
+    <string name="designer_exported_gallery">Exported %1$s: the script and its index.json entry (entry.json)</string>
+    <string name="designer_export_failed">Couldn\'t export: %1$s</string>
 </resources>

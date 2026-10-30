@@ -99,6 +99,8 @@ class DesignerActions(
     val onPickPicture: (PictureTarget) -> Unit = {},
     /** Pick a .ttf/.otf file; it is added to Documents/fonts and used by the selected text. */
     val onPickFont: () -> Unit = {},
+    /** Save the script with a catalog entry (zip) for publishing in a gallery. */
+    val onExportForGallery: () -> Unit = {},
 )
 
 private enum class Panel(@StringRes val title: Int) { Outline(R.string.designer_panel_outline), Properties(R.string.designer_panel_properties) }
@@ -123,12 +125,13 @@ fun DesignerScreen(state: DesignerUiState, actions: DesignerActions) {
         topBar = {
             TopAppBar(
                 navigationIcon = { TextButton(onClick = actions.onBack) { Text("←") } },
-                title = { Text(state.name + if (state.dirty) " •" else "", maxLines = 1) },
+                title = { Text(state.name + if (state.dirty) " •" else "", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
                 actions = {
                     TextButton(onClick = actions.onUndo, enabled = state.canUndo, modifier = Modifier.testTag("undo")) { Text("↶") }
                     TextButton(onClick = actions.onRedo, enabled = state.canRedo, modifier = Modifier.testTag("redo")) { Text("↷") }
                     TextButton(onClick = actions.onPin) { Text(stringResource(R.string.designer_pin)) }
                     TextButton(onClick = actions.onShowCode) { Text(stringResource(R.string.designer_code)) }
+                    MoreMenu(actions)
                 },
             )
         },
@@ -153,6 +156,24 @@ fun DesignerScreen(state: DesignerUiState, actions: DesignerActions) {
                     Panel.Properties -> Properties(state, actions)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun MoreMenu(actions: DesignerActions) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        TextButton(onClick = { open = true }, modifier = Modifier.testTag("designer-more")) { Text("⋮") }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.designer_export_gallery)) },
+                onClick = {
+                    open = false
+                    actions.onExportForGallery()
+                },
+                modifier = Modifier.testTag("export-gallery"),
+            )
         }
     }
 }

@@ -36,5 +36,8 @@ tasks.test {
     systemProperty("compat.corpus", providers.gradleProperty("compatCorpus").getOrElse(""))
     inputs.property("compatCorpus", providers.gradleProperty("compatCorpus").getOrElse(""))
     systemProperty("catalog.file", providers.gradleProperty("catalog").getOrElse(""))
+    // Regenerating the gallery's design samples from the designer templates: -PwriteDesigns
+    systemProperty("design.write", providers.gradleProperty("writeDesigns").isPresent.toString())
+    inputs.property("writeDesigns", providers.gradleProperty("writeDesigns").isPresent)
     inputs.property("catalog", providers.gradleProperty("catalog").getOrElse(""))
 }

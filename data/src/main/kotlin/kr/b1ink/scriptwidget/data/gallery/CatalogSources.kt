@@ -26,16 +26,20 @@ import java.net.URI
 
 internal val CatalogJson = Json { ignoreUnknownKeys = true }
 
-/** The gallery bundled with the app: `/samples/catalog.json` and the scripts next to it. */
-class BuiltinCatalogSource : CatalogSource, SampleScriptSource {
+/**
+ * The gallery bundled with the app: `/samples/catalog.json` and the scripts next to it.
+ * [language] picks an entry's script in the app's language when it has one (`localizedScripts`).
+ */
+class BuiltinCatalogSource(private val language: () -> String? = { null }) : CatalogSource, SampleScriptSource {
     override val id: String = ID
 
     override suspend fun catalog(): Catalog = catalogNow()
 
-    override suspend fun code(entry: CatalogEntry): String = resource(entry.script)
+    override suspend fun code(entry: CatalogEntry): String = resource(entry.scriptFor(language()))
 
-    /** First launch installs every bundled sample under its script name. */
-    override fun load(): Map<String, String> = catalogNow().entries.associate { it.name to resource(it.script) }
+    /** First launch installs the bundled samples (not the opt-outs, like designs) under their script names. */
+    override fun load(): Map<String, String> =
+        catalogNow().entries.filter { it.seed }.associate { it.name to resource(it.scriptFor(language())) }
 
     private fun catalogNow(): Catalog = CatalogJson.decodeFromString(Catalog.serializer(), resource("catalog.json"))
 
@@ -56,13 +60,14 @@ class RemoteCatalogSource(
     private val url: String,
     private val http: HttpGateway,
     private val timeoutSeconds: Double = 20.0,
+    private val language: () -> String? = { null },
 ) : CatalogSource {
     override val id: String = url
 
     override suspend fun catalog(): Catalog =
         CatalogJson.decodeFromString(Catalog.serializer(), fetch(url))
 
-    override suspend fun code(entry: CatalogEntry): String = fetch(URI(url).resolve(entry.script).toString())
+    override suspend fun code(entry: CatalogEntry): String = fetch(URI(url).resolve(entry.scriptFor(language())).toString())
 
     private suspend fun fetch(target: String): String {
         if (!target.startsWith("https://")) throw IOException("https 주소만 사용할 수 있습니다: $target")

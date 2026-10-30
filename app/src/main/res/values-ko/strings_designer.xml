@@ -147,4 +147,7 @@
     <string name="designer_add_font">+ 글꼴 파일</string>
     <string name="designer_font_not_a_font">TrueType(.ttf)·OpenType(.otf) 글꼴 파일이 아닙니다.</string>
     <string name="designer_font_failed">글꼴을 읽지 못했습니다: %1$s</string>
+    <string name="designer_export_gallery">갤러리용으로 내보내기 (.zip)</string>
+    <string name="designer_exported_gallery">%1$s 내보냄: 스크립트와 index.json 항목(entry.json)</string>
+    <string name="designer_export_failed">내보내지 못했습니다: %1$s</string>
 </resources>
