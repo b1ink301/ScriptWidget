@@ -3,14 +3,14 @@ package kr.b1ink.scriptwidget.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.SemanticsMatcher import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsNotSelected
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.hasScrollAction import androidx.compose.ui.test.hasText import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performClick import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kr.b1ink.scriptwidget.domain.model.ScriptSummary
@@ -86,15 +86,23 @@ class MainChromeTest {
 
         compose.onNodeWithTag("screen-off-refresh").performClick()
         listOf("권한", "파일 북마크", "스크립트 가져오기", "전체 백업", "백업에서 복원", "카탈로그 관리").forEach {
+            scrollSettingsTo(hasText(it))
             compose.onNodeWithText(it).performClick()
         }
+        scrollSettingsTo(hasText("ScriptWidget 1.2.3"))
         compose.onNodeWithText("ScriptWidget 1.2.3").assertIsDisplayed()
+        scrollSettingsTo(hasText("GitHub", substring = true))
         compose.onNodeWithText("GitHub", substring = true).performClick()
 
         assertEquals(
             listOf("screenOff:true", "permissions", "bookmarks", "import", "backup", "restore", "catalogs", "url:https://github.com/b1ink301/ScriptWidget"),
             calls,
         )
+    }
+
+    /** The settings list is lazy: on short screens (CI emulators) the lower rows are not composed until scrolled to. */
+    private fun scrollSettingsTo(matcher: SemanticsMatcher) {
+        compose.onNode(hasScrollAction()).performScrollToNode(matcher)
     }
 
     @Test
