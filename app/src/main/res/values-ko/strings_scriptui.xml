@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scriptui_ok">확인</string>
+    <string name="scriptui_cancel">취소</string>
+    <string name="scriptui_next">다음</string>
+    <string name="scriptui_time">시간</string>
+    <string name="scriptui_hours">시</string>
+    <string name="scriptui_minutes">분</string>
+    <string name="scriptui_seconds">초</string>
+    <string name="scriptui_close">닫기</string>
+</resources>

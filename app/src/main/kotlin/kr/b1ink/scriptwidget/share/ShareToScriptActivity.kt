@@ -1,5 +1,7 @@
 package kr.b1ink.scriptwidget.share
 
+import kr.b1ink.scriptwidget.R
+import androidx.compose.ui.res.stringResource
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -36,7 +38,7 @@ class ShareToScriptActivity : ComponentActivity() {
                 val names by container.observeScriptNames().collectAsStateWithLifecycle()
                 AlertDialog(
                     onDismissRequest = ::finish,
-                    title = { Text("어떤 스크립트로 실행할까요?") },
+                    title = { Text(stringResource(R.string.share_pick_title)) },
                     text = {
                         LazyColumn(Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
                             items(names, key = { it }) { name ->
@@ -45,7 +47,7 @@ class ShareToScriptActivity : ComponentActivity() {
                         }
                     },
                     confirmButton = {},
-                    dismissButton = { TextButton(onClick = ::finish) { Text("취소") } },
+                    dismissButton = { TextButton(onClick = ::finish) { Text(stringResource(R.string.share_cancel)) } },
                 )
             }
         }

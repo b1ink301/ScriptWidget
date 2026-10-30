@@ -1,5 +1,7 @@
 package kr.b1ink.scriptwidget.ui.history
 
+import kr.b1ink.scriptwidget.ui.text.UiText
+import kr.b1ink.scriptwidget.R
 import kotlinx.coroutines.test.runTest
 import kr.b1ink.scriptwidget.domain.fake.FakeRunHistory
 import kr.b1ink.scriptwidget.domain.model.LogLine
@@ -29,10 +31,10 @@ class RunHistoryViewModelTest {
         val rows = vm.uiState.value.rows
         assertEquals(listOf("Weather", "Hello"), rows.map { it.scriptName })
         assertEquals(listOf(false, true), rows.map { it.success })
-        assertEquals("위젯 #4", rows[0].sourceLabel)
-        assertEquals("앱", rows[1].sourceLabel)
-        assertEquals("TypeError: x is undefined", rows[0].summary)
-        assertEquals("hi", rows[1].summary)
+        assertEquals(UiText.res(R.string.history_source_widget_id, 4), rows[0].sourceLabel)
+        assertEquals(UiText.res(R.string.history_source_app), rows[1].sourceLabel)
+        assertEquals(UiText.Raw("TypeError: x is undefined"), rows[0].summary)
+        assertEquals(UiText.Raw("hi"), rows[1].summary)
         assertEquals("900ms", rows[0].duration)
     }
 

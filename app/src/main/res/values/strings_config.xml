@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_title">Choose widget script</string>
+    <string name="config_parameter_label">Parameter (args.widgetParameter)</string>
+    <string name="config_done">Done</string>
+</resources>

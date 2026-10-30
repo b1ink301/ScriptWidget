@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bookmarks_title">File bookmarks</string>
+    <string name="bookmarks_add">+ Add bookmark</string>
+    <string name="bookmarks_intro">Files that scripts read with FileManager.bookmarkedPath(\"name\"). The file you pick is copied into the app; tap an item to replace it with another file.</string>
+    <string name="bookmarks_empty">No bookmarks yet.</string>
+    <string name="bookmarks_delete">Delete</string>
+    <string name="bookmarks_name_title">Bookmark name</string>
+    <string name="bookmarks_name_hint">Enter the exact name used in the script (e.g. still)</string>
+    <string name="bookmarks_pick_file">Choose file</string>
+    <string name="bookmarks_cancel">Cancel</string>
+    <string name="bookmarks_delete_title">Delete the \'%1$s\' bookmark?</string>
+    <string name="bookmarks_delete_text">The copy inside the app will be deleted. The original file stays as it is.</string>
+    <string name="bookmarks_saved">Saved the \'%1$s\' bookmark</string>
+    <string name="bookmarks_name_blank">Enter a name</string>
+    <string name="bookmarks_name_not_file_name">Names can\'t contain / or \\</string>
+    <string name="bookmarks_read_failed">Couldn\'t read the file: %1$s</string>
+</resources>

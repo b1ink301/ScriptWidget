@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="api_title">API reference</string>
+    <string name="api_search_label">Search classes and methods</string>
+    <string name="api_loading">Loading…</string>
+    <string name="api_official_docs">Official docs</string>
+    <string name="api_section_static">Static members</string>
+    <string name="api_section_methods">Methods</string>
+    <string name="api_section_properties">Properties</string>
+    <string name="api_kind_class">Class</string>
+    <string name="api_kind_object">Object</string>
+    <string name="api_kind_function">Function</string>
+</resources>

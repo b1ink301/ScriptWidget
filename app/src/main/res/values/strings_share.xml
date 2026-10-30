@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_activity_label">Run with script</string>
+    <string name="share_pick_title">Which script should run this?</string>
+    <string name="share_cancel">Cancel</string>
+</resources>

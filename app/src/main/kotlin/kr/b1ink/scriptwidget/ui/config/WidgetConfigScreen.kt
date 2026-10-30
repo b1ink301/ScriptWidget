@@ -1,5 +1,7 @@
 package kr.b1ink.scriptwidget.ui.config
 
+import kr.b1ink.scriptwidget.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,7 +29,7 @@ fun WidgetConfigScreen(
     onParameterChange: (String) -> Unit,
     onConfirm: () -> Unit,
 ) {
-    Scaffold(topBar = { TopAppBar(title = { Text("위젯 스크립트 선택") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.config_title)) }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             LazyColumn(Modifier.weight(1f)) {
                 items(state.names, key = { it }) { name ->
@@ -41,7 +43,7 @@ fun WidgetConfigScreen(
             OutlinedTextField(
                 value = state.parameter,
                 onValueChange = onParameterChange,
-                label = { Text("파라미터 (args.widgetParameter)") },
+                label = { Text(stringResource(R.string.config_parameter_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             )
@@ -49,7 +51,7 @@ fun WidgetConfigScreen(
                 enabled = state.canConfirm,
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 onClick = onConfirm,
-            ) { Text("완료") }
+            ) { Text(stringResource(R.string.config_done)) }
         }
     }
 }

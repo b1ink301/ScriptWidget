@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_activity_label">스크립트로 실행</string>
+    <string name="share_pick_title">어떤 스크립트로 실행할까요?</string>
+    <string name="share_cancel">취소</string>
+</resources>

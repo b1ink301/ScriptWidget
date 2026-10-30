@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="history_title">Run history</string>
+    <string name="history_failures_only">Failures only</string>
+    <string name="history_clear">Clear</string>
+    <string name="history_empty">No runs yet. Widget refreshes, app runs and automation runs show up here.</string>
+    <string name="history_success">Success</string>
+    <string name="history_source_widget">Widget</string>
+    <string name="history_source_widget_id">Widget #%1$d</string>
+    <string name="history_source_app">App</string>
+    <string name="history_source_share">Share</string>
+    <string name="history_source_notification">Notification</string>
+    <string name="history_source_home_screen">Home screen</string>
+    <string name="history_source_automation">Automation</string>
+    <string name="history_source_trigger">Trigger</string>
+</resources>
