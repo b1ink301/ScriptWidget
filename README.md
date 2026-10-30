@@ -1,5 +1,9 @@
 # ScriptWidget
 
+[![CI](https://github.com/b1ink301/ScriptWidget/actions/workflows/ci.yml/badge.svg)](https://github.com/b1ink301/ScriptWidget/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/b1ink301/ScriptWidget?include_prereleases)](https://github.com/b1ink301/ScriptWidget/releases)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+
 iOS [Scriptable](https://scriptable.app/)처럼 **JavaScript로 안드로이드 홈 화면 위젯을 만드는 앱**입니다. Scriptable 스크립트(`.js`, `.scriptable`)를 가져와 대부분 그대로 실행할 수 있습니다.
 
 - 저장소: https://github.com/b1ink301/ScriptWidget · 라이선스: [GPL-3.0](LICENSE)
@@ -69,13 +73,13 @@ sequenceDiagram
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
 | domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL) | `domain/src/test` | 117 |
-| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업 | `data/src/test` | 242 |
+| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업 | `data/src/test` | 246 |
 | widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
 | app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리) | `app/src/test` | 104 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
 | widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션) | `widget/src/androidTest` | 55 |
 | app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치) | `app/src/androidTest` | 39 |
-| **합계** | | | **637** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| **합계** | | | **641** (+ 호환성 측정 하네스 1, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -97,6 +101,10 @@ export ANDROID_SERIAL=emulator-5554
 - `Device` 정보에서 기본값이 있는 필드(`systemName`, `isPad`)가 JSON에서 빠지던 문제 (kotlinx.serialization `encodeDefaults`)
 - `scriptwidget://`(앱 열기 링크)를 `java.net.URI`가 거부하던 문제
 - 앱 시작 시 DI 순환으로 `StackOverflowError` 크래시: WorkManager의 on-demand 초기화가 Application에 worker factory를 요청하는데, factory가 스케줄러(=WorkManager)를 필요로 하는 UseCase를 즉시 만들고 있었음. 운영 구성을 그대로 검증하는 `ProductionWiringTest`로 재현 후 의존성을 지연 해석하도록 수정
+
+## 설치
+
+[Releases](https://github.com/b1ink301/ScriptWidget/releases)에서 APK를 받아 설치합니다. 대부분의 휴대폰은 `-arm64-v8a.apk`, 잘 모르겠으면 `-universal.apk`. 처음 설치할 때 "출처를 알 수 없는 앱" 설치를 허용해야 합니다. 업데이트는 같은 서명 키로 만든 새 APK를 덮어 설치하면 됩니다.
 
 ## 빌드 & 실행
 
@@ -131,6 +139,7 @@ export ANDROID_SERIAL=emulator-5554
 | 정보 | 진행률(오늘·주·달·해), 코인 시세(업비트, 키 불필요), RSS 뉴스(기본 연합뉴스), 오늘의 명언, 세계 시계 |
 | 예제 | 기존 샘플 9개(01_hello ~ 09_counter) |
 
+- **기본 갤러리는 이 저장소의 [`samples/catalog.json`](data/src/main/resources/samples/catalog.json)을 읽습니다.** 그래서 샘플을 고치거나(항목의 `version`을 올림) 새 샘플을 추가해 `main`에 올리면, 앱을 다시 배포하지 않아도 갤러리에 **업데이트**·새 항목이 보입니다. 오프라인이거나 받기에 실패하면 앱에 들어 있는 사본을 씁니다.
 - 처음 설치하면 갤러리 샘플이 모두 스크립트 목록에 들어갑니다(설치 기록도 함께 남아 나중에 업데이트 가능). 이미 스크립트가 있으면 아무것도 넣지 않습니다.
 - 같은 이름이 있으면 덮어쓰지 않고 `이름 2`로 설치합니다. 갤러리 버전이 더 높으면 **업데이트**가 보이고, 설치 후 직접 고친 스크립트는 그대로 두고 새 버전을 `이름 2`로 설치합니다.
 - **카탈로그 추가**(오른쪽 위 **+ 카탈로그**): https 주소의 `index.json`을 추가하면 그 목록도 갤러리에 나옵니다(예: GitHub 저장소의 raw 주소). 다른 곳에서 받은 스크립트는 설치 전에 **코드와 필요 권한을 보여 주고**, 확인한 그 코드 그대로 설치합니다. 불러오지 못한 카탈로그는 오류와 함께 표시되고, 삭제해도 설치한 스크립트는 남습니다.
@@ -317,10 +326,32 @@ keyPassword=<키 비밀번호>
 ```
 
 ```bash
-./gradlew :app:assembleRelease                      # app/build/outputs/apk/release/app-release.apk
+./gradlew :app:assembleRelease                      # app/build/outputs/apk/release/app-<abi>-release.apk (ABI별 + universal)
 ./gradlew :app:signingReport                        # 등록에 쓸 SHA-256 지문 확인
-apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
+apksigner verify --print-certs app/build/outputs/apk/release/app-universal-release.apk
 ```
+
+### CI/CD (GitHub Actions)
+
+| 워크플로 | 언제 | 하는 일 |
+|---|---|---|
+| [`ci.yml`](.github/workflows/ci.yml) | `main` 푸시, PR, 수동 | 단위 테스트(domain·data(QuickJS)·widget·app) → 디버그 APK(아티팩트) → 에뮬레이터(API 35)에서 기기 테스트 |
+| [`release.yml`](.github/workflows/release.yml) | `v*` 태그 푸시 | 단위 테스트 → 서명된 release APK(arm64-v8a·armeabi-v7a·x86_64·universal) → 서명 검증·SHA-256 → GitHub 릴리스 생성 |
+
+릴리스 만들기:
+```bash
+git tag v0.2.0 && git push origin v0.2.0      # versionName 0.2.0, versionCode 200 (major*10000+minor*100+patch)
+```
+`-beta.1`처럼 `-`가 붙은 태그는 사전 릴리스로 올라갑니다.
+
+릴리스 워크플로는 저장소 **Settings → Secrets and variables → Actions**의 아래 비밀 값으로 서명합니다(없으면 실패하고 이유를 알려 줌):
+
+| Secret | 값 |
+|---|---|
+| `SCRIPTWIDGET_KEYSTORE_BASE64` | `base64 -i ../keystore/scriptwidget-release.jks \| pbcopy` 결과 |
+| `SCRIPTWIDGET_KEYSTORE_PASSWORD` | 키스토어 비밀번호 |
+| `SCRIPTWIDGET_KEY_ALIAS` | `scriptwidget` |
+| `SCRIPTWIDGET_KEY_PASSWORD` | 키 비밀번호 |
 
 - **키와 비밀번호를 잃어버리면 기존 설치본을 업데이트할 수 없습니다.** 저장소 밖 두 곳 이상(비밀번호 관리자 + 오프라인 백업)에 보관하세요.
 - 2027년 Android 개발자 인증에 대비해 **패키지명 `kr.b1ink.scriptwidget`과 이 키의 SHA-256 지문**을 Android Developer Console에 등록합니다. 패키지명은 등록 후 바꿀 수 없습니다(바꾸면 다른 앱이 됨).
@@ -342,7 +373,7 @@ apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
 ### 확인된 제약 / 다음 단계
 
 - `cornerRadius`는 API 31 이상에서만 적용
-- 다음 후보: GitHub 릴리스(ABI split APK), 공개 갤러리 카탈로그(`index.json`) 운영, 이벤트 트리거(충전·Wi-Fi 등), 실기기 장시간 배터리 측정
+- 다음 후보: 이벤트 트리거(충전·Wi-Fi 등), 실기기 장시간 배터리 측정, 커뮤니티 카탈로그 운영
 
 ## 라이선스
 
