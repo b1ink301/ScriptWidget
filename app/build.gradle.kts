@@ -42,8 +42,9 @@ android {
         applicationId = "kr.b1ink.scriptwidget"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0-poc"
+        // CI passes the release tag: -PversionName=1.2.3 -PversionCode=10203
+        versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 1
+        versionName = providers.gradleProperty("versionName").orNull ?: "0.1.0-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -65,6 +66,17 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    // Release APKs per ABI (QuickJS is native, ~0.8MB per ABI) plus a universal one. Debug builds
+    // keep a single APK so installing from the IDE and device tests are unchanged.
+    splits {
+        abi {
+            isEnable = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
     }
 
     buildTypes {
