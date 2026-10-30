@@ -42,13 +42,14 @@ class GallerySamplesTest {
     }
 
     private val now = System.currentTimeMillis()
-    private fun todayAt(hour: Int) = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, hour); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    private fun todayAt(hour: Int, minute: Int = 0) = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour); set(Calendar.MINUTE, minute); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
     }.timeInMillis
 
     private fun seed() {
-        calendar.events += EventData(identifier = "e1", calendarId = "1", title = "팀 회의", start = todayAt(10), end = todayAt(11))
-        calendar.events += EventData(identifier = "e2", calendarId = "2", title = "치과 예약", start = todayAt(15), end = todayAt(16))
+        // The widget hides events that already ended, so both run until late tonight whenever the test runs.
+        calendar.events += EventData(identifier = "e1", calendarId = "1", title = "팀 회의", start = todayAt(10), end = todayAt(23, 58))
+        calendar.events += EventData(identifier = "e2", calendarId = "2", title = "치과 예약", start = todayAt(15), end = todayAt(23, 59))
         reminders.save(ReminderData(title = "우유 사기"))
         reminders.save(ReminderData(title = "보고서 제출", dueDate = now + 3_600_000))
         val birthday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 3); set(Calendar.YEAR, 1990) }.timeInMillis

@@ -47,7 +47,7 @@ class ScheduleBoundWidgetsUseCase(
 }
 
 /**
- * A widget was resized. Within the same family the drawn tree still fits, so it is only redrawn;
+ * A widget was resized. Within the same family the drawn tree still fits (the receiver redraws it);
  * a new family (small ↔ medium ↔ large) needs a new run, since scripts lay out per family.
  */
 class ResizeWidgetUseCase(
@@ -55,8 +55,8 @@ class ResizeWidgetUseCase(
     private val scheduler: WidgetRefreshScheduler,
 ) {
     suspend operator fun invoke(appWidgetId: Int, family: kr.b1ink.scriptwidget.domain.model.WidgetFamily) {
+        // The receiver redraws the drawn state at the new size; only a new family needs a new run.
         val current = renderStates.get(appWidgetId)
-        if (current != null && current.family == family) renderStates.publish(appWidgetId, current)
-        else scheduler.refreshNow(appWidgetId)
+        if (current == null || current.family != family) scheduler.refreshNow(appWidgetId)
     }
 }
