@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="history_title">실행 기록</string>
+    <string name="history_failures_only">실패만</string>
+    <string name="history_clear">지우기</string>
+    <string name="history_empty">기록이 없습니다. 위젯 갱신·앱 실행·자동화 실행이 여기에 남습니다.</string>
+    <string name="history_success">성공</string>
+    <string name="history_source_widget">위젯</string>
+    <string name="history_source_widget_id">위젯 #%1$d</string>
+    <string name="history_source_app">앱</string>
+    <string name="history_source_share">공유</string>
+    <string name="history_source_notification">알림</string>
+    <string name="history_source_home_screen">홈 화면</string>
+    <string name="history_source_automation">자동화</string>
+    <string name="history_source_trigger">트리거</string>
+</resources>

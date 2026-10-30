@@ -1,5 +1,7 @@
 package kr.b1ink.scriptwidget.ui.scriptui
 
+import kr.b1ink.scriptwidget.R
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -180,9 +182,9 @@ private fun DatePickerContent(spec: DatePickerSpec, respond: (Long?) -> Unit) {
                     TextButton(onClick = {
                         val date = pickedDate ?: LocalDate.now(zone)
                         respond(date.atTime(LocalTime.of(state.hour, state.minute)).atZone(zone).toInstant().toEpochMilli())
-                    }) { Text("확인") }
+                    }) { Text(stringResource(R.string.scriptui_ok)) }
                 },
-                dismissButton = { TextButton(onClick = { respond(null) }) { Text("취소") } },
+                dismissButton = { TextButton(onClick = { respond(null) }) { Text(stringResource(R.string.scriptui_cancel)) } },
             )
         }
         else -> {
@@ -207,9 +209,9 @@ private fun DatePickerContent(spec: DatePickerSpec, respond: (Long?) -> Unit) {
                         val day = Instant.ofEpochMilli(selected).atZone(ZoneOffset.UTC).toLocalDate()
                         if (spec.mode == "dateAndTime") pickedDate = day
                         else respond(day.atStartOfDay(zone).toInstant().toEpochMilli())
-                    }) { Text(if (spec.mode == "dateAndTime") "다음" else "확인") }
+                    }) { Text(stringResource(if (spec.mode == "dateAndTime") R.string.scriptui_next else R.string.scriptui_ok)) }
                 },
-                dismissButton = { TextButton(onClick = { respond(null) }) { Text("취소") } },
+                dismissButton = { TextButton(onClick = { respond(null) }) { Text(stringResource(R.string.scriptui_cancel)) } },
             ) { DatePicker(state = state) }
         }
     }
@@ -222,17 +224,17 @@ private fun CountdownDialog(initialSeconds: Int, respond: (Long?) -> Unit) {
     var seconds by remember { mutableStateOf((initialSeconds % 60).toString()) }
     AlertDialog(
         onDismissRequest = { respond(null) },
-        title = { Text("시간") },
+        title = { Text(stringResource(R.string.scriptui_time)) },
         text = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("시" to hours, "분" to minutes, "초" to seconds).forEachIndexed { i, (label, value) ->
+                listOf(R.string.scriptui_hours to hours, R.string.scriptui_minutes to minutes, R.string.scriptui_seconds to seconds).forEachIndexed { i, (label, value) ->
                     OutlinedTextField(
                         value = value,
                         onValueChange = { v ->
                             val digits = v.filter(Char::isDigit).take(3)
                             when (i) { 0 -> hours = digits; 1 -> minutes = digits; else -> seconds = digits }
                         },
-                        label = { Text(label) },
+                        label = { Text(stringResource(label)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
@@ -244,9 +246,9 @@ private fun CountdownDialog(initialSeconds: Int, respond: (Long?) -> Unit) {
             TextButton(onClick = {
                 val total = (hours.toLongOrNull() ?: 0) * 3600 + (minutes.toLongOrNull() ?: 0) * 60 + (seconds.toLongOrNull() ?: 0)
                 respond(total * 1000)
-            }) { Text("확인") }
+            }) { Text(stringResource(R.string.scriptui_ok)) }
         },
-        dismissButton = { TextButton(onClick = { respond(null) }) { Text("취소") } },
+        dismissButton = { TextButton(onClick = { respond(null) }) { Text(stringResource(R.string.scriptui_cancel)) } },
     )
 }
 
@@ -258,7 +260,7 @@ private fun FullScreen(onClose: () -> Unit, content: @Composable () -> Unit) {
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Scaffold(
-                topBar = { TopAppBar(title = {}, navigationIcon = { TextButton(onClick = onClose) { Text("닫기") } }) },
+                topBar = { TopAppBar(title = {}, navigationIcon = { TextButton(onClick = onClose) { Text(stringResource(R.string.scriptui_close)) } }) },
             ) { padding -> Box(Modifier.fillMaxSize().padding(padding)) { content() } }
         }
     }

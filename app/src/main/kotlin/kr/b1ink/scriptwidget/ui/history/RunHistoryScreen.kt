@@ -1,5 +1,8 @@
 package kr.b1ink.scriptwidget.ui.history
 
+import kr.b1ink.scriptwidget.ui.text.asString
+import kr.b1ink.scriptwidget.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,17 +56,17 @@ fun RunHistoryScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = { onBack?.let { TextButton(onClick = it) { Text("←") } } },
-                title = { Text("실행 기록") },
+                title = { Text(stringResource(R.string.history_title)) },
                 actions = {
-                    FilterChip(selected = state.failuresOnly, onClick = { onFailuresOnly(!state.failuresOnly) }, label = { Text("실패만") })
-                    TextButton(onClick = onClear) { Text("지우기") }
+                    FilterChip(selected = state.failuresOnly, onClick = { onFailuresOnly(!state.failuresOnly) }, label = { Text(stringResource(R.string.history_failures_only)) })
+                    TextButton(onClick = onClear) { Text(stringResource(R.string.history_clear)) }
                 },
             )
         },
     ) { padding ->
         if (state.rows.isEmpty()) {
             Column(Modifier.fillMaxSize().padding(padding).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("기록이 없습니다. 위젯 갱신·앱 실행·자동화 실행이 여기에 남습니다.", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.history_empty), style = MaterialTheme.typography.bodyMedium)
             }
             return@Scaffold
         }
@@ -71,11 +74,11 @@ fun RunHistoryScreen(
             items(state.rows, key = { it.key }) { row ->
                 ListItem(
                     modifier = Modifier.clickable { expanded = if (expanded == row.key) null else row.key },
-                    overlineContent = { Text("${timeFormat.format(Date(row.startedAt))} · ${row.sourceLabel}") },
+                    overlineContent = { Text("${timeFormat.format(Date(row.startedAt))} · ${row.sourceLabel.asString()}") },
                     headlineContent = { Text((if (row.success) "✓ " else "✗ ") + row.scriptName, color = if (row.success) Color.Unspecified else MaterialTheme.colorScheme.error) },
                     supportingContent = {
                         Column {
-                            Text(row.summary, maxLines = if (expanded == row.key) Int.MAX_VALUE else 1)
+                            Text(row.summary.asString(), maxLines = if (expanded == row.key) Int.MAX_VALUE else 1)
                             if (expanded == row.key && row.details.isNotEmpty()) {
                                 Text(row.details, fontFamily = FontFamily.Monospace, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
                             }

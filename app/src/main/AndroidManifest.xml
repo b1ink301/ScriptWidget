@@ -87,7 +87,7 @@
             android:name=".share.ShareToScriptActivity"
             android:exported="true"
             android:excludeFromRecents="true"
-            android:label="스크립트로 실행"
+            android:label="@string/share_activity_label"
             android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="api_title">API 도움말</string>
+    <string name="api_search_label">클래스·메서드 검색</string>
+    <string name="api_loading">불러오는 중…</string>
+    <string name="api_official_docs">공식 문서</string>
+    <string name="api_section_static">정적 멤버</string>
+    <string name="api_section_methods">메서드</string>
+    <string name="api_section_properties">속성</string>
+    <string name="api_kind_class">클래스</string>
+    <string name="api_kind_object">객체</string>
+    <string name="api_kind_function">함수</string>
+</resources>

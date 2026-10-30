@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scriptui_ok">OK</string>
+    <string name="scriptui_cancel">Cancel</string>
+    <string name="scriptui_next">Next</string>
+    <string name="scriptui_time">Time</string>
+    <string name="scriptui_hours">h</string>
+    <string name="scriptui_minutes">m</string>
+    <string name="scriptui_seconds">s</string>
+    <string name="scriptui_close">Close</string>
+</resources>
