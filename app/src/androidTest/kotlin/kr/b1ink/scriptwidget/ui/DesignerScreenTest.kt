@@ -187,7 +187,6 @@ class DesignerScreenTest {
         assertEquals(DataBinding.Countdown(yearly = true), (updated as DesignText).data)
         compose.onNodeWithTag("prop-countdown-date").performScrollTo().performTextReplacement("2026-12-25")
         assertEquals(DataBinding.Countdown("2026-12-25"), (updated as DesignText).data)
-        androidx.test.espresso.Espresso.closeSoftKeyboard()
 
         compose.onNodeWithTag("prop-data-progress").performScrollTo().performClick()
         assertEquals(DataBinding.Progress(), (updated as DesignText).data)
