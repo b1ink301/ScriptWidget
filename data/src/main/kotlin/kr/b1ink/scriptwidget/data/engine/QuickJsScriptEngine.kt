@@ -8,9 +8,11 @@ import com.dokar.quickjs.binding.function
 import com.dokar.quickjs.evaluate
 import com.dokar.quickjs.quickJs
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -24,12 +26,12 @@ import kotlinx.serialization.json.put
 import kr.b1ink.scriptwidget.data.format.NativeFormatter
 import kr.b1ink.scriptwidget.data.symbols.SfSymbols
 import kr.b1ink.scriptwidget.domain.engine.ScriptEngine
-import kr.b1ink.scriptwidget.domain.model.LogLine
 import kr.b1ink.scriptwidget.domain.model.RunTimings
 import kr.b1ink.scriptwidget.domain.model.ScriptEnvironment
 import kr.b1ink.scriptwidget.domain.model.ScriptRunResult
 import kr.b1ink.scriptwidget.domain.model.WidgetRoot
 import kr.b1ink.scriptwidget.domain.model.WidgetTree
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.typeOf
@@ -46,13 +48,26 @@ class QuickJsScriptEngine(
     /** Hard cap on the total duration of interactive (in-app) runs, including UI waits. */
     private val interactiveTimeoutMillis: Long = DEFAULT_INTERACTIVE_TIMEOUT_MS,
     private val memoryLimitBytes: Long = DEFAULT_MEMORY_LIMIT_BYTES,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    /** QuickJS's own stack limit; deeper recursion throws instead of overflowing the native stack. */
+    private val maxStackBytes: Long = DEFAULT_MAX_STACK_BYTES,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ScriptEngine {
 
     override suspend fun execute(script: String, env: ScriptEnvironment, scriptName: String): ScriptRunResult =
+        newRunThread().use { runThread -> run(script, env, scriptName, runThread) }
+
+    /**
+     * QuickJS checks for stack overflow against the stack of the thread that created the runtime.
+     * Running the whole script there (instead of hopping between pool threads) keeps that check
+     * valid, so deep recursion ends in a "stack overflow" error instead of a native crash of the process.
+     */
+    private fun newRunThread(): ExecutorCoroutineDispatcher =
+        Executors.newSingleThreadExecutor { task -> Thread(null, task, "quickjs-run", RUN_THREAD_STACK_BYTES) }
+            .asCoroutineDispatcher()
+
+    private suspend fun run(script: String, env: ScriptEnvironment, scriptName: String, dispatcher: CoroutineDispatcher): ScriptRunResult =
         withContext(dispatcher) {
-            val logs = mutableListOf<LogLine>()
+            val logs = LogBuffer(MAX_LOG_LINES, MAX_LOG_LINE_CHARS)
             var widgetJson: String? = null
             var shortcutOutput: String? = null
             val imageIndex = AtomicInteger(0)
@@ -72,6 +87,7 @@ class QuickJsScriptEngine(
                     val run = async {
                     quickJs(dispatcher) {
                         memoryLimit = memoryLimitBytes
+                        maxStackSize = maxStackBytes
                         defineFileAndKeychainBindings(runKey, imageIndex::getAndIncrement)
                         defineLocationAndModuleBindings()
                         defineFormatBindings()
@@ -82,7 +98,7 @@ class QuickJsScriptEngine(
                         definePersonalDataBindings(env, activity, runKey, imageIndex::getAndIncrement)
                         defineBindings(
                             runKey = runKey,
-                            onLog = { level, message -> synchronized(logs) { logs += LogLine(level, message) } },
+                            onLog = logs::add,
                             onSetWidget = { widgetJson = it },
                             onSetOutput = { shortcutOutput = it },
                             nextImageIndex = imageIndex::getAndIncrement,
@@ -99,7 +115,7 @@ class QuickJsScriptEngine(
                     }
                     }
                     // Watchdog: cancels the run (which interrupts QuickJS) once its activity exceeds the limit.
-                    val watchdog = launch {
+                    val watchdog = launch(Dispatchers.Default) {
                         while (isActive) {
                             delay(WATCHDOG_INTERVAL_MS)
                             if (activity.elapsed() > timeoutMillis) {
@@ -152,7 +168,7 @@ class QuickJsScriptEngine(
             }
 
             if (finalError == null) services.images.retainOnly(env.cacheKey, runKey) else services.images.clear(runKey)
-            ScriptRunResult(widget, logs.toList(), finalError, timings, shortcutOutput)
+            ScriptRunResult(widget, logs.lines(), finalError, timings, shortcutOutput)
         }
 
     private fun QuickJs.defineBindings(
@@ -653,5 +669,16 @@ class QuickJsScriptEngine(
         const val DEFAULT_INTERACTIVE_TIMEOUT_MS = 30 * 60_000L
         private const val WATCHDOG_INTERVAL_MS = 250L
         const val DEFAULT_MEMORY_LIMIT_BYTES = 64L * 1024 * 1024
+
+        /** Native stack of the script thread; well above the QuickJS limit for the frames around QuickJS. */
+        private const val RUN_THREAD_STACK_BYTES = 16L * 1024 * 1024
+
+        const val DEFAULT_MAX_STACK_BYTES = 8L * 1024 * 1024
+
+        /** Log lines kept per run; older ones are dropped so a logging loop can't exhaust the heap. */
+        const val MAX_LOG_LINES = 1_000
+
+        /** Longer messages are cut; logs end up in the editor and in the run history file. */
+        const val MAX_LOG_LINE_CHARS = 16 * 1024
     }
 }

@@ -58,7 +58,7 @@ object ApiCatalog {
     suspend fun load(engine: ScriptEngine, language: String = "ko"): List<ApiEntry> {
         val script = "const __names = ${json.encodeToString(NAMES)};\n" + resource("introspect.js")
         val result = engine.execute(script, ScriptEnvironment(runsInWidget = false), "api-introspection")
-        val output = result.logs.lastOrNull()?.message
+        val output = result.shortcutOutput
             ?: error("API introspection failed: ${result.error}")
         return json.decodeFromString<List<ApiEntry>>(output)
             .map { it.copy(summary = ApiDocs.summary(it.name, language), members = it.members.sortedWith(compareBy({ !it.isStatic }, { it.name }))) }

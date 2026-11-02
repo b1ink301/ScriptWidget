@@ -77,13 +77,13 @@ sequenceDiagram
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
 | domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교, 디자인 모델·편집 규칙·헤더·템플릿, 카탈로그 검사, 이벤트 트리거) | `domain/src/test` | 175 |
-| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교), 내장 카탈로그 검사, 트리거 저장소 | `data/src/test` | 280 |
+| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교), 내장 카탈로그 검사, 트리거 저장소, 실행 한도(메모리·재귀·로그) | `data/src/test` | 286 |
 | widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
 | app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인, 디자이너 편집·되돌리기·미리보기, 설치 전 권한 경고, 트리거 화면) | `app/src/test` || 143 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
 | widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션, 이벤트 감시(콘텐츠 URI·조건·자정 알람)) | `widget/src/androidTest` | 65 |
-| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택, 트리거 화면) | `app/src/androidTest` ||| 67 |
-| **합계** | | | **810** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택, 트리거 화면, 실행 한도(재귀·메모리로 프로세스가 죽지 않음)) | `app/src/androidTest` ||| 72 |
+| **합계** | | | **821** (+ 호환성 측정 하네스 1, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -310,6 +310,7 @@ export ANDROID_SERIAL=emulator-5554
   - WorkManager 주기 작업은 재부팅 등으로 알람이 사라졌을 때를 위한 **60분 안전망**이고, 화면이 꺼져 있으면 바로 끝납니다. 깨우지 않는 알람에는 WorkManager 예약을 함께 걸지 않습니다(작업이 화면 꺼짐 중에 폰을 깨울 수 있어서).
   - 안드로이드 자체 제한(Doze, 삼성 "앱 절전")은 이와 별개로 갱신을 더 늦출 수 있습니다. 설정 탭 → 권한에서 **배터리 최적화 제외**를 권장합니다.
 - **중복 실행 방지**: 같은 위젯은 한 번에 하나만 실행하고, 방금 갱신된 위젯의 예약·주기 갱신은 건너뜀. 위젯 크기를 바꿔도 크기 구분(small/medium/large)이 같으면 다시 그리기만 하고 스크립트는 실행하지 않음.
+- **실행 한도**: 스크립트마다 실행 시간 30초(위젯), 메모리 64MB, 호출 깊이 약 8,000단계까지. 넘으면 그 실행만 에러(`timed out`·`out of memory`·`stack overflow`)로 끝나고 다른 위젯은 영향을 받지 않음. 로그는 실행마다 최근 1,000줄, 한 줄 16KB까지 남김.
 - **오프라인**: 네트워크가 없을 때 `Request`·`WebView`·`importModule`을 쓰는 스크립트의 백그라운드 갱신은 건너뛰고 마지막 화면을 유지. 응답은 10MB까지, HTTP 캐시(10MB)는 서버의 캐시 헤더를 따름.
 - **위치**: 요청 정확도에 맞는 최근 위치(정밀 1분, 100m 5분, 1~3km 15분 이내)는 GPS를 다시 켜지 않고 재사용. 새로 잡을 때도 전체 15초 안에서만 시도.
 - **저장공간·메모리**: 위젯을 지우면 그 위젯의 이미지 캐시도 삭제, `tmp`(공유받은 파일·카메라 사진·고른 문서)는 하루 지나면 정리. 불투명한 이미지는 JPEG, 투명한 이미지는 PNG로 저장. 이미지가 많은 위젯은 전체 비트맵 용량(6MB) 안에서 이미지를 작게 디코딩하고, 긴 텍스트 이미지는 높이 2048px까지. 실행 기록은 한 줄씩 추가(JSONL)하고 400줄이 되면 200줄로 정리.
