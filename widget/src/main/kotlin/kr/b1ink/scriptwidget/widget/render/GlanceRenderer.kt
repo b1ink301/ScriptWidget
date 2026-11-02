@@ -60,7 +60,9 @@ internal fun colorProvider(color: Color): ColorProvider = ColorProvider(day = co
 
 /** Day / night colors of a script color (switches with the system theme without re-running the script). */
 internal fun themedProvider(value: String?, fallback: Color, opacity: Float = 1f): ColorProvider {
-    fun Color.faded() = copy(alpha = alpha * opacity)
+    // Scripts set values like 30 (percent); SwiftUI clamps opacity to 0...1, and Color() would throw.
+    val clamped = if (opacity.isNaN()) 1f else opacity.coerceIn(0f, 1f)
+    fun Color.faded() = copy(alpha = alpha * clamped)
     return ColorProvider(day = Styles.color(value, fallback, night = false).faded(), night = Styles.color(value, fallback, night = true).faded())
 }
 
