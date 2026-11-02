@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.os.ParcelFileDescriptor
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -34,10 +35,10 @@ class WidgetRedrawTest {
 
     @Before
     fun bindWidget() {
-        InstrumentationRegistry.getInstrumentation().uiAutomation
+        // The command runs asynchronously: read its output to the end so the grant is in place before binding.
+        val grant = InstrumentationRegistry.getInstrumentation().uiAutomation
             .executeShellCommand("appwidget grantbind --package ${context.packageName} --user 0")
-            .close()
-        Thread.sleep(300)
+        ParcelFileDescriptor.AutoCloseInputStream(grant).use { it.readBytes() }
         appWidgetId = host.allocateAppWidgetId()
         val bound = manager.bindAppWidgetIdIfAllowed(appWidgetId, ComponentName(context, ScriptWidgetReceiver::class.java))
         assertTrue(bound, "test widget could not be bound")
