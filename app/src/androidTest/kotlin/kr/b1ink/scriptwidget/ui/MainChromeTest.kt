@@ -252,4 +252,26 @@ class MainChromeTest {
             bindings,
         )
     }
+
+    @Test
+    fun aJsonExampleFillsTheAddressAndLoadsIt() {
+        val requested = mutableListOf<String>()
+        compose.setContent {
+            ScriptListScreen(
+                state = ScriptListUiState(),
+                onOpen = {}, onCreate = {}, onRequestDelete = {}, onConfirmDelete = {}, onCancelDelete = {},
+                loadJson = { url -> requested += url; listOf(kr.b1ink.scriptwidget.domain.model.JsonField("data.amount", "76712.6")) },
+            )
+        }
+
+        compose.onNodeWithTag("new-script").performClick()
+        compose.onNodeWithTag("new-json").performClick()
+        compose.onNodeWithText("사용법").assertIsDisplayed()
+        compose.onNodeWithText("비트코인 시세").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("json-field-data.amount").fetchSemanticsNodes().isNotEmpty() }
+
+        assertEquals(listOf("https://api.coinbase.com/v2/prices/BTC-USD/spot"), requested)
+        // The title defaults to the example's host.
+        compose.onNodeWithText("api.coinbase.com").assertIsDisplayed()
+    }
 }

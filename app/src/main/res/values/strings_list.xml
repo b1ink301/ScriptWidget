@@ -29,6 +29,13 @@
     <string name="json_widget_pick">Pick up to %1$d values to show</string>
     <string name="json_widget_create">Create (%1$d)</string>
     <string name="json_widget_close">Close</string>
+    <string name="json_widget_guide">How to</string>
+    <string name="json_widget_guide_path" translatable="false">/blob/main/docs/json-widget.md</string>
+    <string name="json_widget_examples">Examples (no API key needed)</string>
+    <string name="json_example_weather">Seoul weather</string>
+    <string name="json_example_exchange">Dollar exchange rates</string>
+    <string name="json_example_bitcoin">Bitcoin price</string>
+    <string name="json_example_github">GitHub stars</string>
     <string name="list_template_blank">Blank widget</string>
     <string name="list_template_clock">Clock</string>
     <string name="list_template_battery">Battery</string>

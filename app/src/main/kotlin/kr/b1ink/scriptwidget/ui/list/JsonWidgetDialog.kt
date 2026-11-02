@@ -46,6 +46,15 @@ import kr.b1ink.scriptwidget.domain.model.WidgetDesign
 /** Values a widget can show without getting crowded. */
 const val MAX_JSON_PICKS = 6
 
+/** Public APIs that need no key, to try the feature (the same ones as in docs/json-widget.md). */
+internal val JSON_EXAMPLES = listOf(
+    R.string.json_example_weather to
+        "https://api.open-meteo.com/v1/forecast?latitude=37.57&longitude=126.98&current=temperature_2m,relative_humidity_2m,wind_speed_10m",
+    R.string.json_example_exchange to "https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY,EUR",
+    R.string.json_example_bitcoin to "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+    R.string.json_example_github to "https://api.github.com/repos/b1ink301/ScriptWidget",
+)
+
 private sealed interface JsonLoad {
     data object Idle : JsonLoad
     data object Loading : JsonLoad
@@ -90,6 +99,11 @@ fun JsonWidgetDialog(
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.json_widget_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                    val guide = kr.b1ink.scriptwidget.ui.settings.REPOSITORY_URL + stringResource(R.string.json_widget_guide_path)
+                    TextButton(onClick = { runCatching { uriHandler.openUri(guide) } }, modifier = Modifier.testTag("json-guide")) {
+                        Text(stringResource(R.string.json_widget_guide))
+                    }
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.json_widget_close)) }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -104,6 +118,22 @@ fun JsonWidgetDialog(
                     )
                     Button(onClick = ::fetch, enabled = state != JsonLoad.Loading, modifier = Modifier.testTag("json-load")) {
                         Text(stringResource(R.string.json_widget_load))
+                    }
+                }
+                if (state !is JsonLoad.Loaded) {
+                    Text(stringResource(R.string.json_widget_examples), style = MaterialTheme.typography.labelLarge)
+                    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        JSON_EXAMPLES.forEachIndexed { index, (label, address) ->
+                            androidx.compose.material3.AssistChip(
+                                onClick = {
+                                    url = address
+                                    title = ""
+                                    fetch()
+                                },
+                                label = { Text(stringResource(label)) },
+                                modifier = Modifier.testTag("json-example-$index"),
+                            )
+                        }
                     }
                 }
                 when (val current = state) {
