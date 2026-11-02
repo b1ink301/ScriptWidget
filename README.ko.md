@@ -77,13 +77,13 @@ sequenceDiagram
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
 | domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교, 디자인 모델·편집 규칙·헤더·템플릿, 카탈로그 검사, 이벤트 트리거) | `domain/src/test` | 175 |
-| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교), 내장 카탈로그 검사, 트리거 저장소, 실행 한도(메모리·재귀·로그) | `data/src/test` | 286 |
+| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 호환성 측정용 HTTP 녹화·재생, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교), 내장 카탈로그 검사, 트리거 저장소, 실행 한도(메모리·재귀·로그) | `data/src/test` | 291 |
 | widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
 | app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인, 디자이너 편집·되돌리기·미리보기, 설치 전 권한 경고, 트리거 화면) | `app/src/test` || 143 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
-| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션, 이벤트 감시(콘텐츠 URI·조건·자정 알람)) | `widget/src/androidTest` | 65 |
+| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션, 이벤트 감시(콘텐츠 URI·조건·자정 알람)) | `widget/src/androidTest` | 66 |
 | app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택, 트리거 화면, 실행 한도(재귀·메모리로 프로세스가 죽지 않음)) | `app/src/androidTest` ||| 72 |
-| **합계** | | | **821** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| **합계** | | | **827** (+ 호환성 측정 하네스 2, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -343,8 +343,24 @@ export ANDROID_SERIAL=emulator-5554
 cat data/build/compat-report.txt
 ```
 
-- 네트워크 응답은 하네스에서 "어떤 속성에 접근해도 진행되는 Proxy"로 대체합니다. 그래서 데이터 형태가 아니라 API 누락을 측정합니다.
+- 네트워크 응답은 `-PcompatNetwork`로 정합니다.
+  - `proxy`(기본): "어떤 속성에 접근해도 진행되는 Proxy"로 대체. 데이터 형태가 아니라 API 누락을 측정합니다.
+  - `record`: 실제 네트워크를 쓰고, 스크립트마다 주고받은 내용을 `<corpus>/_http/<스크립트>.json`에 저장합니다(잘못된 URL 같은 실패도 저장).
+  - `replay`: 저장한 응답을 그대로 돌려주고, 시계를 녹화 시각에 고정하고 `Math.random`도 고정해서 실행할 때마다 같은 위젯이 나옵니다. 녹화에 없던 요청은 404(이미지는 네트워크 오류)이고 리포트에 `not recorded`로 표시됩니다.
+- **결과 스냅샷**: 스크립트마다 결과(위젯 트리 JSON 또는 에러)를 `data/build/compat-trees/`에 쓰고, `<corpus>/_golden/`과 다르면 `[changed]`로 보고합니다. `-PcompatUpdateGolden`을 주면 지금 결과를 `_golden`으로 저장합니다.
 - `<corpus>/_docs/<스크립트 이름>/`이 있으면 그 내용을 Documents 폴더에 넣고 실행합니다. 저장소 전체를 Scriptable에 받아 둔 사용자와 같은 상태(모듈·설정 파일)로 측정하기 위해서입니다.
+
+렌더러가 바뀌었을 때 **그려진 모양**을 비교하려면, `_golden`의 위젯 트리를 기기에서 실제 RemoteViews(Scriptable 중간 크기 329×155pt)로 그려 PNG로 받습니다. PNG는 같은 기기끼리만 비교하세요(글꼴·밀도가 기기마다 다름). 실시간으로 바뀌는 날짜(`relative`·`timer`)는 고정 문구로 그립니다.
+
+```bash
+# 1) 녹화(한 번) → 2) 재생해서 기준 저장 → 3) 기기에서 그려 기준 PNG 저장
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=record --rerun
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=replay -PcompatUpdateGolden --rerun
+scripts/compat-snapshots.sh $CORPUS --update
+# 렌더러를 고친 뒤: 바뀐 위젯 트리와 PNG 목록
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=replay --rerun
+scripts/compat-snapshots.sh $CORPUS      # <corpus>/_snapshots/ 와 _snapshots_golden/ 비교, 그리지 못한 위젯도 표시
+```
 
 **측정 대상**: [awesome-scriptable](https://github.com/dersvenhesse/awesome-scriptable)에 등록된 스크립트 33개에, 2026-10-30에 GitHub의 Scriptable 위젯 저장소 71곳에서 모은 143개(`ListWidget`을 쓰는 파일, 저장소당 최대 4개, 중복 제거)를 더해 **176개**입니다.
 
@@ -355,6 +371,9 @@ cat data/build/compat-report.txt
 | 앱 UI·WebView·시스템 연동·개인 데이터 구현 후 | 33개 | 23 (70%) |
 | 측정 대상 확대 (2026-10-30) | 176개 | 80 (45%) |
 | `module` 전역·`arguments`·`atob`/`btoa`·Documents 모듈 + 저장소 파일 제공 | 176개 | **101 (57%)** |
+| 같은 시점, **실제 응답**으로 측정 (2026-11-02 녹화·재생) | 176개 | 81 (46%) |
+
+Proxy 측정은 어떤 데이터 형태든 통과시켜 실제보다 후합니다. 실제 응답으로 그린 81개 중 기기에서 렌더링에 실패한 것은 2개로, 둘 다 Glance의 위젯당 뷰 500개 제한에 걸립니다(점 격자로 된 D-day·카운트다운).
 
 측정 대상을 넓히면서 찾아 보강한 것:
 - **`module` 전역**: Scriptable은 모든 스크립트에 `module.filename`·`module.exports`를 줍니다. iCloud 사용 여부를 확인하거나 모듈 경로를 계산하는 데 씁니다(13개).

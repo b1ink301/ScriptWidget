@@ -35,6 +35,11 @@ dependencies {
 tasks.test {
     systemProperty("compat.corpus", providers.gradleProperty("compatCorpus").getOrElse(""))
     inputs.property("compatCorpus", providers.gradleProperty("compatCorpus").getOrElse(""))
+    // proxy (default) | record | replay, and -PcompatUpdateGolden to accept the current results
+    systemProperty("compat.network", providers.gradleProperty("compatNetwork").getOrElse(""))
+    inputs.property("compatNetwork", providers.gradleProperty("compatNetwork").getOrElse(""))
+    systemProperty("compat.updateGolden", providers.gradleProperty("compatUpdateGolden").isPresent.toString())
+    inputs.property("compatUpdateGolden", providers.gradleProperty("compatUpdateGolden").isPresent)
     systemProperty("catalog.file", providers.gradleProperty("catalog").getOrElse(""))
     // Regenerating the gallery's design samples from the designer templates: -PwriteDesigns
     systemProperty("design.write", providers.gradleProperty("writeDesigns").isPresent.toString())

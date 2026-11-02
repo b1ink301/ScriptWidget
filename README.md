@@ -77,13 +77,13 @@ Every feature was built in the order **write the test first (Red) → implement 
 | Layer | Test type | Location | Count |
 |---|---|---|---|
 | domain | JVM unit tests (using Fakes, import/export, backup/restore, icon header, run history, automation runs, file bookmarks, gallery install/update/catalog URL, app update check/version comparison, design model/edit rules/header/templates, catalog validation, event triggers) | `domain/src/test` | 175 |
-| data | JVM unit tests: real QuickJS and prelude contracts (per API), MockWebServer, sandbox, DataStore, SF→Material mapping, app UI/system/personal data bridges, reminder store, sample scripts, run context (config, args), text styles, API list, run history file, zip backup, reading GitHub releases, designer code generation (run with real QuickJS and compared), built-in catalog validation, trigger store, run limits (memory, recursion, logs) | `data/src/test` | 286 |
+| data | JVM unit tests: real QuickJS and prelude contracts (per API), MockWebServer, sandbox, DataStore, SF→Material mapping, app UI/system/personal data bridges, reminder store, sample scripts, run context (config, args), text styles, API list, HTTP record/replay for compatibility measurement, run history file, zip backup, reading GitHub releases, designer code generation (run with real QuickJS and compared), built-in catalog validation, trigger store, run limits (memory, recursion, logs) | `data/src/test` | 291 |
 | widget | JVM unit tests (RenderStateCodec, StackLayout (space distribution, 10-child limit, title shrinking), text rendering method selection, available width) | `widget/src/test` | 30 |
 | app | JVM unit tests (ViewModel, permission screen and request flow, deep links, script UI host, syntax highlighting/autocomplete/find, share content classification, icons, file bookmarks, gallery, tab navigation rules, list search/activity, update check, designer editing/undo/preview, pre-install permission warning, trigger screen) | `app/src/test` || 143 |
 | data-android | Device integration tests (Bitmap, Keystore, LocationManager, Notification, Canvas, symbols, Device, clipboard/share/mail/TTS intents, CalendarProvider, ContactsProvider, MediaStore, document read/write, notification tap and buttons) | `data-android/src/androidTest` | 50 |
-| widget | Device integration tests (Glance rendering/gradients/borders/buttons, text bitmaps, WorkManager, exact alarms, Worker, widget actions, event watching (content URI, constraints, midnight alarm)) | `widget/src/androidTest` | 65 |
+| widget | Device integration tests (Glance rendering/gradients/borders/buttons, text bitmaps, WorkManager, exact alarms, Worker, widget actions, event watching (content URI, constraints, midnight alarm)) | `widget/src/androidTest` | 66 |
 | app | Device integration tests (AppContainer + real stack, production DI wiring, permission state, Compose script UI, share/open intents, copying shared files, automation and shortcuts, app preview layout, gallery, floating tab bar and settings, drawing a widget in one pass without a session, update row, designer screen and new script picker, trigger screen, run limits (recursion and memory don't kill the process)) | `app/src/androidTest` ||| 72 |
-| **Total** | | | **821** (+ 1 compatibility measurement harness, skipped by default) |
+| **Total** | | | **827** (+ 2 compatibility measurement harnesses, skipped by default) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -343,8 +343,24 @@ Runs community widget scripts and measures the share that draw a widget without 
 cat data/build/compat-report.txt
 ```
 
-- Network responses are replaced in the harness with "a Proxy that proceeds whatever property is accessed". So it measures missing APIs, not data shapes.
+- Network responses are chosen with `-PcompatNetwork`:
+  - `proxy` (default): replaced with "a Proxy that proceeds whatever property is accessed". It measures missing APIs, not data shapes.
+  - `record`: uses the real network and saves each script's traffic to `<corpus>/_http/<script>.json` (failures such as bad URLs too).
+  - `replay`: serves the saved responses, with the clock set to the recording time and a seeded `Math.random`, so every run gives the same widget. Requests that weren't recorded get a 404 (a network error for images) and show up as `not recorded` in the report.
+- **Result snapshots**: each script's result (widget tree JSON, or the error) is written to `data/build/compat-trees/` and reported as `[changed]` when it differs from `<corpus>/_golden/`. `-PcompatUpdateGolden` saves the current results as `_golden`.
 - If `<corpus>/_docs/<script name>/` exists, its contents are put in the Documents folder before running. This measures in the same state (modules, config files) as a user who downloaded the whole repository into Scriptable.
+
+To compare **what gets drawn** after a renderer change, the `_golden` widget trees are drawn on a device as real RemoteViews (Scriptable's medium size, 329×155pt) and pulled as PNGs. Compare PNGs from the same device only (fonts and density differ). Live dates (`relative`, `timer`) are drawn as a fixed label.
+
+```bash
+# 1) record (once) -> 2) replay and save the baseline -> 3) draw on a device and save the baseline PNGs
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=record --rerun
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=replay -PcompatUpdateGolden --rerun
+scripts/compat-snapshots.sh $CORPUS --update
+# after changing the renderer: which widget trees and PNGs changed
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=replay --rerun
+scripts/compat-snapshots.sh $CORPUS      # compares <corpus>/_snapshots/ with _snapshots_golden/, lists widgets it couldn't draw
+```
 
 **Measured set**: 33 scripts listed in [awesome-scriptable](https://github.com/dersvenhesse/awesome-scriptable), plus 143 collected on 2026-10-30 from 71 Scriptable widget repositories on GitHub (files using `ListWidget`, up to 4 per repository, deduplicated), for **176** in total.
 
@@ -355,6 +371,9 @@ cat data/build/compat-report.txt
 | After implementing app UI, WebView, system integration, personal data | 33 | 23 (70%) |
 | Measured set expanded (2026-10-30) | 176 | 80 (45%) |
 | `module` global, `arguments`, `atob`/`btoa`, Documents modules + providing repository files | 176 | **101 (57%)** |
+| Same point, measured with **real responses** (recorded and replayed 2026-11-02) | 176 | 81 (46%) |
+
+The Proxy measurement lets any data shape through, so it's more generous than reality. Of the 81 drawn with real responses, 2 fail to render on a device, both on Glance's limit of 500 views per widget (D-day and countdown widgets made of dot grids).
 
 What was found and added while expanding the measured set:
 - **`module` global**: Scriptable gives every script `module.filename` and `module.exports`. Scripts use them to check whether iCloud is used or to compute module paths (13 scripts).
