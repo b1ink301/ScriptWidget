@@ -78,12 +78,12 @@ Every feature was built in the order **write the test first (Red) → implement 
 |---|---|---|---|
 | domain | JVM unit tests (using Fakes, import/export, backup/restore, icon header, run history, automation runs, file bookmarks, gallery install/update/catalog URL, app update check/version comparison, design model/edit rules/header/templates, catalog validation, event triggers) | `domain/src/test` | 175 |
 | data | JVM unit tests: real QuickJS and prelude contracts (per API), MockWebServer, sandbox, DataStore, SF→Material mapping, app UI/system/personal data bridges, reminder store, sample scripts, run context (config, args), text styles, API list, HTTP record/replay for compatibility measurement, run history file, zip backup, reading GitHub releases, designer code generation (run with real QuickJS and compared), built-in catalog validation, trigger store, run limits (memory, recursion, logs) | `data/src/test` | 291 |
-| widget | JVM unit tests (RenderStateCodec, StackLayout (space distribution, 10-child limit, title shrinking), text rendering method selection, available width) | `widget/src/test` | 30 |
+| widget | JVM unit tests (RenderStateCodec, StackLayout (space distribution, 10-child limit, title shrinking), the 500-view budget, text rendering method selection, available width) | `widget/src/test` | 40 |
 | app | JVM unit tests (ViewModel, permission screen and request flow, deep links, script UI host, syntax highlighting/autocomplete/find, share content classification, icons, file bookmarks, gallery, tab navigation rules, list search/activity, update check, designer editing/undo/preview, pre-install permission warning, trigger screen) | `app/src/test` || 143 |
 | data-android | Device integration tests (Bitmap, Keystore, LocationManager, Notification, Canvas, symbols, Device, clipboard/share/mail/TTS intents, CalendarProvider, ContactsProvider, MediaStore, document read/write, notification tap and buttons) | `data-android/src/androidTest` | 50 |
-| widget | Device integration tests (Glance rendering/gradients/borders/buttons, text bitmaps, WorkManager, exact alarms, Worker, widget actions, event watching (content URI, constraints, midnight alarm)) | `widget/src/androidTest` | 66 |
+| widget | Device integration tests (Glance rendering/gradients/borders/buttons, text bitmaps, widgets over 500 views, WorkManager, exact alarms, Worker, widget actions, event watching (content URI, constraints, midnight alarm)) | `widget/src/androidTest` | 70 |
 | app | Device integration tests (AppContainer + real stack, production DI wiring, permission state, Compose script UI, share/open intents, copying shared files, automation and shortcuts, app preview layout, gallery, floating tab bar and settings, drawing a widget in one pass without a session, update row, designer screen and new script picker, trigger screen, run limits (recursion and memory don't kill the process)) | `app/src/androidTest` ||| 72 |
-| **Total** | | | **827** (+ 2 compatibility measurement harnesses, skipped by default) |
+| **Total** | | | **841** (+ 2 compatibility measurement harnesses, skipped by default) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -331,6 +331,7 @@ Choose a template (Blank widget, Clock, Battery, Next event, Reminders, Weather,
 - **`Color.dynamic(lightColor, darkColor)`**: both colors are passed to the widget, so it switches immediately when the system light/dark mode changes, without re-running the script.
 - **Space distribution in horizontal stacks**: like SwiftUI, children that want to stretch (e.g. left and right columns with a Spacer in each row) split the width equally. In a row like `[rank, title (lineLimit 1), Spacer, publisher]`, the title takes the leftover space and shrinks with an ellipsis, so trailing elements aren't pushed out.
 - **10-child limit**: RemoteViews draws only up to 10 children per row/column and drops the rest. The renderer groups overflowing children into inner containers so all are drawn (gaps created by `spacing` count too).
+- **500-view limit**: Glance draws a widget with at most 500 views and doesn't draw it at all past that. Big widgets such as a dot-per-day grid (365 for a year) get their largest stacks made only of text, fixed spacers and solid-color stacks drawn as one image each until they fit (stacks with taps, images or flexible spacers stay as they are).
 - **Text rendering**: text Glance can't draw is drawn as a bitmap: weights outside the 3 levels (regular/medium/bold), shadows, `minimumScaleFactor` (truncated with an ellipsis if it still overflows at the minimum scale), and fonts placed in `Documents/fonts/<name>.ttf|otf` (`new Font("name", size)`). Names like `Menlo` and `Courier` fall back to the monospace system font, and the `Georgia` and `Times` families to the serif system font.
 - **Intl**: not available in QuickJS, so it's implemented with `java.text`/`java.time`. Individual component options like `year`/`month` aren't supported. Output can differ slightly between the JVM (CLDR) and Android (ICU).
 
@@ -373,7 +374,7 @@ scripts/compat-snapshots.sh $CORPUS      # compares <corpus>/_snapshots/ with _s
 | `module` global, `arguments`, `atob`/`btoa`, Documents modules + providing repository files | 176 | **101 (57%)** |
 | Same point, measured with **real responses** (recorded and replayed 2026-11-02) | 176 | 81 (46%) |
 
-The Proxy measurement lets any data shape through, so it's more generous than reality. Of the 81 drawn with real responses, 2 fail to render on a device, both on Glance's limit of 500 views per widget (D-day and countdown widgets made of dot grids).
+The Proxy measurement lets any data shape through, so it's more generous than reality. All 81 drawn with real responses render on a device (including 2 dot-grid widgets that used to hit the 500-view limit).
 
 What was found and added while expanding the measured set:
 - **`module` global**: Scriptable gives every script `module.filename` and `module.exports`. Scripts use them to check whether iCloud is used or to compute module paths (13 scripts).

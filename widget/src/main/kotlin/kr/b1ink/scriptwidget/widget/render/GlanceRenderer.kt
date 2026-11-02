@@ -90,6 +90,7 @@ object GlanceRenderer {
             CompositionLocalProvider(
                 LocalAvailableWidth provides width,
                 LocalImageMaxPx provides BitmapBudget.maxImagePx(root),
+                LocalRasterized provides remember(root) { ViewBudget.rasterized(root) },
             ) {
                 ColumnChildren(root.children, root.spacing)
             }
@@ -294,6 +295,7 @@ object GlanceRenderer {
         weighted: Boolean = false,
         weightedHeight: Boolean = false,
     ) {
+        if (node in LocalRasterized.current) return RasterizedStack(node, outer)
         var modifier = outer.clickUrl(node.url, node.action)
         modifier = modifier.backgroundOf(node.background, fallback = null)
         if (node.cornerRadius > 0) modifier = modifier.cornerRadius(node.cornerRadius.dp)
@@ -349,6 +351,23 @@ object GlanceRenderer {
             }
             Box(modifier = outer.background(ImageProvider(bitmap), ContentScale.FillBounds)) { content() }
         }
+    }
+
+    /** A stack drawn as one image, shrunk to the available width if it's wider. */
+    @Composable
+    private fun RasterizedStack(node: StackNode, outer: GlanceModifier) {
+        val context = LocalContext.current
+        val density = context.resources.displayMetrics.density
+        val night = Styles.isNight(context)
+        val available = LocalAvailableWidth.current.takeUnless { it.isNaN() } ?: LocalSize.current.width.value
+        val result = remember(node, density, night, available) { StackBitmap.render(node, density, night, available) }
+        val fit = if (result.widthDp > available && available > 0) available / result.widthDp else 1f
+        Image(
+            provider = ImageProvider(result.bitmap),
+            contentDescription = null,
+            modifier = outer.size((result.widthDp * fit).dp, (result.heightDp * fit).dp),
+            contentScale = ContentScale.Fit,
+        )
     }
 
     @Composable
