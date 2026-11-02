@@ -116,6 +116,9 @@ jobs:
           api-level: 35
           arch: x86_64
           target: google_apis
+          # Without a profile the AVD is 320x640, which the designer doesn't support: its properties panel shrinks
+          # to a sliver there. Test on an ordinary phone instead.
+          profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: ./gradlew connectedDebugAndroidTest --continue
