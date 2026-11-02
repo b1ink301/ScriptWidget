@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import androidx.work.Configuration
+import kr.b1ink.scriptwidget.data.diagnostics.CrashLogStore
 import kr.b1ink.scriptwidget.di.AppContainer
 import kr.b1ink.scriptwidget.widget.WidgetDependencies
 
@@ -20,8 +21,18 @@ class ScriptWidgetApp : Application(), WidgetDependencies.Provider, Configuratio
 
     override fun onCreate() {
         super.onCreate()
+        recordCrashes()
         // Alarms are cleared by reboots and app updates; the event triggers hook in again.
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch { runCatching { container.syncEventMonitor() } }
+    }
+
+    /** Keeps uncaught exceptions for the diagnostics report, then lets Android handle them as before. */
+    private fun recordCrashes() {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            runCatching { container.crashLog.record(CrashLogStore.reportOf(thread, error, System.currentTimeMillis())) }
+            previous?.uncaughtException(thread, error)
+        }
     }
 }
 

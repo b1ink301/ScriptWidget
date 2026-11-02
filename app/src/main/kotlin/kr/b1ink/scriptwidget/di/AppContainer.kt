@@ -195,6 +195,9 @@ class AppContainer(
     /** A script and its catalog entry, zipped for publishing in a gallery. */
     val exportForGallery by lazy { kr.b1ink.scriptwidget.domain.usecase.ExportForGalleryUseCase(scriptRepository, archiveCodec, scriptDocuments) }
     val exportScript by lazy { ExportScriptUseCase(scriptRepository, scriptDocuments) }
+    /** Uncaught exceptions, written as the process dies; read for the diagnostics report. */
+    val crashLog by lazy { kr.b1ink.scriptwidget.data.diagnostics.CrashLogStore(File(rootDir, "crashes")) }
+
     /** Every run (app, widget, automation, …) for the run history screen. */
     val runHistory by lazy {
         kr.b1ink.scriptwidget.data.history.FileRunHistoryRepository(

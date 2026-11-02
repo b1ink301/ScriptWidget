@@ -188,6 +188,9 @@ class MainActivity : ComponentActivity() {
                   kr.b1ink.scriptwidget.ui.settings.UpdateViewModel(container.checkForUpdate(versionName())::invoke)
               }
               LaunchedEffect(Unit) { updates.checkOnce() }
+              val diagnosticsFile = androidx.activity.compose.rememberLauncherForActivityResult(
+                  androidx.activity.result.contract.ActivityResultContracts.CreateDocument("text/plain"),
+              ) { uri -> if (uri != null) scope.launch { exportDiagnostics(uri) } }
               SettingsScreen(
                 versionName = versionName(),
                 refreshWhileScreenOff = screenOff,
@@ -205,6 +208,7 @@ class MainActivity : ComponentActivity() {
                     onCatalogs = { onNav(nav.select(MainTab.Gallery)) },
                     onOpenUrl = { url -> runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } },
                     onCheckUpdate = updates::check,
+                    onExportDiagnostics = { diagnosticsFile.launch(kr.b1ink.scriptwidget.diagnostics.AndroidDiagnostics.fileName(System.currentTimeMillis())) },
                     onRefreshWhileScreenOff = { enabled ->
                         container.refreshSettings.setRefreshWhileScreenOff(enabled)
                         screenOff = enabled
@@ -213,6 +217,19 @@ class MainActivity : ComponentActivity() {
               )
             }
         }
+    }
+
+    /** Writes the diagnostics report to the file the user picked (e.g. to attach to a GitHub issue). */
+    private suspend fun exportDiagnostics(uri: Uri) {
+        val saved = runCatching {
+            val info = kr.b1ink.scriptwidget.diagnostics.AndroidDiagnostics(this, container).collect(versionName())
+            val text = kr.b1ink.scriptwidget.domain.model.DiagnosticsReport.text(info, System.currentTimeMillis())
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                checkNotNull(contentResolver.openOutputStream(uri)).use { it.write(text.toByteArray()) }
+            }
+        }.isSuccess
+        val message = if (saved) R.string.settings_diagnostics_saved else R.string.settings_diagnostics_failed
+        android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_SHORT).show()
     }
 
     private fun versionName(): String =

@@ -44,6 +44,7 @@ class SettingsActions(
     val onTriggers: () -> Unit = {},
     /** "ko", "en", or null to follow the system. */
     val onLanguage: (String?) -> Unit = {},
+    val onExportDiagnostics: () -> Unit = {},
 )
 
 const val REPOSITORY_URL = "https://github.com/b1ink301/ScriptWidget"
@@ -112,6 +113,7 @@ fun SettingsScreen(
                 // The README in the app's language, at its License section.
                 val licenseUrl = REPOSITORY_URL + stringResource(R.string.settings_license_path)
                 Row("📄", stringResource(R.string.settings_license_title), stringResource(R.string.settings_license_subtitle)) { actions.onOpenUrl(licenseUrl) }
+                Row("🩺", stringResource(R.string.settings_diagnostics_title), stringResource(R.string.settings_diagnostics_subtitle), actions.onExportDiagnostics)
             }
         }
     }

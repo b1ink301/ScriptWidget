@@ -5,6 +5,14 @@
     <!-- Not on Google Play: allowed to ask for a battery optimization exemption (reliable widget refreshes). -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!-- The home app, named in the diagnostics report (widgets differ per launcher). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+    </queries>
+
     <application
         android:localeConfig="@xml/locales_config"
         android:name=".ScriptWidgetApp"
