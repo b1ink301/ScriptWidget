@@ -29,7 +29,7 @@ class ScriptWidgetReceiver : GlanceAppWidgetReceiver() {
         val pending = goAsync()
         background.launch {
             try {
-                appWidgetIds.forEach { drawer.draw(it) }
+                drawer.drawAll(appWidgetIds.asIterable())
             } finally {
                 pending.finish()
             }
@@ -51,7 +51,7 @@ class ScriptWidgetReceiver : GlanceAppWidgetReceiver() {
         val pending = goAsync()
         background.launch {
             try {
-                drawer.draw(appWidgetId)
+                drawer.drawAll(listOf(appWidgetId))
             } finally {
                 pending.finish()
             }
