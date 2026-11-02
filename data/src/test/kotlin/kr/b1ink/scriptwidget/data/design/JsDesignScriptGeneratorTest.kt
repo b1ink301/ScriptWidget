@@ -188,6 +188,17 @@ class JsDesignScriptGeneratorTest {
     }
 
     @Test
+    fun `fields from the same JSON address load it once`() = runTest {
+        val url = "https://api.example.com/data.json"
+        val design = WidgetDesign(children = listOf(DesignText("{value}", data = DataBinding.Json(url, "data.0.name")), DesignText("{value}", data = DataBinding.Json(url, "data.0.n"))))
+
+        val root = run(design)
+
+        assertEquals(listOf("첫째", "3"), listOf(root.text(0), root.text(1)))
+        assertEquals(1, http.requests.count { it.url == url })
+    }
+
+    @Test
     fun `a failing data source shows a dash instead of breaking the widget`() = runTest {
         val design = WidgetDesign(children = listOf(DesignText("값: {value}", data = DataBinding.Json("https://api.example.com/missing.json", "a"))))
 

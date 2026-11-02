@@ -120,7 +120,7 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
         is DataBinding.DateText -> "formatDate(new Date(), ${str(binding.format)})"
         DataBinding.Battery -> "Math.round(Device.batteryLevel() * 100)"
         is DataBinding.Parameter -> "args.widgetParameter || ${str(binding.fallback)}"
-        is DataBinding.Json -> "pick(await new Request(${str(binding.url)}).loadJSON(), ${str(binding.path)})"
+        is DataBinding.Json -> "pick(await json(${str(binding.url)}), ${str(binding.path)})"
         is DataBinding.Weather -> when (binding.field) {
             DataBinding.Weather.Field.Temperature -> "Math.round((await weather()).temperature_2m)"
             DataBinding.Weather.Field.Condition -> "weatherLabel((await weather()).weather_code)"
@@ -232,6 +232,11 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
         """.trimMargin() + "\n"
 
         private val pickHelper = """
+            |// One request per address, however many values come from it.
+            |const _json = {};
+            |function json(url) {
+            |  return (_json[url] ??= new Request(url).loadJSON());
+            |}
             |function pick(json, path) {
             |  const value = path.split(".").filter(Boolean).reduce((o, k) => (o == null ? undefined : o[k]), json);
             |  return value !== null && typeof value === "object" ? JSON.stringify(value) : value;

@@ -64,6 +64,8 @@ fun ScriptListRoute(
     container: AppContainer,
     onOpen: (String) -> Unit,
     onNewDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = {},
+    /** A design made by "From a URL (JSON)". */
+    onNewJsonDesign: (kr.b1ink.scriptwidget.domain.model.WidgetDesign) -> Unit = {},
     widgetRecommendations: List<AppPermission> = emptyList(),
     onOpenPermissions: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
@@ -163,6 +165,8 @@ fun ScriptListRoute(
         onOpen = onOpen,
         onCreate = vm::createScript,
         onNewDesign = onNewDesign,
+        onNewJsonDesign = onNewJsonDesign,
+        loadJson = container::jsonFields,
         onRequestDelete = vm::requestDelete,
         onConfirmDelete = vm::confirmDelete,
         onCancelDelete = vm::cancelDelete,
@@ -196,14 +200,25 @@ fun ScriptListScreen(
     onSearch: (String) -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     onNewDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = {},
+    onNewJsonDesign: (kr.b1ink.scriptwidget.domain.model.WidgetDesign) -> Unit = {},
+    loadJson: suspend (String) -> List<kr.b1ink.scriptwidget.domain.model.JsonField> = { emptyList() },
 ) {
     var styling by remember { mutableStateOf<ScriptSummary?>(null) }
     var choosingNew by remember { mutableStateOf(false) }
+    var fromJson by remember { mutableStateOf(false) }
     if (choosingNew) {
         NewScriptDialog(
             onCode = { choosingNew = false; onCreate() },
+            onJson = { choosingNew = false; fromJson = true },
             onTemplate = { choosingNew = false; onNewDesign(it) },
             onDismiss = { choosingNew = false },
+        )
+    }
+    if (fromJson) {
+        JsonWidgetDialog(
+            load = loadJson,
+            onCreate = { fromJson = false; onNewJsonDesign(it) },
+            onDismiss = { fromJson = false },
         )
     }
     Scaffold(
@@ -378,6 +393,7 @@ private fun AppearanceDialog(script: ScriptSummary, onDismiss: () -> Unit, onPic
 @Composable
 private fun NewScriptDialog(
     onCode: () -> Unit,
+    onJson: () -> Unit,
     onTemplate: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -390,6 +406,11 @@ private fun NewScriptDialog(
                     headlineContent = { Text(stringResource(R.string.list_new_code)) },
                     supportingContent = { Text(stringResource(R.string.list_new_code_description)) },
                     modifier = Modifier.clickable(onClick = onCode),
+                )
+                androidx.compose.material3.ListItem(
+                    headlineContent = { Text(stringResource(R.string.list_new_json)) },
+                    supportingContent = { Text(stringResource(R.string.list_new_json_description)) },
+                    modifier = Modifier.testTag("new-json").clickable(onClick = onJson),
                 )
                 Text(
                     stringResource(R.string.list_new_designer),

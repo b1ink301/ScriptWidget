@@ -171,6 +171,7 @@ class MainActivity : ComponentActivity() {
                     container = container,
                     onOpen = open,
                     onNewDesign = newDesign,
+                    onNewJsonDesign = { design -> scope.launch { onNav(nav.open(container.createDesign(design), designer = true)) } },
                     widgetRecommendations = widgetRecommendations,
                     onOpenPermissions = { onNav(nav.show(Overlay.Permissions)) },
                     incomingFiles = pendingImport,

@@ -216,6 +216,13 @@ class AppContainer(
     val openDesign = kr.b1ink.scriptwidget.domain.usecase.OpenDesignUseCase(scriptRepository)
     val saveDesign by lazy { kr.b1ink.scriptwidget.domain.usecase.SaveDesignUseCase(saveScript, scriptRepository, designGenerator) }
 
+    /** The values in the JSON at [url], for "From a URL (JSON)". Throws on network errors, HTTP errors and non-JSON. */
+    suspend fun jsonFields(url: String): List<kr.b1ink.scriptwidget.domain.model.JsonField> {
+        val response = http.loadString(kr.b1ink.scriptwidget.data.engine.HttpRequestSpec(url = url, timeout = 20.0))
+        check(response.statusCode in 200..299) { "HTTP ${response.statusCode}" }
+        return kr.b1ink.scriptwidget.domain.model.JsonWidget.fields(kotlinx.serialization.json.Json.parseToJsonElement(response.body))
+    }
+
     /** Designer previews run on every edit; they are not worth a run-history entry. */
     val runPreview by lazy { RunScriptUseCase(engine) }
 

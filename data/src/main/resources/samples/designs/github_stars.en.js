@@ -1,5 +1,5 @@
 // scriptwidget-design: {"url":"https://github.com/b1ink301/ScriptWidget","refreshMinutes":60,"children":[{"type":"text","text":"ScriptWidget","color":"#FF8E8E93","size":13.0},{"type":"text","text":"⭐ {value}","data":{"type":"json","url":"https://api.github.com/repos/b1ink301/ScriptWidget","path":"stargazers_count"},"size":30.0,"weight":"bold"}]}
-// scriptwidget-design-hash: 35581f3ac874e507
+// scriptwidget-design-hash: c8da3790996ce3cc
 // Made in the widget designer. Open it there to change it.
 // Edits made to this code are lost when the designer saves again.
 
@@ -10,12 +10,17 @@ async function load(key, read) {
   if (data[key] === undefined || data[key] === null) data[key] = "–";
 }
 function formatDate(date, pattern) { const f = new DateFormatter(); f.dateFormat = pattern; return f.string(date); }
+// One request per address, however many values come from it.
+const _json = {};
+function json(url) {
+  return (_json[url] ??= new Request(url).loadJSON());
+}
 function pick(json, path) {
   const value = path.split(".").filter(Boolean).reduce((o, k) => (o == null ? undefined : o[k]), json);
   return value !== null && typeof value === "object" ? JSON.stringify(value) : value;
 }
 
-await load("d0", async () => pick(await new Request("https://api.github.com/repos/b1ink301/ScriptWidget").loadJSON(), "stargazers_count"));
+await load("d0", async () => pick(await json("https://api.github.com/repos/b1ink301/ScriptWidget"), "stargazers_count"));
 
 const w = new ListWidget();
 w.url = "https://github.com/b1ink301/ScriptWidget";
