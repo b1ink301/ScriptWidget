@@ -97,6 +97,9 @@ object TextBitmap {
         val weight = WEIGHTS[node.weight] ?: 400
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             Typeface.create(base, weight, node.italic)
+        } else if (node.fontFile == null && base == Typeface.SANS_SERIF && legacyFamily(weight) != null) {
+            // No weight axis before Android 9, but the system font comes in thin/light/medium/black families.
+            Typeface.create(legacyFamily(weight), if (node.italic) Typeface.ITALIC else Typeface.NORMAL)
         } else {
             val style = when {
                 weight >= 600 && node.italic -> Typeface.BOLD_ITALIC
@@ -106,6 +109,15 @@ object TextBitmap {
             }
             Typeface.create(base, style)
         }
+    }
+
+    /** The system font family for [weight] before Android 9; null for regular and (semi)bold, drawn as before. */
+    private fun legacyFamily(weight: Int): String? = when {
+        weight <= 200 -> "sans-serif-thin"
+        weight <= 300 -> "sans-serif-light"
+        weight == 500 -> "sans-serif-medium"
+        weight >= 800 -> "sans-serif-black"
+        else -> null
     }
 
     private data class Padding(val left: Int, val top: Int, val right: Int, val bottom: Int) {

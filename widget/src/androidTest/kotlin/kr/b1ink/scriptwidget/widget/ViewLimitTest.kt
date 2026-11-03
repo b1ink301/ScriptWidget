@@ -81,8 +81,10 @@ class ViewLimitTest {
 
         // 22 dots and 21 gaps across, 17 lines and 16 gaps down: fits the widget, nothing cut off.
         val dot = StackBitmap.render(StackNode(children = listOf(TextNode("●", size = 5f))), density, night = false, maxWidthDp = 300f)
-        assertEquals(22 * dot.widthDp + 21 * 2, result.widthDp, 1f)
-        assertEquals(17 * dot.heightDp + 16 * 2, result.heightDp, 1f)
+        // In pixels: gaps are rounded to whole pixels, so dp sums drift by a pixel or two per density.
+        val gap = Math.round(2 * density)
+        assertEquals(22 * dot.bitmap.width + 21 * gap, result.bitmap.width)
+        assertEquals(17 * dot.bitmap.height + 16 * gap, result.bitmap.height)
         assertTrue(result.widthDp < 300f && result.heightDp < 155f, "${result.widthDp} x ${result.heightDp}")
         // Dots are drawn: some pixels are white (past days), some gray.
         val pixels = IntArray(result.bitmap.width * result.bitmap.height).also { result.bitmap.getPixels(it, 0, result.bitmap.width, 0, 0, result.bitmap.width, result.bitmap.height) }

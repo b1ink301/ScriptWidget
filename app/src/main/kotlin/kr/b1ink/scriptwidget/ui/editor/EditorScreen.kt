@@ -166,9 +166,7 @@ private fun ScriptPermission.androidPermissions(): List<String> = when (this) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) listOf(Manifest.permission.POST_NOTIFICATIONS) else emptyList()
     ScriptPermission.Calendar -> listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
     ScriptPermission.Contacts -> listOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)
-    ScriptPermission.Photos ->
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) listOf(Manifest.permission.READ_MEDIA_IMAGES)
-        else listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+    ScriptPermission.Photos -> kr.b1ink.scriptwidget.ui.permissions.forThisVersion(Manifest.permission.READ_MEDIA_IMAGES)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -88,10 +88,15 @@ jobs:
           path: '**/build/reports/lint-results-*.html'
 
   device-tests:
-    name: Device tests (emulator)
+    name: Device tests (API ${{ matrix.api-level }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
     needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        # minSdk, the last version before scoped storage and per-app languages, and a current one.
+        api-level: [26, 29, 35]
     steps:
       - uses: actions/checkout@v7
 
@@ -113,7 +118,7 @@ jobs:
       - name: Instrumented tests (data-android, widget, app)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: ${{ matrix.api-level }}
           arch: x86_64
           target: google_apis
           # Without a profile the AVD is 320x640, which the designer doesn't support: its properties panel shrinks
@@ -121,7 +126,10 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: ./gradlew connectedDebugAndroidTest --continue
+          # The app's screen tests look for Korean texts; before Android 13 that needs the system language.
+          script: |
+            bash .github/scripts/use-korean-locale.sh
+            ./gradlew connectedDebugAndroidTest --continue
 
       - name: Report failed device tests
         if: failure()
@@ -131,5 +139,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: device-test-reports
+          name: device-test-reports-api${{ matrix.api-level }}
           path: '**/build/reports/androidTests/'

@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
 import org.junit.After
 import org.junit.Rule
+import android.os.Build
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.ByteArrayOutputStream
@@ -17,8 +18,15 @@ import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class AndroidPhotoLibraryTest {
+    /** Photo access is READ_MEDIA_IMAGES from Android 13, storage permissions before (writing too before 10). */
     @get:Rule
-    val permissions: GrantPermissionRule = GrantPermissionRule.grant(Manifest.permission.READ_MEDIA_IMAGES)
+    val permissions: GrantPermissionRule = GrantPermissionRule.grant(
+        *when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+            else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        },
+    )
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val library = AndroidPhotoLibrary(context)

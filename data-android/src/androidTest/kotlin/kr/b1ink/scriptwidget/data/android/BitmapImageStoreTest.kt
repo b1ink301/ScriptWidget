@@ -90,7 +90,8 @@ class BitmapImageStoreTest {
 
     // --- storage: photos are kept as JPEG, transparent images as PNG ---
 
-    private fun header(path: String) = File(path).inputStream().use { it.readNBytes(4) }
+    // Not readNBytes(): it's only on Android 13+.
+    private fun header(path: String) = File(path).readBytes().copyOf(4)
 
     @Test
     fun opaqueImagesAreStoredAsJpeg() {

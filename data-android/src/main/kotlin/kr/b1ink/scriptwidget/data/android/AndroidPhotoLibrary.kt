@@ -3,11 +3,12 @@ package kr.b1ink.scriptwidget.data.android
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
-import android.graphics.BitmapFactory
+import android.os.Environment
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import kr.b1ink.scriptwidget.data.engine.PhotoLibrary
+import java.io.File
 
 /** [PhotoLibrary] over MediaStore. Saved images are named `scriptwidget_*`. */
 class AndroidPhotoLibrary(context: Context) : PhotoLibrary {
@@ -41,13 +42,13 @@ class AndroidPhotoLibrary(context: Context) : PhotoLibrary {
 
     fun save(bytes: ByteArray, relativePath: String) {
         guarded {
+            val name = "$PREFIX${System.currentTimeMillis()}.png"
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.insertImage(resolver, BitmapFactory.decodeByteArray(bytes, 0, bytes.size), "$PREFIX${System.currentTimeMillis()}", null)
+                saveLegacy(bytes, relativePath, name)
                 return@guarded
             }
             val values = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, "$PREFIX${System.currentTimeMillis()}.png")
+                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
                 put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
                 put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
                 put(MediaStore.MediaColumns.IS_PENDING, 1)
@@ -56,6 +57,24 @@ class AndroidPhotoLibrary(context: Context) : PhotoLibrary {
             resolver.openOutputStream(uri)?.use { it.write(bytes) }
             resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
         }
+    }
+
+    /**
+     * Before Android 10 there is no RELATIVE_PATH: the file is written into the folder itself
+     * (WRITE_EXTERNAL_STORAGE) and registered by path. insertImage() would re-encode it as a JPEG
+     * and ignore the folder.
+     */
+    @Suppress("DEPRECATION")
+    private fun saveLegacy(bytes: ByteArray, relativePath: String, name: String) {
+        val file = File(File(Environment.getExternalStorageDirectory(), relativePath).apply { mkdirs() }, name)
+        file.writeBytes(bytes)
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DATA, file.absolutePath)
+            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+            put(MediaStore.MediaColumns.DATE_ADDED, System.currentTimeMillis() / 1000)
+        }
+        requireNotNull(resolver.insert(images, values)) { "Could not save the image" }
     }
 
     /** Removes images saved by this app (used by tests). */
