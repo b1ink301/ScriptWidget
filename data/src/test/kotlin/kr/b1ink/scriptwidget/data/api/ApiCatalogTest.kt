@@ -74,4 +74,17 @@ class ApiCatalogTest {
         assertEquals(ApiDocs.summary("ListWidget", "en"), english.single { it.name == "ListWidget" }.summary)
         assertEquals(ApiDocs.summary("ListWidget"), ApiCatalog.inLanguage(english, "ko").single { it.name == "ListWidget" }.summary)
     }
+
+    @Test
+    fun `the reference for language models lists every global with its members`() = runTest {
+        val reference = ApiCatalog.reference(catalog())
+
+        val lines = reference.lines()
+        assertEquals(ApiCatalog.NAMES.size, lines.size)
+        val widget = lines.first { it.startsWith("ListWidget(") }
+        assertTrue("addText(" in widget && "backgroundColor" in widget, widget)
+        assertTrue(lines.first { it.startsWith("Request(") }.contains("await loadJSON()"))
+        assertTrue(lines.first { it.startsWith("Font") }.contains("Font.boldSystemFont("))
+        assertTrue("toJSON" !in reference)
+    }
 }

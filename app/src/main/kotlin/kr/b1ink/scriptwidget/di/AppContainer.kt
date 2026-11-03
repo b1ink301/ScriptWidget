@@ -216,6 +216,46 @@ class AppContainer(
     val openDesign = kr.b1ink.scriptwidget.domain.usecase.OpenDesignUseCase(scriptRepository)
     val saveDesign by lazy { kr.b1ink.scriptwidget.domain.usecase.SaveDesignUseCase(saveScript, scriptRepository, designGenerator) }
 
+    // ---------- "Make a widget with AI" ----------
+
+    val aiSettings by lazy {
+        kr.b1ink.scriptwidget.settings.AiSettings(
+            appContext.getSharedPreferences("ai_settings", Context.MODE_PRIVATE),
+            KeystoreSecretStore(appContext, prefsName = "ai_keys", keyAlias = "scriptwidget.ai"),
+        )
+    }
+
+    /** Models answer only once the whole script is written; the default 10-second read timeout is too short. */
+    private val aiHttp by lazy { OkHttpGateway.patient(readTimeoutSeconds = 150) }
+
+    /** The prompt to paste into any AI chat app (free; no API key in the app). */
+    suspend fun aiPrompt(request: String): String =
+        kr.b1ink.scriptwidget.domain.ai.AiWidget.prompt(request, kr.b1ink.scriptwidget.data.api.ApiCatalog.reference(apiCatalog()))
+
+    /** Runs a script as a medium widget for the preview (not recorded in the run history). */
+    suspend fun aiPreview(code: String): kr.b1ink.scriptwidget.domain.model.ScriptRunResult =
+        runPreview(code, kr.b1ink.scriptwidget.domain.model.ScriptEnvironment(runsInWidget = true, widgetFamily = kr.b1ink.scriptwidget.domain.model.WidgetFamily.Medium, cacheKey = "ai-preview"), "ai-preview")
+
+    /** Generates with the configured provider and key, running and fixing the script up to three times. */
+    suspend fun generateWidget(request: String, onAttempt: (Int) -> Unit): kr.b1ink.scriptwidget.domain.ai.AiWidgetResult {
+        val provider = aiSettings.provider
+        val key = checkNotNull(aiSettings.key(provider)) { "No API key for $provider" }
+        val model = aiSettings.model(provider).ifBlank { error("No model chosen for $provider") }
+        val client = kr.b1ink.scriptwidget.data.ai.LlmClients.create(provider, aiHttp, key, model)
+        val reference = kr.b1ink.scriptwidget.data.api.ApiCatalog.reference(apiCatalog())
+        return kr.b1ink.scriptwidget.domain.ai.GenerateWidgetUseCase(client, reference, ::aiPreview)(request, onAttempt)
+    }
+
+    suspend fun aiModels(provider: kr.b1ink.scriptwidget.data.ai.AiProvider, key: String): List<String> =
+        kr.b1ink.scriptwidget.data.ai.LlmClients.models(provider, aiHttp, key)
+
+    /** Saves [code] as a new script named after [name] (with " 2", " 3", ... if taken) and returns its name. */
+    suspend fun saveNewScript(name: String, code: String): String {
+        val name = kr.b1ink.scriptwidget.domain.ai.AiWidget.uniqueName(kr.b1ink.scriptwidget.domain.ai.AiWidget.name(name), scriptRepository.list().toSet())
+        saveScript(name, code)
+        return name
+    }
+
     /** The values in the JSON at [url], for "From a URL (JSON)". Throws on network errors, HTTP errors and non-JSON. */
     suspend fun jsonFields(url: String): List<kr.b1ink.scriptwidget.domain.model.JsonField> {
         val response = http.loadString(kr.b1ink.scriptwidget.data.engine.HttpRequestSpec(url = url, timeout = 20.0))

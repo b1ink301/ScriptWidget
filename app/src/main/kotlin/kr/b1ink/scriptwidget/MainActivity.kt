@@ -172,6 +172,7 @@ class MainActivity : ComponentActivity() {
                     onOpen = open,
                     onNewDesign = newDesign,
                     onNewJsonDesign = { design -> scope.launch { onNav(nav.open(container.createDesign(design), designer = true)) } },
+                    onNewAiScript = { name, code -> scope.launch { onNav(nav.open(container.saveNewScript(name, code), designer = false)) } },
                     widgetRecommendations = widgetRecommendations,
                     onOpenPermissions = { onNav(nav.show(Overlay.Permissions)) },
                     incomingFiles = pendingImport,

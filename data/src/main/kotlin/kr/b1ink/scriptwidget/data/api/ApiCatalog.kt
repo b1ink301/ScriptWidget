@@ -64,6 +64,18 @@ object ApiCatalog {
             .map { it.copy(summary = ApiDocs.summary(it.name, language), members = it.members.sortedWith(compareBy({ !it.isStatic }, { it.name }))) }
     }
 
+    /**
+     * A compact list for a language model: one line per global, e.g.
+     * `ListWidget(): addText(text), await presentSmall(), backgroundColor`. Static members are `Name.member`.
+     */
+    fun reference(entries: List<ApiEntry>): String = entries.joinToString("\n") { entry ->
+        val head = entry.constructorParams?.let { "${entry.name}(${it.joinToString(", ")})" } ?: entry.name
+        // toJSON() is how the app reads widget trees, not something scripts call.
+        val members = entry.members.filter { it.name != "toJSON" }
+            .joinToString(", ") { if (it.isStatic) "${entry.name}.${it.signature}" else it.signature }
+        if (members.isEmpty()) head else "$head: $members"
+    }
+
     /** The same entries with their descriptions in [language], e.g. after the app's language changed. */
     fun inLanguage(entries: List<ApiEntry>, language: String): List<ApiEntry> =
         entries.map { it.copy(summary = ApiDocs.summary(it.name, language)) }
