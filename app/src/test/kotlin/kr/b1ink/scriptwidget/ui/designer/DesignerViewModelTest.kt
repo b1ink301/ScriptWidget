@@ -93,6 +93,18 @@ class DesignerViewModelTest {
     }
 
     @Test
+    fun `a tap inside an element that draws several nodes, a button's label, selects the element`() = runTest {
+        val vm = vm()
+
+        vm.select(listOf(0, 0))
+        assertEquals(listOf(0), vm.state.value.selected)
+        vm.select(listOf(1, 0, 2))
+        assertEquals(listOf(1, 0), vm.state.value.selected)
+        vm.select(listOf(5))
+        assertNull(vm.state.value.selected)
+    }
+
+    @Test
     fun `move, wrap and remove keep the selection on the element`() = runTest {
         val vm = vm()
         vm.select(listOf(0))

@@ -114,10 +114,13 @@
     addImage(image) { return this._add(new WidgetImage(image)); }
     addSpacer(length) { return this._add(new WidgetSpacer(length)); }
     addStack() { return this._add(new WidgetStack()); }
-    /** Android extension: a tappable pill that re-runs the script with args.widgetAction = action. */
+    /**
+     * Android extension: a tappable pill that re-runs the script with args.widgetAction = action.
+     * Without an action it is only a pill: set its url to open an address instead.
+     */
     addButton(title, action) {
       const button = this.addStack();
-      button.tapAction = String(action);
+      if (action !== undefined && action !== null) button.tapAction = String(action);
       button.setPadding(6, 12, 6, 12);
       button.cornerRadius = 12;
       button.backgroundColor = new Color("#FFFFFF", 0.18);

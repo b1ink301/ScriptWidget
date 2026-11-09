@@ -135,7 +135,10 @@ class DesignerViewModel(
         }
     }
 
-    fun select(path: List<Int>?) = _state.update { it.copy(selected = path?.takeIf { p -> it.design.elementAt(p) != null }) }
+    /** A tap on a node the design doesn't have by itself (a button's label) selects the element it belongs to. */
+    fun select(path: List<Int>?) = _state.update {
+        it.copy(selected = path?.let { p -> (p.size downTo 1).map(p::take).firstOrNull { q -> it.design.elementAt(q) != null } })
+    }
 
     fun selectFamily(family: WidgetFamily) {
         _state.update { it.copy(family = family) }

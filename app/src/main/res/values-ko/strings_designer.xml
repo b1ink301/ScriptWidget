@@ -12,7 +12,7 @@
     <string name="designer_preview_error">미리보기 오류: %1$s</string>
     <string name="designer_rendering">그리는 중…</string>
     <string name="designer_updating">갱신 중…</string>
-    <string name="designer_preview_hint">미리보기는 실제 위젯 엔진으로 그립니다 · 요소를 탭해 선택</string>
+    <string name="designer_preview_hint">실제 위젯 엔진으로 그림 · 탭해서 선택 · 점선은 선택한 요소가 든 스택</string>
     <string name="designer_move_up">↑ 위로</string>
     <string name="designer_move_down">↓ 아래로</string>
     <string name="designer_wrap_in_stack">스택으로 묶기</string>
@@ -150,4 +150,24 @@
     <string name="designer_export_gallery">갤러리용으로 내보내기 (.zip)</string>
     <string name="designer_exported_gallery">%1$s 내보냄: 스크립트와 index.json 항목(entry.json)</string>
     <string name="designer_export_failed">내보내지 못했습니다: %1$s</string>
+    <string name="designer_element_button">버튼</string>
+    <string name="designer_default_button_title">↻ 새로고침</string>
+    <string name="designer_prop_button_title">버튼 글자</string>
+    <string name="designer_prop_button_action">누르면</string>
+    <string name="designer_button_refresh">새로고침</string>
+    <string name="designer_button_url">주소 열기</string>
+    <string name="designer_button_counter">카운터</string>
+    <string name="designer_prop_button_url">열 주소</string>
+    <string name="designer_prop_counter_name">카운터 이름</string>
+    <string name="designer_prop_counter_op">카운터를</string>
+    <string name="designer_counter_add">+1</string>
+    <string name="designer_counter_subtract">−1</string>
+    <string name="designer_counter_reset">0으로</string>
+    <string name="designer_counter_hint">같은 이름의 카운터 데이터 블록이 값을 보여 줍니다. 값은 위젯이 다시 그려져도 남습니다.</string>
+    <string name="designer_button_hint">미리보기에서 누르면 선택만 됩니다. 동작은 홈 화면 위젯에서 확인하세요.</string>
+    <string name="designer_data_counter">카운터</string>
+    <string name="designer_add_element_after">+ 요소 (선택한 요소 뒤에)</string>
+    <string name="designer_tool_add_after">+ 뒤에 추가</string>
+    <string name="designer_tool_add_inside">+ 안에 추가</string>
+    <string name="designer_counter_data_hint">같은 이름의 카운터 버튼(+1·−1·0으로)이 이 값을 바꿉니다. 처음 값은 0입니다.</string>
 </resources>

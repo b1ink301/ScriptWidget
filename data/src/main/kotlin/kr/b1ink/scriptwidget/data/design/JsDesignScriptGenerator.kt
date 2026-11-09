@@ -1,6 +1,8 @@
 package kr.b1ink.scriptwidget.data.design
 
+import kr.b1ink.scriptwidget.domain.model.ButtonAction
 import kr.b1ink.scriptwidget.domain.model.DataBinding
+import kr.b1ink.scriptwidget.domain.model.DesignButton
 import kr.b1ink.scriptwidget.domain.model.DesignDate
 import kr.b1ink.scriptwidget.domain.model.DesignElement
 import kr.b1ink.scriptwidget.domain.model.DesignImage
@@ -20,6 +22,11 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
 
     override fun generate(design: WidgetDesign): String = buildString {
         texts.header.forEach { appendLine("// $it") }
+        // Before the data blocks, so a counter shows the value its button just set.
+        if (design.usesCounters()) {
+            appendLine()
+            append(counterHelper(texts))
+        }
         val bindings = design.bindings()
         if (bindings.isNotEmpty()) {
             appendLine()
@@ -90,6 +97,17 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
                 element.size?.let { appendLine("$v.imageSize = new Size(${num(it)}, ${num(it)});") }
                 if (element.cornerRadius > 0) appendLine("$v.cornerRadius = ${num(element.cornerRadius)};")
             }
+            is DesignButton -> {
+                val v = names.next("button")
+                val action = when (val a = element.action) {
+                    ButtonAction.Refresh -> str(REFRESH)
+                    is ButtonAction.OpenUrl -> null
+                    is ButtonAction.Counter -> str("counter:${a.op.name.lowercase()}:${a.name}")
+                }
+                appendLine("const $v = $parent.addButton(${str(element.title)}${action?.let { ", $it" }.orEmpty()});")
+                (element.action as? ButtonAction.OpenUrl)?.let { appendLine("$v.url = ${str(it.url)};") }
+                element.bg?.let { appendLine("$v.backgroundColor = ${color(it)};") }
+            }
             is DesignSpacer -> appendLine("$parent.addSpacer(${element.length?.let(::num).orEmpty()});")
             is DesignStack -> {
                 val v = names.next("stack")
@@ -135,6 +153,7 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
         }
         is DataBinding.Progress -> "progress(${str(binding.period.name.lowercase())})"
         is DataBinding.WorldTime -> "worldTime(${str(binding.zone)})"
+        is DataBinding.Counter -> "counter(${str(binding.name)})"
         is DataBinding.Reminders -> when (binding.field) {
             DataBinding.Reminders.Field.Count -> "(await openReminders()).length"
             DataBinding.Reminders.Field.Next -> "(await openReminders())[0]?.title ?? ${str(texts.noReminders)}"
@@ -150,6 +169,9 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
     companion object {
         private const val VALUE = "{value}"
         private const val PLACEHOLDER = "SFSymbol.named(\"photo\").image"
+
+        /** The action of a refresh button; any action re-runs the script, this one changes nothing else. */
+        private const val REFRESH = "refresh"
 
         private val DATE_STYLES = mapOf(
             "time" to "applyTimeStyle",
@@ -198,6 +220,26 @@ class JsDesignScriptGenerator(private val texts: GeneratorTexts = GeneratorTexts
             val rgb = str("#" + hex.substring(2))
             return if (alpha >= 1f) "new Color($rgb)" else "new Color($rgb, ${"%.3f".format(java.util.Locale.ROOT, alpha).trimEnd('0').trimEnd('.')})"
         }
+
+        /** Counters live in Documents/<script>.counters.json; a tapped counter button changes one first. */
+        private fun counterHelper(texts: GeneratorTexts) = """
+            |// ${texts.counterComment}
+            |const _counters = (() => {
+            |  const fm = FileManager.local();
+            |  const path = fm.joinPath(fm.documentsDirectory(), `${'$'}{Script.name()}.counters.json`);
+            |  let values = {};
+            |  try { values = JSON.parse(fm.readString(path) ?? "{}"); } catch (e) {}
+            |  const tap = /^counter:(add|subtract|reset):(.*)${'$'}/.exec(args.widgetAction ?? "");
+            |  if (tap) {
+            |    const [, op, name] = tap;
+            |    values[name] = op === "reset" ? 0 : (values[name] ?? 0) + (op === "add" ? 1 : -1);
+            |    try { fm.writeString(path, JSON.stringify(values)); } catch (e) { console.warn(`counter: ${'$'}{e}`); }
+            |  }
+            |  return values;
+            |})();
+            |function counter(name) { return _counters[name] ?? 0; }
+            |
+        """.trimMargin() + "\n"
 
         private fun bookmarkHelper(texts: GeneratorTexts) = """
             |// ${texts.bookmarkComment}
@@ -334,6 +376,7 @@ data class GeneratorTexts(
     val noReminders: String,
     val allDay: String,
     val bookmarkComment: String,
+    val counterComment: String,
     /** Clear, partly cloudy, cloudy, fog, drizzle, rain, snow, thunderstorm. */
     val weather: List<String>,
 ) {
@@ -345,6 +388,7 @@ data class GeneratorTexts(
             noReminders = "할 일 없음",
             allDay = "하루 종일",
             bookmarkComment = "사진은 파일 북마크에서 읽습니다(설정 → 파일 북마크). 없으면 빈 자리로 둡니다.",
+            counterComment = "카운터: 버튼을 누르면 바뀌고, 값은 Documents의 <스크립트 이름>.counters.json에 남습니다.",
             weather = listOf("맑음", "구름 조금", "흐림", "안개", "이슬비", "비", "눈", "뇌우"),
         )
         val ENGLISH = GeneratorTexts(
@@ -354,6 +398,7 @@ data class GeneratorTexts(
             noReminders = "Nothing to do",
             allDay = "All day",
             bookmarkComment = "Pictures come from file bookmarks (Settings → File bookmarks); a missing one leaves a placeholder.",
+            counterComment = "Counters: buttons change them, and they are kept in Documents/<script name>.counters.json.",
             weather = listOf("Clear", "Partly cloudy", "Cloudy", "Fog", "Drizzle", "Rain", "Snow", "Thunderstorm"),
         )
     }

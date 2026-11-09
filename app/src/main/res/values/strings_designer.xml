@@ -12,7 +12,7 @@
     <string name="designer_preview_error">Preview error: %1$s</string>
     <string name="designer_rendering">Rendering…</string>
     <string name="designer_updating">Updating…</string>
-    <string name="designer_preview_hint">Preview drawn by the real widget engine · Tap an element to select it</string>
+    <string name="designer_preview_hint">Drawn by the real widget engine · Tap to select · Dashed: the stack it is in</string>
     <string name="designer_move_up">↑ Up</string>
     <string name="designer_move_down">↓ Down</string>
     <string name="designer_wrap_in_stack">Wrap in stack</string>
@@ -150,4 +150,24 @@
     <string name="designer_export_gallery">Export for a gallery (.zip)</string>
     <string name="designer_exported_gallery">Exported %1$s: the script and its index.json entry (entry.json)</string>
     <string name="designer_export_failed">Couldn\'t export: %1$s</string>
+    <string name="designer_element_button">Button</string>
+    <string name="designer_default_button_title">↻ Refresh</string>
+    <string name="designer_prop_button_title">Button label</string>
+    <string name="designer_prop_button_action">When tapped</string>
+    <string name="designer_button_refresh">Refresh</string>
+    <string name="designer_button_url">Open address</string>
+    <string name="designer_button_counter">Counter</string>
+    <string name="designer_prop_button_url">Address to open</string>
+    <string name="designer_prop_counter_name">Counter name</string>
+    <string name="designer_prop_counter_op">Change the counter</string>
+    <string name="designer_counter_add">+1</string>
+    <string name="designer_counter_subtract">−1</string>
+    <string name="designer_counter_reset">Reset to 0</string>
+    <string name="designer_counter_hint">A Counter data block with the same name shows the value. It is kept when the widget redraws.</string>
+    <string name="designer_button_hint">In the preview a tap only selects it. Try it on the home screen widget.</string>
+    <string name="designer_data_counter">Counter</string>
+    <string name="designer_add_element_after">+ Element (after selected)</string>
+    <string name="designer_tool_add_after">+ Add after</string>
+    <string name="designer_tool_add_inside">+ Add inside</string>
+    <string name="designer_counter_data_hint">Counter buttons with the same name (+1, −1, reset) change this value. It starts at 0.</string>
 </resources>

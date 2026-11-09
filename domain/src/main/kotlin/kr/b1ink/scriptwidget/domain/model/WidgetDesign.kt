@@ -110,6 +110,19 @@ data class WidgetDesign(
         return (listOfNotNull(background.image) + walk(children)).distinct()
     }
 
+    /** Whether a counter is shown or changed anywhere, so the script must keep counters. */
+    fun usesCounters(): Boolean {
+        fun walk(list: List<DesignElement>): Boolean = list.any {
+            when (it) {
+                is DesignText -> it.data is DataBinding.Counter
+                is DesignButton -> it.action is ButtonAction.Counter
+                is DesignStack -> walk(it.children)
+                else -> false
+            }
+        }
+        return walk(children)
+    }
+
     fun encode(): String = DesignJson.encodeToString(serializer(), this)
 
     private fun editChildren(parent: List<Int>, change: (List<DesignElement>) -> List<DesignElement>): WidgetDesign {
@@ -196,6 +209,37 @@ data class DesignSpacer(
     val length: Float? = null,
 ) : DesignElement
 
+/** A tappable pill (the `addButton` Android extension) that does one of a few ready-made things. */
+@Serializable
+@SerialName("button")
+data class DesignButton(
+    val title: String,
+    val action: ButtonAction = ButtonAction.Refresh,
+    /** null keeps the translucent white pill. */
+    val bg: String? = null,
+) : DesignElement
+
+/** What a [DesignButton] does when tapped on the home screen. */
+@Serializable
+sealed interface ButtonAction {
+    /** Runs the script again, so the widget shows fresh values. */
+    @Serializable
+    @SerialName("refresh")
+    data object Refresh : ButtonAction
+
+    @Serializable
+    @SerialName("url")
+    data class OpenUrl(val url: String = "https://") : ButtonAction
+
+    /** Changes the counter [name], shown by a text with [DataBinding.Counter]. */
+    @Serializable
+    @SerialName("counter")
+    data class Counter(val name: String = "count", val op: Op = Op.Add) : ButtonAction {
+        @Serializable
+        enum class Op { Add, Subtract, Reset }
+    }
+}
+
 @Serializable
 @SerialName("stack")
 data class DesignStack(
@@ -279,6 +323,11 @@ sealed interface DataBinding {
     @Serializable
     @SerialName("worldTime")
     data class WorldTime(val zone: String = "America/New_York") : DataBinding
+
+    /** A number that [ButtonAction.Counter] buttons change; it starts at 0 and is kept between runs. */
+    @Serializable
+    @SerialName("counter")
+    data class Counter(val name: String = "count") : DataBinding
 }
 
 private val DesignJson = Json {

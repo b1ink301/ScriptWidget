@@ -26,10 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.graphics.asImageBitmap
@@ -86,16 +91,52 @@ fun WidgetPreview(
             .padding(top = p[0].dp, start = p[1].dp, bottom = p[2].dp, end = p[3].dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        ColumnChildren(root.children, root.spacing, emptyList(), selection)
+        ColumnChildren(root.children, root.spacing, emptyList(), selection, fillsWidth = true)
     }
 }
 
-/** Which element is selected in the designer, and where taps go. */
+/**
+ * Which element is selected in the designer, and where taps go. The stack holding the selection is
+ * dashed, so it shows where the element sits and where "add" puts the next one.
+ */
 private class Selection(val selected: List<Int>?, val onSelect: ((List<Int>?) -> Unit)?) {
     fun modifier(path: List<Int>): Modifier {
         val onSelect = onSelect ?: return Modifier
-        val outline = if (path == selected) Modifier.border(2.dp, SELECTED, RoundedCornerShape(4.dp)) else Modifier
+        val outline = when {
+            path == selected -> Modifier.border(2.dp, SELECTED, RoundedCornerShape(4.dp))
+            selected != null && selected.size > 1 && path == selected.dropLast(1) -> Modifier.dashed()
+            else -> Modifier
+        }
         return Modifier.testTag("preview-" + path.joinToString("-")).then(outline).clickable { onSelect(path) }
+    }
+
+    /** Spacers are invisible on the home screen; here they can be tapped, and show when selected. */
+    fun Modifier.spacer(path: List<Int>): Modifier {
+        val onSelect = onSelect ?: return this
+        // Drawn without taking space: a spacer in a stack that wraps its content is 0 wide (or high).
+        val shown = if (path == selected) {
+            Modifier.drawBehind {
+                val band = 6.dp.toPx()
+                val w = if (size.width > 0) size.width else band
+                val h = if (size.height > 0) size.height else band
+                drawRect(SELECTED.copy(alpha = 0.3f), topLeft = Offset((size.width - w) / 2, (size.height - h) / 2), size = Size(w, h))
+            }
+        } else {
+            Modifier
+        }
+        return testTag("preview-" + path.joinToString("-")).then(shown).clickable { onSelect(path) }
+    }
+
+    private fun Modifier.dashed(): Modifier = drawWithContent {
+        drawContent()
+        val width = 1.5.dp.toPx()
+        drawRoundRect(
+            color = SELECTED.copy(alpha = 0.7f),
+            topLeft = Offset(width / 2, width / 2),
+            size = size.copy(width = size.width - width, height = size.height - width),
+            cornerRadius = CornerRadius(4.dp.toPx()),
+            style = Stroke(width, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 3.dp.toPx()))),
+        )
     }
 
     companion object {
@@ -104,12 +145,17 @@ private class Selection(val selected: List<Int>?, val onSelect: ((List<Int>?) ->
     }
 }
 
+/**
+ * [fillsWidth] (of a column) / [fillsHeight] (of a row): its size across is fixed, so a spacer can
+ * span it in the designer, to be tapped, without making the stack bigger than on the home screen.
+ */
 @Composable
-private fun ColumnScope.ColumnChildren(children: List<WidgetNode>, spacing: Float, path: List<Int>, selection: Selection) {
+private fun ColumnScope.ColumnChildren(children: List<WidgetNode>, spacing: Float, path: List<Int>, selection: Selection, fillsWidth: Boolean) {
     children.forEachIndexed { i, node ->
         if (i > 0 && spacing > 0) Spacer(Modifier.height(spacing.dp))
         if (node is SpacerNode) {
-            Spacer(node.length?.let { Modifier.height(it.dp) } ?: Modifier.weight(1f))
+            val size = node.length?.let { Modifier.height(it.dp) } ?: Modifier.weight(1f)
+            Spacer(with(selection) { size.then(if (fillsWidth) Modifier.fillMaxWidth() else Modifier).spacer(path + i) })
         } else if (StackLayout.wantsHeight(node)) {
             // Children that grow vertically split the column's height, as on the home screen.
             Node(node, inColumn = true, outer = Modifier.weight(1f), weightedHeight = true, path = path + i, selection = selection)
@@ -120,11 +166,12 @@ private fun ColumnScope.ColumnChildren(children: List<WidgetNode>, spacing: Floa
 }
 
 @Composable
-private fun RowScope.RowChildren(children: List<WidgetNode>, spacing: Float, path: List<Int>, selection: Selection) {
+private fun RowScope.RowChildren(children: List<WidgetNode>, spacing: Float, path: List<Int>, selection: Selection, fillsHeight: Boolean) {
     children.forEachIndexed { i, node ->
         if (i > 0 && spacing > 0) Spacer(Modifier.width(spacing.dp))
         if (node is SpacerNode) {
-            Spacer(node.length?.let { Modifier.width(it.dp) } ?: Modifier.weight(1f))
+            val size = node.length?.let { Modifier.width(it.dp) } ?: Modifier.weight(1f)
+            Spacer(with(selection) { size.then(if (fillsHeight) Modifier.fillMaxHeight() else Modifier).spacer(path + i) })
         } else if (StackLayout.wantsWidth(node)) {
             Node(node, inColumn = false, outer = Modifier.weight(1f), weighted = true, path = path + i, selection = selection)
         } else {
@@ -206,6 +253,8 @@ private fun Node(
             // Same growth rules as GlanceRenderer: stacks with flexible spacers fill that axis.
             if (!weighted && StackLayout.wantsWidth(node)) modifier = modifier.fillMaxWidth()
             if (!weightedHeight && StackLayout.wantsHeight(node)) modifier = modifier.fillMaxHeight()
+            val fixedWidth = weighted || StackLayout.wantsWidth(node) || (node.size?.getOrNull(0) ?: 0f) > 0
+            val fixedHeight = weightedHeight || StackLayout.wantsHeight(node) || (node.size?.getOrNull(1) ?: 0f) > 0
             val borderColor = node.borderColor
             if (borderColor != null && node.borderWidth > 0) {
                 modifier = modifier.border(node.borderWidth.dp, parse(borderColor, Color.Transparent), RoundedCornerShape(node.cornerRadius.dp))
@@ -216,14 +265,14 @@ private fun Node(
                 modifier = modifier.padding(top = p[0].dp, start = p[1].dp, bottom = p[2].dp, end = p[3].dp)
             }
             if (node.dir == "v") {
-                Column(modifier) { ColumnChildren(node.children, node.spacing, path, selection) }
+                Column(modifier) { ColumnChildren(node.children, node.spacing, path, selection, fillsWidth = fixedWidth) }
             } else {
                 val vertical = when (node.align) {
                     "top" -> Alignment.Top
                     "bottom" -> Alignment.Bottom
                     else -> Alignment.CenterVertically
                 }
-                Row(modifier, verticalAlignment = vertical) { RowChildren(node.children, node.spacing, path, selection) }
+                Row(modifier, verticalAlignment = vertical) { RowChildren(node.children, node.spacing, path, selection, fillsHeight = fixedHeight) }
             }
         }
 
