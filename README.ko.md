@@ -76,14 +76,14 @@ sequenceDiagram
 
 | 계층 | 테스트 종류 | 위치 | 개수 |
 |---|---|---|---|
-| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교, 디자인 모델·편집 규칙·헤더·템플릿, 카탈로그 검사, 이벤트 트리거) | `domain/src/test` | 175 |
-| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교), 내장 카탈로그 검사, 트리거 저장소 | `data/src/test` | 280 |
-| widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 30 |
+| domain | JVM 단위 테스트 (Fake 사용, 가져오기·내보내기, 백업·복원, 아이콘 헤더, 실행 기록, 자동화 실행, 파일 북마크, 갤러리 설치·업데이트·카탈로그 URL, 앱 업데이트 확인·버전 비교, 디자인 모델·편집 규칙·헤더·템플릿, 카탈로그 검사, 이벤트 트리거, 진단 리포트, URL(JSON)로 위젯 만들기, AI 위젯 프롬프트·생성 반복) | `domain/src/test` | 202 |
+| data | JVM 단위 테스트: 실제 QuickJS·prelude 계약(API별), MockWebServer, 샌드박스, DataStore, SF→Material 매핑, 앱 UI·시스템·개인 데이터 브릿지, 리마인더 저장소, 샘플 스크립트, 실행 컨텍스트(config·args), 텍스트 스타일, API 목록, 호환성 측정용 HTTP 녹화·재생, 실행 기록 파일, zip 백업, GitHub 릴리스 읽기, 디자이너 코드 생성(실제 QuickJS로 실행해 비교), 내장 카탈로그 검사, 트리거 저장소, 실행 한도(메모리·재귀·로그) | `data/src/test` | 304 |
+| widget | JVM 단위 테스트 (RenderStateCodec, StackLayout(공간 나누기·10개 제한·제목 줄이기), 뷰 500개 한도 계산, 텍스트 렌더링 방식 판단, 가용 너비) | `widget/src/test` | 40 |
 | app | JVM 단위 테스트 (ViewModel, 권한 화면·요청 흐름, 딥링크, 스크립트 UI 호스트, 문법 색상·자동완성·찾기, 공유 내용 분류, 아이콘, 파일 북마크, 갤러리, 탭 탐색 규칙, 목록 검색·활동, 업데이트 확인, 디자이너 편집·되돌리기·미리보기, 설치 전 권한 경고, 트리거 화면) | `app/src/test` || 143 |
 | data-android | 기기 통합 테스트 (Bitmap, Keystore, LocationManager, Notification, Canvas, 심볼, Device, 클립보드·공유·메일·TTS 인텐트, CalendarProvider, ContactsProvider, MediaStore, 문서 읽기·쓰기, 알림 탭·버튼) | `data-android/src/androidTest` | 50 |
-| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, WorkManager, 정확한 알람, Worker, 위젯 액션, 이벤트 감시(콘텐츠 URI·조건·자정 알람)) | `widget/src/androidTest` | 65 |
-| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택, 트리거 화면) | `app/src/androidTest` ||| 67 |
-| **합계** | | | **810** (+ 호환성 측정 하네스 1, 기본 스킵) |
+| widget | 기기 통합 테스트 (Glance 렌더링·그라데이션·테두리·버튼, 텍스트 비트맵, 뷰 500개를 넘는 위젯, WorkManager, 정확한 알람, Worker, 위젯 액션, 이벤트 감시(콘텐츠 URI·조건·자정 알람)) | `widget/src/androidTest` | 70 |
+| app | 기기 통합 테스트 (AppContainer + 실제 스택, 운영 DI 구성, 권한 상태, Compose 스크립트 UI, 공유·열기 인텐트, 공유 파일 복사, 자동화·바로가기, 앱 미리보기 배치, 갤러리, 플로팅 탭바·설정, 위젯을 세션 없이 한 번에 그리기, 업데이트 행, 디자이너 화면·새 스크립트 선택, 트리거 화면, 실행 한도(재귀·메모리로 프로세스가 죽지 않음), 진단 정보 수집) | `app/src/androidTest` ||| 82 |
+| **합계** | | | **891** (+ 호환성 측정 하네스 2, 기본 스킵) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -185,6 +185,10 @@ export ANDROID_SERIAL=emulator-5554
 
 **+ 새 스크립트** → **디자이너로 만들기**에서 템플릿(빈 위젯·시계·배터리·다음 일정·할 일·날씨·JSON 값·사진 액자·D-day)을 고르면 디자이너가 열립니다. 같은 템플릿이 갤러리의 **디자인** 분류에도 있습니다.
 
+**URL(JSON)로 만들기**: 코드 없이 API 응답으로 위젯을 만듭니다. JSON 주소를 넣고 **불러오기**를 누르면 응답의 값이 경로(`main.temp`, `items.0.title` …)와 지금 값으로 나열됩니다(배열은 앞의 3개). 최대 6개를 고르면 디자이너가 열립니다. 하나만 고르면 큰 숫자 하나, 여러 개면 "이름 … 값" 행으로 배치되고, 각 값은 JSON 값 블록이라 위젯이 갱신될 때마다(기본 30분) 새로 가져옵니다. 같은 주소의 값 여러 개는 한 번만 요청합니다. 화면에 키 없이 쓸 수 있는 **예시**(날씨·환율·비트코인·GitHub)가 있고, 자세한 사용법은 [URL(JSON)로 위젯 만들기](docs/json-widget.ko.md)에 있습니다.
+
+**✨ AI로 만들기**: 원하는 위젯을 말로 설명하면 AI가 스크립트를 쓰고, 앱이 실제 엔진으로 실행해 위젯이 그려지는지 확인한 뒤 미리보기와 쓰는 기능(네트워크·위치 등)을 보여 줍니다. **프롬프트 복사(무료)** 는 아무 AI 채팅 앱에 붙여 넣고 답을 다시 붙여 넣는 방식이고, **앱에서 바로** 는 Gemini·Claude·OpenAI API 키로 생성하면서 오류가 나면 AI에 보내 최대 3번 고칩니다. 프롬프트에는 이 앱이 실제로 지원하는 API 목록이 들어가고, 키는 스크립트의 `Keychain`과 분리된 저장소에 암호화해 둡니다. 사용법: [AI로 위젯 만들기](docs/ai-widget.ko.md)
+
 - **화면**: 위쪽 미리보기(소·중·대), 아래 **구조**(요소 트리)와 **속성**(선택한 요소). 미리보기에서 요소를 탭해도 선택됩니다.
 - **요소**: 텍스트, 시각(실시간), 심볼(SF Symbols 이름), 이미지(URL 또는 파일 북마크 사진), 간격, 가로·세로 스택. 선택한 요소는 스택으로 묶기, 삭제. 되돌리기(↶)·다시 실행(↷).
 - **순서 바꾸기**: 구조 목록의 **≡** 손잡이를 끌어 놓습니다. 행의 위·아래쪽에 놓으면 그 앞·뒤로, 스택 행의 가운데에 놓으면 그 스택 안으로 들어갑니다. 위·아래 버튼도 그대로 있습니다.
@@ -244,6 +248,7 @@ export ANDROID_SERIAL=emulator-5554
 ### 편집기·실행 기록·도움말
 - **편집기**: 줄 번호, 문법 색상(키워드·문자열·숫자·주석·API 이름), 키보드 위 자동완성(`Font.` 뒤에는 정적 멤버, `new ListWidget()`으로 만든 변수 뒤에는 그 클래스의 메서드, 그 밖에는 API·키워드·스크립트 안에서 선언한 이름), **찾기/바꾸기**(대소문자 무시, 모두 바꾸기).
 - **실행 기록**: **기록** 탭. 앱·위젯·알림·공유·자동화 실행이 최근 200개까지 남습니다(시간, 실행 위치, 걸린 시간, 에러·로그). **실패만** 필터.
+- **진단 정보**: **설정** 탭 → **진단 정보 내보내기**. 기기·Android 버전·런처·권한·설정, 최근 크래시(앱이 남긴 예외와 Android가 기록한 네이티브 크래시·ANR·메모리 부족 종료), 최근 실패한 실행을 텍스트 파일로 저장해 GitHub 이슈에 첨부할 수 있습니다. 스크립트 코드와 로그는 넣지 않고, URL의 쿼리(API 키가 자주 들어 있음)는 가립니다.
 - **API 도움말**: **도움말** 탭 또는 편집기 **API** 버튼. 목록은 prelude를 QuickJS로 직접 조사해서 만들어서(생성자·메서드 인자·속성·async 여부) 구현과 항상 일치합니다. 각 항목에서 공식 문서로 이동할 수 있습니다.
 
 ## 지원 JS API
@@ -310,6 +315,7 @@ export ANDROID_SERIAL=emulator-5554
   - WorkManager 주기 작업은 재부팅 등으로 알람이 사라졌을 때를 위한 **60분 안전망**이고, 화면이 꺼져 있으면 바로 끝납니다. 깨우지 않는 알람에는 WorkManager 예약을 함께 걸지 않습니다(작업이 화면 꺼짐 중에 폰을 깨울 수 있어서).
   - 안드로이드 자체 제한(Doze, 삼성 "앱 절전")은 이와 별개로 갱신을 더 늦출 수 있습니다. 설정 탭 → 권한에서 **배터리 최적화 제외**를 권장합니다.
 - **중복 실행 방지**: 같은 위젯은 한 번에 하나만 실행하고, 방금 갱신된 위젯의 예약·주기 갱신은 건너뜀. 위젯 크기를 바꿔도 크기 구분(small/medium/large)이 같으면 다시 그리기만 하고 스크립트는 실행하지 않음.
+- **실행 한도**: 스크립트마다 실행 시간 30초(위젯), 메모리 64MB, 호출 깊이 약 8,000단계까지. 넘으면 그 실행만 에러(`timed out`·`out of memory`·`stack overflow`)로 끝나고 다른 위젯은 영향을 받지 않음. 로그는 실행마다 최근 1,000줄, 한 줄 16KB까지 남김.
 - **오프라인**: 네트워크가 없을 때 `Request`·`WebView`·`importModule`을 쓰는 스크립트의 백그라운드 갱신은 건너뛰고 마지막 화면을 유지. 응답은 10MB까지, HTTP 캐시(10MB)는 서버의 캐시 헤더를 따름.
 - **위치**: 요청 정확도에 맞는 최근 위치(정밀 1분, 100m 5분, 1~3km 15분 이내)는 GPS를 다시 켜지 않고 재사용. 새로 잡을 때도 전체 15초 안에서만 시도.
 - **저장공간·메모리**: 위젯을 지우면 그 위젯의 이미지 캐시도 삭제, `tmp`(공유받은 파일·카메라 사진·고른 문서)는 하루 지나면 정리. 불투명한 이미지는 JPEG, 투명한 이미지는 PNG로 저장. 이미지가 많은 위젯은 전체 비트맵 용량(6MB) 안에서 이미지를 작게 디코딩하고, 긴 텍스트 이미지는 높이 2048px까지. 실행 기록은 한 줄씩 추가(JSONL)하고 400줄이 되면 200줄로 정리.
@@ -330,6 +336,7 @@ export ANDROID_SERIAL=emulator-5554
 - **`Color.dynamic(밝은색, 어두운색)`**: 두 색을 모두 위젯에 넘겨서, 시스템 라이트/다크 모드가 바뀌면 스크립트를 다시 실행하지 않아도 바로 바뀝니다.
 - **가로 스택의 공간 나누기**: SwiftUI처럼 늘어나려는 자식들(예: 행마다 Spacer가 있는 왼쪽·오른쪽 열)이 너비를 똑같이 나눕니다. `[순위, 제목(lineLimit 1), Spacer, 언론사]` 같은 행은 제목이 남는 공간을 차지하고 말줄임으로 줄어들어 뒤 요소가 밀려나지 않습니다.
 - **자식 10개 제한**: RemoteViews는 한 행/열에 자식을 10개까지만 그리고 나머지를 버립니다. 렌더러가 넘치는 자식을 안쪽 컨테이너로 묶어 모두 그립니다 (`spacing`으로 생기는 간격도 개수에 포함).
+- **뷰 500개 제한**: Glance는 위젯 하나를 뷰 500개까지만 그리고, 넘으면 위젯을 아예 그리지 않습니다. 날마다 점을 찍는 격자(1년 = 365개)처럼 큰 위젯은 글자·고정 간격·단색 스택으로만 된 가장 큰 스택부터 이미지 한 장으로 그려 한도 안에 맞춥니다(탭 동작·이미지·늘어나는 Spacer가 있는 스택은 그대로).
 - **텍스트 렌더링**: Glance로 그릴 수 없는 텍스트는 비트맵으로 그립니다: 3단계(regular/medium/bold) 밖의 굵기, 그림자, `minimumScaleFactor`(최소 배율까지 줄여도 넘치면 말줄임), `Documents/fonts/<이름>.ttf|otf`에 넣은 글꼴(`new Font("이름", 크기)`). `Menlo`·`Courier` 같은 이름은 고정폭, `Georgia`·`Times` 계열은 세리프 시스템 글꼴로 대체.
 - **Intl**: QuickJS에 없어서 `java.text`/`java.time`으로 구현. `year`/`month` 같은 개별 구성요소 옵션은 미지원. 출력은 JVM(CLDR)과 Android(ICU)가 조금 다를 수 있음.
 
@@ -342,8 +349,24 @@ export ANDROID_SERIAL=emulator-5554
 cat data/build/compat-report.txt
 ```
 
-- 네트워크 응답은 하네스에서 "어떤 속성에 접근해도 진행되는 Proxy"로 대체합니다. 그래서 데이터 형태가 아니라 API 누락을 측정합니다.
+- 네트워크 응답은 `-PcompatNetwork`로 정합니다.
+  - `proxy`(기본): "어떤 속성에 접근해도 진행되는 Proxy"로 대체. 데이터 형태가 아니라 API 누락을 측정합니다.
+  - `record`: 실제 네트워크를 쓰고, 스크립트마다 주고받은 내용을 `<corpus>/_http/<스크립트>.json`에 저장합니다(잘못된 URL 같은 실패도 저장).
+  - `replay`: 저장한 응답을 그대로 돌려주고, 시계를 녹화 시각에 고정하고 `Math.random`도 고정해서 실행할 때마다 같은 위젯이 나옵니다. 녹화에 없던 요청은 404(이미지는 네트워크 오류)이고 리포트에 `not recorded`로 표시됩니다.
+- **결과 스냅샷**: 스크립트마다 결과(위젯 트리 JSON 또는 에러)를 `data/build/compat-trees/`에 쓰고, `<corpus>/_golden/`과 다르면 `[changed]`로 보고합니다. `-PcompatUpdateGolden`을 주면 지금 결과를 `_golden`으로 저장합니다.
 - `<corpus>/_docs/<스크립트 이름>/`이 있으면 그 내용을 Documents 폴더에 넣고 실행합니다. 저장소 전체를 Scriptable에 받아 둔 사용자와 같은 상태(모듈·설정 파일)로 측정하기 위해서입니다.
+
+렌더러가 바뀌었을 때 **그려진 모양**을 비교하려면, `_golden`의 위젯 트리를 기기에서 실제 RemoteViews(Scriptable 중간 크기 329×155pt)로 그려 PNG로 받습니다. PNG는 같은 기기끼리만 비교하세요(글꼴·밀도가 기기마다 다름). 실시간으로 바뀌는 날짜(`relative`·`timer`)는 고정 문구로 그립니다.
+
+```bash
+# 1) 녹화(한 번) → 2) 재생해서 기준 저장 → 3) 기기에서 그려 기준 PNG 저장
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=record --rerun
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=replay -PcompatUpdateGolden --rerun
+scripts/compat-snapshots.sh $CORPUS --update
+# 렌더러를 고친 뒤: 바뀐 위젯 트리와 PNG 목록
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=replay --rerun
+scripts/compat-snapshots.sh $CORPUS      # <corpus>/_snapshots/ 와 _snapshots_golden/ 비교, 그리지 못한 위젯도 표시
+```
 
 **측정 대상**: [awesome-scriptable](https://github.com/dersvenhesse/awesome-scriptable)에 등록된 스크립트 33개에, 2026-10-30에 GitHub의 Scriptable 위젯 저장소 71곳에서 모은 143개(`ListWidget`을 쓰는 파일, 저장소당 최대 4개, 중복 제거)를 더해 **176개**입니다.
 
@@ -354,6 +377,9 @@ cat data/build/compat-report.txt
 | 앱 UI·WebView·시스템 연동·개인 데이터 구현 후 | 33개 | 23 (70%) |
 | 측정 대상 확대 (2026-10-30) | 176개 | 80 (45%) |
 | `module` 전역·`arguments`·`atob`/`btoa`·Documents 모듈 + 저장소 파일 제공 | 176개 | **101 (57%)** |
+| 같은 시점, **실제 응답**으로 측정 (2026-11-02 녹화·재생) | 176개 | 81 (46%) |
+
+Proxy 측정은 어떤 데이터 형태든 통과시켜 실제보다 후합니다. 실제 응답으로 그린 81개는 모두 기기에서 렌더링됩니다(뷰 500개 제한에 걸리던 점 격자 위젯 2개 포함).
 
 측정 대상을 넓히면서 찾아 보강한 것:
 - **`module` 전역**: Scriptable은 모든 스크립트에 `module.filename`·`module.exports`를 줍니다. iCloud 사용 여부를 확인하거나 모듈 경로를 계산하는 데 씁니다(13개).

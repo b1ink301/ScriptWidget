@@ -46,7 +46,13 @@ class ExactAlarmRefreshSchedulerTest {
         val lines = dump.lines()
         val tag = lines.indexOfFirst { it.trim().endsWith("REFRESH_AT.$appWidgetId") && it.contains("tag=") }
         if (tag < 0) return null
-        return Regex("""type=(\w+)""").find(lines[tag + 1])?.groupValues?.get(1)
+        val type = Regex("""type=(\w+)""").find(lines[tag + 1])?.groupValues?.get(1)
+        // Before Android 12 dumpsys prints the AlarmManager constant instead of its name.
+        return when (type) {
+            "0" -> "RTC_WAKEUP"
+            "1" -> "RTC"
+            else -> type
+        }
     }
 
     @Test

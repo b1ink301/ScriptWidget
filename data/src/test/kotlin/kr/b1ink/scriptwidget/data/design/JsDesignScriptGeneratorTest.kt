@@ -12,7 +12,9 @@ import kr.b1ink.scriptwidget.data.engine.fakeServices
 import kr.b1ink.scriptwidget.data.files.SandboxedFileSystem
 import kr.b1ink.scriptwidget.data.personal.FileReminderStore
 import kr.b1ink.scriptwidget.data.engine.FakeNotifier
+import kr.b1ink.scriptwidget.domain.model.ButtonAction
 import kr.b1ink.scriptwidget.domain.model.DataBinding
+import kr.b1ink.scriptwidget.domain.model.DesignButton
 import kr.b1ink.scriptwidget.domain.model.DateNode
 import kr.b1ink.scriptwidget.domain.model.DesignBackground
 import kr.b1ink.scriptwidget.domain.model.DesignDate
@@ -188,6 +190,17 @@ class JsDesignScriptGeneratorTest {
     }
 
     @Test
+    fun `fields from the same JSON address load it once`() = runTest {
+        val url = "https://api.example.com/data.json"
+        val design = WidgetDesign(children = listOf(DesignText("{value}", data = DataBinding.Json(url, "data.0.name")), DesignText("{value}", data = DataBinding.Json(url, "data.0.n"))))
+
+        val root = run(design)
+
+        assertEquals(listOf("첫째", "3"), listOf(root.text(0), root.text(1)))
+        assertEquals(1, http.requests.count { it.url == url })
+    }
+
+    @Test
     fun `a failing data source shows a dash instead of breaking the widget`() = runTest {
         val design = WidgetDesign(children = listOf(DesignText("값: {value}", data = DataBinding.Json("https://api.example.com/missing.json", "a"))))
 
@@ -323,6 +336,61 @@ class JsDesignScriptGeneratorTest {
             check(template.design.children, emptyList())
             assertEquals(template.design.children.size, root.children.size, template.title)
         }
+    }
+
+    @Test
+    fun `buttons refresh, open an address or change a counter that a text shows`() = runTest {
+        val design = WidgetDesign(
+            children = listOf(
+                DesignText("{value}", data = DataBinding.Counter("cups")),
+                DesignStack(
+                    children = listOf(
+                        DesignButton("−", ButtonAction.Counter("cups", ButtonAction.Counter.Op.Subtract)),
+                        DesignButton("+", ButtonAction.Counter("cups", ButtonAction.Counter.Op.Add), bg = "#FF0A84FF"),
+                        DesignButton("0", ButtonAction.Counter("cups", ButtonAction.Counter.Op.Reset)),
+                    ),
+                ),
+                DesignButton("↻", ButtonAction.Refresh),
+                DesignButton("Open", ButtonAction.OpenUrl("https://example.com")),
+            ),
+        )
+        val files = tmp.newFolder()
+        val engine = QuickJsScriptEngine(
+            Prelude.load(),
+            fakeServices(http = http, files = SandboxedFileSystem(files), calendar = calendar, reminders = reminders),
+            timeoutMillis = 5_000,
+        )
+        suspend fun tap(action: String?): WidgetRoot {
+            val result = engine.execute(
+                generator.generate(design),
+                ScriptEnvironment(runsInWidget = true, widgetAction = action),
+                "water",
+            )
+            assertNull(result.error, result.error)
+            return assertNotNull(result.widget)
+        }
+
+        val first = tap(null)
+        assertEquals("0", first.text(0))
+        val buttons = assertIs<StackNode>(first.children[1]).children.map { assertIs<StackNode>(it) }
+        assertEquals(listOf("counter:subtract:cups", "counter:add:cups", "counter:reset:cups"), buttons.map { it.action })
+        assertEquals("+", first.text(1, 1, 0))
+        assertEquals("#FF0A84FF", buttons[1].bg)
+        assertEquals("refresh", assertIs<StackNode>(first.children[2]).action)
+        val open = assertIs<StackNode>(first.children[3])
+        assertEquals(listOf(null, "https://example.com"), listOf(open.action, open.url))
+
+        assertEquals("1", tap("counter:add:cups").text(0))
+        assertEquals("2", tap("counter:add:cups").text(0))
+        assertEquals("1", tap("counter:subtract:cups").text(0))
+        assertEquals("1", tap("refresh").text(0))
+        assertEquals("0", tap("counter:reset:cups").text(0))
+    }
+
+    @Test
+    fun `a design without counters keeps no counter file`() {
+        val code = generator.generate(WidgetDesign(children = listOf(DesignButton("↻"), DesignText("{value}", data = DataBinding.Battery))))
+        assertTrue("_counters" !in code && "FileManager" !in code, code)
     }
 
     @Test

@@ -33,6 +33,10 @@
     <string name="settings_view_source">View source on GitHub</string>
     <string name="settings_license_title">License</string>
     <string name="settings_license_subtitle">GPL-3.0 · Open-source licenses</string>
+    <string name="settings_diagnostics_title">Export diagnostics</string>
+    <string name="settings_diagnostics_subtitle">Device, settings and recent crashes as a text file to attach to a GitHub issue. Script code and logs are left out</string>
+    <string name="settings_diagnostics_saved">Diagnostics saved</string>
+    <string name="settings_diagnostics_failed">Couldn\'t save diagnostics</string>
     <string name="settings_update_checking">Checking for updates…</string>
     <string name="settings_update_checking_subtitle">Checking GitHub releases</string>
     <string name="settings_update_available">New version %1$s</string>

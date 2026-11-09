@@ -58,4 +58,4 @@ for (const name of NAMES) {
   }
   out.push({ name, kind, constructorParams: ctor, members });
 }
-console.log(JSON.stringify(out));
+Script.setShortcutOutput(out);

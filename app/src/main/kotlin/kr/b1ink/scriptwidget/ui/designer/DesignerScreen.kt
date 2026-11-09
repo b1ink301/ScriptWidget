@@ -65,8 +65,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.annotation.StringRes
 import kr.b1ink.scriptwidget.R
+import kr.b1ink.scriptwidget.domain.model.ButtonAction
 import kr.b1ink.scriptwidget.domain.model.DataBinding
 import kr.b1ink.scriptwidget.domain.model.DesignBackground
+import kr.b1ink.scriptwidget.domain.model.DesignButton
 import kr.b1ink.scriptwidget.domain.model.DesignDate
 import kr.b1ink.scriptwidget.domain.model.DesignElement
 import kr.b1ink.scriptwidget.domain.model.DesignImage
@@ -149,7 +151,7 @@ fun DesignerScreen(state: DesignerUiState, actions: DesignerActions) {
                     Tab(selected = panel == p, onClick = { panel = p }, text = { Text(stringResource(p.title)) }, modifier = Modifier.testTag("panel-${p.name}"))
                 }
             }
-            if (state.selected != null) Toolbar(actions)
+            if (state.selected != null) Toolbar(actions, inside = state.design.elementAt(state.selected) is DesignStack)
             Box(Modifier.weight(1f)) {
                 when (panel) {
                     Panel.Outline -> Outline(state, actions, onDropped = { dropped = true })
@@ -224,16 +226,22 @@ private fun PreviewArea(state: DesignerUiState, actions: DesignerActions) {
     }
 }
 
+/** [inside]: the selection is a stack, so "add" puts the new element in it rather than after it. */
 @Composable
-private fun Toolbar(actions: DesignerActions) {
+private fun Toolbar(actions: DesignerActions, inside: Boolean) {
+    // Scrolls rather than wrapping: five buttons don't all fit a narrow phone.
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        AddMenu(actions) { open ->
+            TextButton(onClick = open, modifier = Modifier.testTag("tool-add")) {
+                Text(stringResource(if (inside) R.string.designer_tool_add_inside else R.string.designer_tool_add_after))
+            }
+        }
         TextButton(onClick = { actions.onMove(-1) }, modifier = Modifier.testTag("tool-up")) { Text(stringResource(R.string.designer_move_up)) }
         TextButton(onClick = { actions.onMove(1) }, modifier = Modifier.testTag("tool-down")) { Text(stringResource(R.string.designer_move_down)) }
         TextButton(onClick = { actions.onWrap("v") }, modifier = Modifier.testTag("tool-wrap")) { Text(stringResource(R.string.designer_wrap_in_stack)) }
-        Spacer(Modifier.weight(1f))
         TextButton(onClick = actions.onRemove, modifier = Modifier.testTag("tool-remove")) {
             Text(stringResource(R.string.designer_delete), color = MaterialTheme.colorScheme.error)
         }
@@ -301,7 +309,16 @@ private fun Outline(state: DesignerUiState, actions: DesignerActions, onDropped:
                 modifier = Modifier.padding(16.dp),
             )
         }
-        AddMenu(actions, inside = (state.selected?.let(state.design::elementAt) as? DesignStack) != null)
+        val label = when (state.selected?.let(state.design::elementAt)) {
+            null -> R.string.designer_add_element
+            is DesignStack -> R.string.designer_add_element_inside
+            else -> R.string.designer_add_element_after
+        }
+        Box(Modifier.padding(16.dp)) {
+            AddMenu(actions) { open ->
+                FilledTonalButton(onClick = open, modifier = Modifier.testTag("add-element")) { Text(stringResource(label)) }
+            }
+        }
     }
 }
 
@@ -398,6 +415,7 @@ private fun label(e: DesignElement): String = when (e) {
     is DesignDate -> "🕒 " + (dateStyles().firstOrNull { it.first == e.style }?.second ?: stringResource(R.string.designer_date_style_time))
     is DesignSymbol -> "⭐ ${stringResource(R.string.designer_element_symbol)} · ${e.name}"
     is DesignImage -> "🖼 " + stringResource(R.string.designer_element_image) + (e.bookmark?.let { " · $it" } ?: "")
+    is DesignButton -> "🔘 ${stringResource(R.string.designer_element_button)} · " + e.title.take(24)
     is DesignSpacer -> "↕ " + stringResource(R.string.designer_element_spacer) +
         (e.length?.let { " ${it.toInt()}" } ?: (" " + stringResource(R.string.designer_label_spacer_flex)))
     is DesignStack -> if (e.dir == "v") {
@@ -420,16 +438,16 @@ private fun dataLabel(b: DataBinding): String = stringResource(
         is DataBinding.Countdown -> R.string.designer_data_countdown
         is DataBinding.Progress -> R.string.designer_data_progress
         is DataBinding.WorldTime -> R.string.designer_data_world_time
+        is DataBinding.Counter -> R.string.designer_data_counter
     },
 )
 
+/** The element and data block menu, opened by [button]; new elements go where `WidgetDesign.add` puts them. */
 @Composable
-private fun AddMenu(actions: DesignerActions, inside: Boolean) {
+private fun AddMenu(actions: DesignerActions, button: @Composable (open: () -> Unit) -> Unit) {
     var open by remember { mutableStateOf(false) }
-    Box(Modifier.padding(16.dp)) {
-        FilledTonalButton(onClick = { open = true }, modifier = Modifier.testTag("add-element")) {
-            Text(stringResource(if (inside) R.string.designer_add_element_inside else R.string.designer_add_element))
-        }
+    Box {
+        button { open = true }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             Text(stringResource(R.string.designer_menu_elements), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
             elements().forEach { (title, element) ->
@@ -451,6 +469,7 @@ private fun elements(): List<Pair<String, DesignElement>> = listOf(
     stringResource(R.string.designer_element_symbol) to DesignSymbol("star.fill", color = "#FFFFCC00"),
     stringResource(R.string.designer_element_image_url) to DesignImage("https://", size = 60f, cornerRadius = 8f),
     "🖼 " + stringResource(R.string.designer_element_photo) to DesignImage(bookmark = "photo", size = 80f, cornerRadius = 12f),
+    "🔘 " + stringResource(R.string.designer_element_button) to DesignButton(stringResource(R.string.designer_default_button_title)),
     stringResource(R.string.designer_element_spacer) to DesignSpacer(),
     stringResource(R.string.designer_element_hstack) to DesignStack(dir = "h", spacing = 6f),
     stringResource(R.string.designer_element_vstack) to DesignStack(dir = "v", spacing = 4f),
@@ -474,6 +493,7 @@ private fun dataBlocks(): List<Pair<String, DesignElement>> = listOf(
         DesignText(stringResource(R.string.designer_default_progress_text), data = DataBinding.Progress(), size = 15f, weight = "semibold"),
     stringResource(R.string.designer_data_world_time) to
         DesignText("New York {value}", data = DataBinding.WorldTime(), size = 15f),
+    stringResource(R.string.designer_data_counter) to DesignText("{value}", data = DataBinding.Counter(), size = 40f, weight = "bold"),
 )
 
 // --- properties ---
@@ -528,6 +548,7 @@ private fun Properties(state: DesignerUiState, actions: DesignerActions) {
                 Slide(stringResource(R.string.designer_prop_size), element.size ?: 60f, 16f..200f) { v -> update { (it as DesignImage).copy(size = v) } }
                 Slide(stringResource(R.string.designer_prop_corner), element.cornerRadius, 0f..40f) { v -> update { (it as DesignImage).copy(cornerRadius = v) } }
             }
+            is DesignButton -> ButtonProperties(element, update, type)
             is DesignSpacer -> {
                 Chips(
                     stringResource(R.string.designer_prop_spacer),
@@ -611,6 +632,66 @@ private fun TextProperties(
 }
 
 @Composable
+private fun ButtonProperties(
+    element: DesignButton,
+    update: ((DesignElement) -> DesignElement) -> Unit,
+    type: ((DesignElement) -> DesignElement) -> Unit,
+) {
+    Field(stringResource(R.string.designer_prop_button_title), element.title, "prop-button-title") { v -> type { (it as DesignButton).copy(title = v) } }
+    val action = element.action
+    Chips(
+        stringResource(R.string.designer_prop_button_action),
+        listOf(
+            "refresh" to stringResource(R.string.designer_button_refresh),
+            "url" to stringResource(R.string.designer_button_url),
+            "counter" to stringResource(R.string.designer_button_counter),
+        ),
+        when (action) {
+            ButtonAction.Refresh -> "refresh"
+            is ButtonAction.OpenUrl -> "url"
+            is ButtonAction.Counter -> "counter"
+        },
+        "prop-button-action",
+    ) { v ->
+        val next = when (v) {
+            "url" -> action as? ButtonAction.OpenUrl ?: ButtonAction.OpenUrl()
+            "counter" -> action as? ButtonAction.Counter ?: ButtonAction.Counter()
+            else -> ButtonAction.Refresh
+        }
+        update { (it as DesignButton).copy(action = next) }
+    }
+    when (action) {
+        is ButtonAction.OpenUrl -> Field(stringResource(R.string.designer_prop_button_url), action.url, "prop-button-url") { v ->
+            type { (it as DesignButton).copy(action = ButtonAction.OpenUrl(v.trim())) }
+        }
+        is ButtonAction.Counter -> {
+            Chips(
+                stringResource(R.string.designer_prop_counter_op),
+                listOf(
+                    ButtonAction.Counter.Op.Add.name to stringResource(R.string.designer_counter_add),
+                    ButtonAction.Counter.Op.Subtract.name to stringResource(R.string.designer_counter_subtract),
+                    ButtonAction.Counter.Op.Reset.name to stringResource(R.string.designer_counter_reset),
+                ),
+                action.op.name,
+                "prop-counter-op",
+            ) { v -> update { (it as DesignButton).copy(action = action.copy(op = ButtonAction.Counter.Op.valueOf(v))) } }
+            Field(stringResource(R.string.designer_prop_counter_name), action.name, "prop-button-counter") { v ->
+                type { (it as DesignButton).copy(action = action.copy(name = v.trim())) }
+            }
+            Hint(stringResource(R.string.designer_counter_hint))
+        }
+        ButtonAction.Refresh -> Unit
+    }
+    ColorProperty(stringResource(R.string.designer_prop_background), element.bg) { c -> update { (it as DesignButton).copy(bg = c) } }
+    Hint(stringResource(R.string.designer_button_hint))
+}
+
+@Composable
+private fun Hint(text: String) {
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+@Composable
 private fun DataProperty(
     data: DataBinding?,
     update: ((DesignElement) -> DesignElement) -> Unit,
@@ -628,6 +709,7 @@ private fun DataProperty(
         "countdown" to stringResource(R.string.designer_data_countdown),
         "progress" to stringResource(R.string.designer_data_progress),
         "world" to stringResource(R.string.designer_data_world_time),
+        "counter" to stringResource(R.string.designer_data_counter),
     )
     val defaultDatePattern = stringResource(R.string.designer_default_date_pattern)
     val current = when (data) {
@@ -642,6 +724,7 @@ private fun DataProperty(
         is DataBinding.Countdown -> "countdown"
         is DataBinding.Progress -> "progress"
         is DataBinding.WorldTime -> "world"
+        is DataBinding.Counter -> "counter"
     }
     Chips(stringResource(R.string.designer_prop_data), options, current, "prop-data") { key ->
         val binding = when (key) {
@@ -655,6 +738,7 @@ private fun DataProperty(
             "countdown" -> DataBinding.Countdown()
             "progress" -> DataBinding.Progress()
             "world" -> DataBinding.WorldTime()
+            "counter" -> DataBinding.Counter()
             else -> null
         }
         update { e ->
@@ -728,6 +812,12 @@ private fun DataProperty(
             Chips(stringResource(R.string.designer_prop_common_time_zones), TIME_ZONES.map { it to it.substringAfterLast('/').replace('_', ' ') }, data.zone, "prop-world") { v ->
                 update { (it as DesignText).copy(data = DataBinding.WorldTime(v)) }
             }
+        }
+        is DataBinding.Counter -> {
+            Field(stringResource(R.string.designer_prop_counter_name), data.name, "prop-counter-name") { v ->
+                type { (it as DesignText).copy(data = DataBinding.Counter(v.trim())) }
+            }
+            Hint(stringResource(R.string.designer_counter_data_hint))
         }
         DataBinding.Battery, null -> Unit
     }

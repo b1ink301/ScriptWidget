@@ -73,13 +73,15 @@ fun AppPermission.descriptionRes(): Int = when (this) {
     AppPermission.Photos -> R.string.permissions_photos_description
 }
 
-/** READ_MEDIA_IMAGES only exists on Android 13+; older versions use READ_EXTERNAL_STORAGE. */
-internal fun forThisVersion(permission: String): String =
-    if (permission == android.Manifest.permission.READ_MEDIA_IMAGES && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-        android.Manifest.permission.READ_EXTERNAL_STORAGE
-    } else {
-        permission
-    }
+/**
+ * READ_MEDIA_IMAGES only exists on Android 13+; older versions use READ_EXTERNAL_STORAGE, and
+ * before Android 10 saving to the photo library also needs WRITE_EXTERNAL_STORAGE.
+ */
+internal fun forThisVersion(permission: String, sdkInt: Int = Build.VERSION.SDK_INT): List<String> = when {
+    permission != android.Manifest.permission.READ_MEDIA_IMAGES || sdkInt >= Build.VERSION_CODES.TIRAMISU -> listOf(permission)
+    sdkInt >= Build.VERSION_CODES.Q -> listOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+    else -> listOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+}
 
 /** Runs [PermissionAction]s: runtime prompts and system settings screens. */
 @Composable
@@ -95,7 +97,7 @@ fun PermissionActionHandler(vm: PermissionsViewModel) {
         vm.actions.collect { action ->
             val packageUri = Uri.parse("package:${context.packageName}")
             when (action) {
-                is PermissionAction.RequestRuntime -> runtime.launch(action.permissions.map(::forThisVersion).toTypedArray())
+                is PermissionAction.RequestRuntime -> runtime.launch(action.permissions.flatMap { forThisVersion(it) }.toTypedArray())
                 PermissionAction.OpenBatteryOptimizationRequest ->
                     context.startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, packageUri))
                 PermissionAction.OpenExactAlarmSettings ->

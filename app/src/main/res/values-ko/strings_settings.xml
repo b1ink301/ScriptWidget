@@ -30,6 +30,10 @@
     <string name="settings_view_source">GitHub에서 소스 보기</string>
     <string name="settings_license_title">라이선스</string>
     <string name="settings_license_subtitle">GPL-3.0 · 오픈소스 라이선스</string>
+    <string name="settings_diagnostics_title">진단 정보 내보내기</string>
+    <string name="settings_diagnostics_subtitle">기기·설정·최근 오류를 텍스트 파일로 저장해 GitHub 이슈에 첨부합니다. 스크립트 코드와 로그는 넣지 않습니다</string>
+    <string name="settings_diagnostics_saved">진단 정보를 저장했습니다</string>
+    <string name="settings_diagnostics_failed">진단 정보를 저장하지 못했습니다</string>
     <string name="settings_update_checking">업데이트 확인 중…</string>
     <string name="settings_update_checking_subtitle">GitHub 릴리스를 확인하고 있습니다</string>
     <string name="settings_update_available">새 버전 %1$s</string>

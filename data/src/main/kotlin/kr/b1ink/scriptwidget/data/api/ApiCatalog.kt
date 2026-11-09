@@ -58,10 +58,22 @@ object ApiCatalog {
     suspend fun load(engine: ScriptEngine, language: String = "ko"): List<ApiEntry> {
         val script = "const __names = ${json.encodeToString(NAMES)};\n" + resource("introspect.js")
         val result = engine.execute(script, ScriptEnvironment(runsInWidget = false), "api-introspection")
-        val output = result.logs.lastOrNull()?.message
+        val output = result.shortcutOutput
             ?: error("API introspection failed: ${result.error}")
         return json.decodeFromString<List<ApiEntry>>(output)
             .map { it.copy(summary = ApiDocs.summary(it.name, language), members = it.members.sortedWith(compareBy({ !it.isStatic }, { it.name }))) }
+    }
+
+    /**
+     * A compact list for a language model: one line per global, e.g.
+     * `ListWidget(): addText(text), await presentSmall(), backgroundColor`. Static members are `Name.member`.
+     */
+    fun reference(entries: List<ApiEntry>): String = entries.joinToString("\n") { entry ->
+        val head = entry.constructorParams?.let { "${entry.name}(${it.joinToString(", ")})" } ?: entry.name
+        // toJSON() is how the app reads widget trees, not something scripts call.
+        val members = entry.members.filter { it.name != "toJSON" }
+            .joinToString(", ") { if (it.isStatic) "${entry.name}.${it.signature}" else it.signature }
+        if (members.isEmpty()) head else "$head: $members"
     }
 
     /** The same entries with their descriptions in [language], e.g. after the app's language changed. */

@@ -186,4 +186,13 @@ class ScriptWidgetContentTest {
             actionParametersOf(WidgetActionCallback.ACTION to "wins")
         )
     }
+
+    @Test
+    fun opacityOutsideZeroToOneIsClampedLikeScriptable() = render(
+        // Seen in community scripts: `textOpacity = 30` (meant as percent). SwiftUI clamps it to 1.
+        RenderState(scriptName = "s", tree = WidgetRoot(children = listOf(TextNode("loud", opacity = 30f), TextNode("quiet", opacity = -2f)))),
+    ) {
+        onNode(hasText("loud")).assertExists()
+        onNode(hasText("quiet")).assertExists()
+    }
 }

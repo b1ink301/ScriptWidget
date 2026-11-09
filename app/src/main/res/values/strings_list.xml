@@ -18,6 +18,24 @@
     <string name="list_new_code">&lt;/&gt; Write code</string>
     <string name="list_new_code_description">Write it yourself in JavaScript</string>
     <string name="list_new_designer">Build with the designer</string>
+    <string name="list_new_json">🔗 From a URL (JSON)</string>
+    <string name="list_new_json_description">Pick values from an API response. The widget fetches them again on every refresh</string>
+    <string name="json_widget_title">Widget from a URL</string>
+    <string name="json_widget_url">JSON address (https://…)</string>
+    <string name="json_widget_load">Load</string>
+    <string name="json_widget_error">Couldn\'t load JSON: %1$s</string>
+    <string name="json_widget_empty">There are no values in this response</string>
+    <string name="json_widget_name">Title</string>
+    <string name="json_widget_pick">Pick up to %1$d values to show</string>
+    <string name="json_widget_create">Create (%1$d)</string>
+    <string name="json_widget_close">Close</string>
+    <string name="json_widget_guide">How to</string>
+    <string name="json_widget_guide_path" translatable="false">/blob/main/docs/json-widget.md</string>
+    <string name="json_widget_examples">Examples (no API key needed)</string>
+    <string name="json_example_weather">Seoul weather</string>
+    <string name="json_example_exchange">Dollar exchange rates</string>
+    <string name="json_example_bitcoin">Bitcoin price</string>
+    <string name="json_example_github">GitHub stars</string>
     <string name="list_template_blank">Blank widget</string>
     <string name="list_template_clock">Clock</string>
     <string name="list_template_battery">Battery</string>

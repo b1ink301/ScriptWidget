@@ -19,3 +19,6 @@ val LocalColumnFillsWidth = staticCompositionLocalOf { true }
 
 /** Longest side images may be decoded at in this widget (see [BitmapBudget]). */
 val LocalImageMaxPx = staticCompositionLocalOf { Styles.MAX_IMAGE_PX }
+
+/** Stacks drawn as one bitmap so the widget stays within Glance's view limit (see [ViewBudget]). */
+val LocalRasterized = staticCompositionLocalOf { emptySet<kr.b1ink.scriptwidget.domain.model.StackNode>() }

@@ -12,7 +12,9 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kr.b1ink.scriptwidget.domain.model.ButtonAction
 import kr.b1ink.scriptwidget.domain.model.DataBinding
+import kr.b1ink.scriptwidget.domain.model.DesignButton
 import kr.b1ink.scriptwidget.domain.model.DesignElement
 import kr.b1ink.scriptwidget.domain.model.DesignImage
 import kr.b1ink.scriptwidget.domain.model.DesignStack
@@ -108,12 +110,41 @@ class DesignerScreenTest {
         state = state.copy(selected = listOf(0))
         show()
 
-        compose.onNodeWithTag("tool-up").performClick()
-        compose.onNodeWithTag("tool-down").performClick()
-        compose.onNodeWithTag("tool-wrap").performClick()
-        compose.onNodeWithTag("tool-remove").performClick()
+        // The toolbar scrolls sideways on narrow screens.
+        listOf("tool-up", "tool-down", "tool-wrap", "tool-remove").forEach { compose.onNodeWithTag(it).performScrollTo().performClick() }
 
         assertEquals(listOf("move:-1", "move:1", "wrap:v", "remove"), calls)
+    }
+
+    @Test
+    fun theToolbarAddsAfterTheSelectionOrInsideASelectedStack() {
+        state = state.copy(selected = listOf(0))
+        show()
+
+        compose.onNodeWithText("+ 뒤에 추가").assertIsDisplayed()
+        compose.onNodeWithTag("tool-add").performClick()
+        compose.onNodeWithText("🔘 버튼").performClick()
+        assertEquals(listOf("add:${DesignButton("↻ 새로고침")}"), calls)
+
+        state = state.copy(selected = listOf(1))
+        compose.onNodeWithText("+ 안에 추가").assertIsDisplayed()
+    }
+
+    @Test
+    fun aButtonRefreshesOpensAnAddressOrChangesACounter() {
+        state = state.copy(
+            design = design.copy(children = design.children + DesignButton("+1", ButtonAction.Counter("cups"))),
+            selected = listOf(2),
+        )
+        show()
+
+        compose.onNodeWithTag("prop-button-counter").assertIsDisplayed()
+        compose.onNodeWithTag("prop-counter-op-Reset").performClick()
+        assertEquals(ButtonAction.Counter("cups", ButtonAction.Counter.Op.Reset), (updated as DesignButton).action)
+        compose.onNodeWithTag("prop-button-action-url").performClick()
+        assertEquals(ButtonAction.OpenUrl(), (updated as DesignButton).action)
+        compose.onNodeWithTag("prop-button-action-refresh").performClick()
+        assertEquals(ButtonAction.Refresh, (updated as DesignButton).action)
     }
 
     @Test

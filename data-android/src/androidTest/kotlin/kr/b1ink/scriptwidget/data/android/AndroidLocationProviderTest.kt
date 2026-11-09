@@ -32,9 +32,12 @@ import kotlin.test.assertTrue
 class AndroidLocationProviderTest {
     @get:Rule
     val permissions: GrantPermissionRule = GrantPermissionRule.grant(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+        *listOfNotNull(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            // Background location is its own permission from Android 10.
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION.takeIf { android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q },
+        ).toTypedArray(),
     )
 
     private val context = ApplicationProvider.getApplicationContext<Context>()

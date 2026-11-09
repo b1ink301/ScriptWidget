@@ -5,6 +5,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import kotlinx.coroutines.CompletableDeferred
@@ -18,6 +20,7 @@ import kr.b1ink.scriptwidget.data.engine.MessageSpec
 import kr.b1ink.scriptwidget.data.engine.ShareSpec
 import kr.b1ink.scriptwidget.data.engine.Speaker
 import java.util.UUID
+import java.util.concurrent.FutureTask
 
 /** Starts the share sheet, mail and SMS composers. */
 class AndroidComposer(context: Context) : Composer {
@@ -41,7 +44,22 @@ class AndroidComposer(context: Context) : Composer {
 }
 
 class AndroidClipboard(context: Context) : Clipboard {
-    private val manager = context.applicationContext.getSystemService(ClipboardManager::class.java)
+    private val context = context.applicationContext
+
+    /**
+     * Looked up on the main thread when first used: before Android 9 the ClipboardManager constructor
+     * creates a Handler on the calling thread, which throws on worker threads without a Looper, and
+     * widget refreshes create the script engine on one.
+     */
+    private val manager: ClipboardManager by lazy {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            this.context.getSystemService(ClipboardManager::class.java)
+        } else {
+            val lookup = FutureTask { this.context.getSystemService(ClipboardManager::class.java) }
+            Handler(Looper.getMainLooper()).post(lookup)
+            lookup.get()
+        }
+    }
 
     override fun copy(text: String) {
         manager.setPrimaryClip(ClipData.newPlainText("ScriptWidget", text))

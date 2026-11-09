@@ -18,6 +18,24 @@
     <string name="list_new_code">&lt;/&gt; 코드로 작성</string>
     <string name="list_new_code_description">JavaScript로 직접 작성합니다</string>
     <string name="list_new_designer">디자이너로 만들기</string>
+    <string name="list_new_json">🔗 URL(JSON)로 만들기</string>
+    <string name="list_new_json_description">API 응답에서 값을 골라 위젯으로 만듭니다. 위젯이 갱신될 때마다 값을 새로 가져옵니다</string>
+    <string name="json_widget_title">URL로 위젯 만들기</string>
+    <string name="json_widget_url">JSON 주소 (https://…)</string>
+    <string name="json_widget_load">불러오기</string>
+    <string name="json_widget_error">JSON을 불러오지 못했습니다: %1$s</string>
+    <string name="json_widget_empty">이 응답에는 값이 없습니다</string>
+    <string name="json_widget_name">제목</string>
+    <string name="json_widget_pick">위젯에 보일 값을 최대 %1$d개 고르세요</string>
+    <string name="json_widget_create">만들기 (%1$d)</string>
+    <string name="json_widget_close">닫기</string>
+    <string name="json_widget_guide">사용법</string>
+    <string name="json_widget_guide_path" translatable="false">/blob/main/docs/json-widget.ko.md</string>
+    <string name="json_widget_examples">예시 (API 키 필요 없음)</string>
+    <string name="json_example_weather">서울 날씨</string>
+    <string name="json_example_exchange">달러 환율</string>
+    <string name="json_example_bitcoin">비트코인 시세</string>
+    <string name="json_example_github">GitHub 별</string>
     <string name="list_template_blank">빈 위젯</string>
     <string name="list_template_clock">시계</string>
     <string name="list_template_battery">배터리</string>

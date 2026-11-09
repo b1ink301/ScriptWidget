@@ -64,6 +64,10 @@ fun ScriptListRoute(
     container: AppContainer,
     onOpen: (String) -> Unit,
     onNewDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = {},
+    /** A design made by "From a URL (JSON)". */
+    onNewJsonDesign: (kr.b1ink.scriptwidget.domain.model.WidgetDesign) -> Unit = {},
+    /** A script made "With AI": save it under the name and open it. */
+    onNewAiScript: (name: String, code: String) -> Unit = { _, _ -> },
     widgetRecommendations: List<AppPermission> = emptyList(),
     onOpenPermissions: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
@@ -163,6 +167,10 @@ fun ScriptListRoute(
         onOpen = onOpen,
         onCreate = vm::createScript,
         onNewDesign = onNewDesign,
+        onNewJsonDesign = onNewJsonDesign,
+        loadJson = container::jsonFields,
+        aiBackend = remember(container) { ContainerAiBackend(container) },
+        onNewAiScript = onNewAiScript,
         onRequestDelete = vm::requestDelete,
         onConfirmDelete = vm::confirmDelete,
         onCancelDelete = vm::cancelDelete,
@@ -196,14 +204,36 @@ fun ScriptListScreen(
     onSearch: (String) -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     onNewDesign: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit = {},
+    onNewJsonDesign: (kr.b1ink.scriptwidget.domain.model.WidgetDesign) -> Unit = {},
+    loadJson: suspend (String) -> List<kr.b1ink.scriptwidget.domain.model.JsonField> = { emptyList() },
+    aiBackend: AiWidgetBackend? = null,
+    onNewAiScript: (name: String, code: String) -> Unit = { _, _ -> },
 ) {
     var styling by remember { mutableStateOf<ScriptSummary?>(null) }
     var choosingNew by remember { mutableStateOf(false) }
+    var fromJson by remember { mutableStateOf(false) }
+    var withAi by remember { mutableStateOf(false) }
     if (choosingNew) {
         NewScriptDialog(
             onCode = { choosingNew = false; onCreate() },
+            onJson = { choosingNew = false; fromJson = true },
+            onAi = aiBackend?.let { { choosingNew = false; withAi = true } },
             onTemplate = { choosingNew = false; onNewDesign(it) },
             onDismiss = { choosingNew = false },
+        )
+    }
+    if (withAi && aiBackend != null) {
+        AiWidgetDialog(
+            backend = aiBackend,
+            onSave = { name, code -> withAi = false; onNewAiScript(name, code) },
+            onDismiss = { withAi = false },
+        )
+    }
+    if (fromJson) {
+        JsonWidgetDialog(
+            load = loadJson,
+            onCreate = { fromJson = false; onNewJsonDesign(it) },
+            onDismiss = { fromJson = false },
         )
     }
     Scaffold(
@@ -378,6 +408,8 @@ private fun AppearanceDialog(script: ScriptSummary, onDismiss: () -> Unit, onPic
 @Composable
 private fun NewScriptDialog(
     onCode: () -> Unit,
+    onJson: () -> Unit,
+    onAi: (() -> Unit)?,
     onTemplate: (kr.b1ink.scriptwidget.domain.model.DesignTemplates) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -390,6 +422,18 @@ private fun NewScriptDialog(
                     headlineContent = { Text(stringResource(R.string.list_new_code)) },
                     supportingContent = { Text(stringResource(R.string.list_new_code_description)) },
                     modifier = Modifier.clickable(onClick = onCode),
+                )
+                if (onAi != null) {
+                    androidx.compose.material3.ListItem(
+                        headlineContent = { Text(stringResource(R.string.ai_new)) },
+                        supportingContent = { Text(stringResource(R.string.ai_new_description)) },
+                        modifier = Modifier.testTag("new-ai").clickable(onClick = onAi),
+                    )
+                }
+                androidx.compose.material3.ListItem(
+                    headlineContent = { Text(stringResource(R.string.list_new_json)) },
+                    supportingContent = { Text(stringResource(R.string.list_new_json_description)) },
+                    modifier = Modifier.testTag("new-json").clickable(onClick = onJson),
                 )
                 Text(
                     stringResource(R.string.list_new_designer),

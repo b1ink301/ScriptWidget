@@ -97,6 +97,10 @@ class OkHttpGateway(
         /** The app's gateway: responses are cached in [cacheDir] as their headers allow. */
         fun cached(cacheDir: java.io.File): OkHttpGateway = OkHttpGateway(defaultClient(cacheDir))
 
+        /** For servers that answer only when done (language models): no cache, a long read timeout. */
+        fun patient(readTimeoutSeconds: Long): OkHttpGateway =
+            OkHttpGateway(defaultClient().newBuilder().readTimeout(readTimeoutSeconds, TimeUnit.SECONDS).build())
+
         /** With [cacheDir], responses are cached as their HTTP headers allow (e.g. icons, static JSON). */
         fun defaultClient(cacheDir: java.io.File? = null): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)

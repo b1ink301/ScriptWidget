@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ai_new">✨ With AI</string>
+    <string name="ai_new_description">Describe the widget; an AI writes the script and the app checks that it runs</string>
+    <string name="ai_title">Widget with AI</string>
+    <string name="ai_guide">How to</string>
+    <string name="ai_guide_path" translatable="false">/blob/main/docs/ai-widget.md</string>
+    <string name="ai_close">Close</string>
+    <string name="ai_request">What should the widget show?</string>
+    <string name="ai_request_hint">e.g. Today\'s weather in Seoul, big temperature and the high and low</string>
+    <string name="ai_example_weather">Today\'s weather in Seoul: the temperature big, the high and low below</string>
+    <string name="ai_example_dday">Days left until Christmas, in big numbers</string>
+    <string name="ai_example_battery">Battery level with a bar, red under 20%</string>
+    <string name="ai_example_rates">Dollar to won and yen exchange rates (Frankfurter API)</string>
+    <string name="ai_mode_key">In the app (API key)</string>
+    <string name="ai_mode_copy">Copy a prompt (free)</string>
+    <string name="ai_provider">Service</string>
+    <string name="ai_key">API key</string>
+    <string name="ai_key_saved">Saved key ····%1$s</string>
+    <string name="ai_key_change">Change</string>
+    <string name="ai_key_note">Kept encrypted on this phone and sent only to the chosen service. Scripts can\'t read it.</string>
+    <string name="ai_model">Model</string>
+    <string name="ai_models_load">Models</string>
+    <string name="ai_models_failed">Couldn\'t list models: %1$s</string>
+    <string name="ai_generate">Create</string>
+    <string name="ai_generating">Writing and testing the script… (try %1$d of %2$d)</string>
+    <string name="ai_generate_failed">The AI request failed: %1$s</string>
+    <string name="ai_copy_steps">1. Copy the prompt and paste it into an AI chat (ChatGPT, Claude, Gemini, …).\n2. Copy the whole answer and paste it below.</string>
+    <string name="ai_copy_prompt">Copy prompt</string>
+    <string name="ai_copied">Copied. Paste it into an AI chat app.</string>
+    <string name="ai_answer">The AI\'s answer (or just the code)</string>
+    <string name="ai_try">Run it</string>
+    <string name="ai_no_code">No script found in the answer. Paste the whole answer, including the ```javascript block.</string>
+    <string name="ai_works">It works. Check the preview and save it.</string>
+    <string name="ai_failed_after">Still failing after %1$d tries: %2$s</string>
+    <string name="ai_error">It doesn\'t run yet: %1$s</string>
+    <string name="ai_copy_fix">Copy a fix request</string>
+    <string name="ai_retry">Try again</string>
+    <string name="ai_uses">Uses: %1$s</string>
+    <string name="ai_name">Script name</string>
+    <string name="ai_save">Save and open</string>
+</resources>

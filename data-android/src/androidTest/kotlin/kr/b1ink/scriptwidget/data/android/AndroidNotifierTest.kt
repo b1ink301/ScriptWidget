@@ -17,6 +17,9 @@ import kr.b1ink.scriptwidget.data.engine.NotificationSpec
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
+import android.os.Build
+import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
@@ -26,8 +29,13 @@ import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class AndroidNotifierTest {
+    /** POST_NOTIFICATIONS exists from Android 13; before that notifications need no permission. */
     @get:Rule
-    val permission: GrantPermissionRule = GrantPermissionRule.grant(Manifest.permission.POST_NOTIFICATIONS)
+    val permission: TestRule = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        GrantPermissionRule.grant(Manifest.permission.POST_NOTIFICATIONS)
+    } else {
+        RuleChain.emptyRuleChain()
+    }
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val manager = context.getSystemService(NotificationManager::class.java)

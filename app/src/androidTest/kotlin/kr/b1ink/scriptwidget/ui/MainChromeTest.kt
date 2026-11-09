@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kr.b1ink.scriptwidget.domain.model.AppRelease
 import kr.b1ink.scriptwidget.domain.model.ScriptSummary
@@ -88,6 +89,7 @@ class MainChromeTest {
                     onCatalogs = { calls += "catalogs" },
                     onOpenUrl = { calls += "url:$it" },
                     onRefreshWhileScreenOff = { calls += "screenOff:$it" },
+                    onExportDiagnostics = { calls += "diagnostics" },
                 ),
             )
         }
@@ -101,9 +103,11 @@ class MainChromeTest {
         compose.onNodeWithText("ScriptWidget 1.2.3").assertIsDisplayed()
         scrollSettingsTo(hasText("GitHub에서 소스 보기"))
         compose.onNodeWithText("GitHub에서 소스 보기").performClick()
+        scrollSettingsTo(hasText("진단 정보 내보내기"))
+        compose.onNodeWithText("진단 정보 내보내기").performClick()
 
         assertEquals(
-            listOf("screenOff:true", "permissions", "bookmarks", "import", "backup", "restore", "catalogs", "url:https://github.com/b1ink301/ScriptWidget"),
+            listOf("screenOff:true", "permissions", "bookmarks", "import", "backup", "restore", "catalogs", "url:https://github.com/b1ink301/ScriptWidget", "diagnostics"),
             calls,
         )
     }
@@ -202,5 +206,72 @@ class MainChromeTest {
         compose.onNodeWithTag("template-Battery").performClick()
 
         assertEquals(listOf(kr.b1ink.scriptwidget.domain.model.DesignTemplates.Battery), designs)
+    }
+
+    @Test
+    fun newScriptFromAJsonAddressBuildsADesignFromThePickedValues() {
+        val requested = mutableListOf<String>()
+        val designs = mutableListOf<kr.b1ink.scriptwidget.domain.model.WidgetDesign>()
+        compose.setContent {
+            ScriptListScreen(
+                state = ScriptListUiState(),
+                onOpen = {}, onCreate = {}, onRequestDelete = {}, onConfirmDelete = {}, onCancelDelete = {},
+                loadJson = { url ->
+                    requested += url
+                    listOf(
+                        kr.b1ink.scriptwidget.domain.model.JsonField("main.temp", "21.5"),
+                        kr.b1ink.scriptwidget.domain.model.JsonField("main.humidity", "40"),
+                        kr.b1ink.scriptwidget.domain.model.JsonField("name", "Seoul"),
+                    )
+                },
+                onNewJsonDesign = { designs += it },
+            )
+        }
+
+        compose.onNodeWithTag("new-script").performClick()
+        compose.onNodeWithTag("new-json").performClick()
+        compose.onNodeWithTag("json-url").performTextReplacement("https://api.example.com/weather")
+        compose.onNodeWithTag("json-load").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("json-field-main.temp").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("21.5").assertIsDisplayed()
+        compose.onNodeWithTag("json-field-main.temp").performClick()
+        compose.onNodeWithTag("json-field-name").performClick()
+        compose.onNodeWithTag("json-create").performClick()
+
+        assertEquals(listOf("https://api.example.com/weather"), requested)
+        val design = designs.single()
+        assertEquals("api.example.com", (design.children.first() as kr.b1ink.scriptwidget.domain.model.DesignText).text)
+        val bindings = design.children.drop(1).map { row ->
+            ((row as kr.b1ink.scriptwidget.domain.model.DesignStack).children.last() as kr.b1ink.scriptwidget.domain.model.DesignText).data
+        }
+        assertEquals(
+            listOf(
+                kr.b1ink.scriptwidget.domain.model.DataBinding.Json("https://api.example.com/weather", "main.temp"),
+                kr.b1ink.scriptwidget.domain.model.DataBinding.Json("https://api.example.com/weather", "name"),
+            ),
+            bindings,
+        )
+    }
+
+    @Test
+    fun aJsonExampleFillsTheAddressAndLoadsIt() {
+        val requested = mutableListOf<String>()
+        compose.setContent {
+            ScriptListScreen(
+                state = ScriptListUiState(),
+                onOpen = {}, onCreate = {}, onRequestDelete = {}, onConfirmDelete = {}, onCancelDelete = {},
+                loadJson = { url -> requested += url; listOf(kr.b1ink.scriptwidget.domain.model.JsonField("data.amount", "76712.6")) },
+            )
+        }
+
+        compose.onNodeWithTag("new-script").performClick()
+        compose.onNodeWithTag("new-json").performClick()
+        compose.onNodeWithText("사용법").assertIsDisplayed()
+        compose.onNodeWithText("비트코인 시세").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("json-field-data.amount").fetchSemanticsNodes().isNotEmpty() }
+
+        assertEquals(listOf("https://api.coinbase.com/v2/prices/BTC-USD/spot"), requested)
+        // The title defaults to the example's host.
+        compose.onNodeWithText("api.coinbase.com").assertIsDisplayed()
     }
 }

@@ -76,14 +76,14 @@ Every feature was built in the order **write the test first (Red) → implement 
 
 | Layer | Test type | Location | Count |
 |---|---|---|---|
-| domain | JVM unit tests (using Fakes, import/export, backup/restore, icon header, run history, automation runs, file bookmarks, gallery install/update/catalog URL, app update check/version comparison, design model/edit rules/header/templates, catalog validation, event triggers) | `domain/src/test` | 175 |
-| data | JVM unit tests: real QuickJS and prelude contracts (per API), MockWebServer, sandbox, DataStore, SF→Material mapping, app UI/system/personal data bridges, reminder store, sample scripts, run context (config, args), text styles, API list, run history file, zip backup, reading GitHub releases, designer code generation (run with real QuickJS and compared), built-in catalog validation, trigger store | `data/src/test` | 280 |
-| widget | JVM unit tests (RenderStateCodec, StackLayout (space distribution, 10-child limit, title shrinking), text rendering method selection, available width) | `widget/src/test` | 30 |
+| domain | JVM unit tests (using Fakes, import/export, backup/restore, icon header, run history, automation runs, file bookmarks, gallery install/update/catalog URL, app update check/version comparison, design model/edit rules/header/templates, catalog validation, event triggers, diagnostics report, widgets from a URL (JSON), AI widget prompt and generate loop) | `domain/src/test` | 202 |
+| data | JVM unit tests: real QuickJS and prelude contracts (per API), MockWebServer, sandbox, DataStore, SF→Material mapping, app UI/system/personal data bridges, reminder store, sample scripts, run context (config, args), text styles, API list, HTTP record/replay for compatibility measurement, run history file, zip backup, reading GitHub releases, designer code generation (run with real QuickJS and compared), built-in catalog validation, trigger store, run limits (memory, recursion, logs) | `data/src/test` | 304 |
+| widget | JVM unit tests (RenderStateCodec, StackLayout (space distribution, 10-child limit, title shrinking), the 500-view budget, text rendering method selection, available width) | `widget/src/test` | 40 |
 | app | JVM unit tests (ViewModel, permission screen and request flow, deep links, script UI host, syntax highlighting/autocomplete/find, share content classification, icons, file bookmarks, gallery, tab navigation rules, list search/activity, update check, designer editing/undo/preview, pre-install permission warning, trigger screen) | `app/src/test` || 143 |
 | data-android | Device integration tests (Bitmap, Keystore, LocationManager, Notification, Canvas, symbols, Device, clipboard/share/mail/TTS intents, CalendarProvider, ContactsProvider, MediaStore, document read/write, notification tap and buttons) | `data-android/src/androidTest` | 50 |
-| widget | Device integration tests (Glance rendering/gradients/borders/buttons, text bitmaps, WorkManager, exact alarms, Worker, widget actions, event watching (content URI, constraints, midnight alarm)) | `widget/src/androidTest` | 65 |
-| app | Device integration tests (AppContainer + real stack, production DI wiring, permission state, Compose script UI, share/open intents, copying shared files, automation and shortcuts, app preview layout, gallery, floating tab bar and settings, drawing a widget in one pass without a session, update row, designer screen and new script picker, trigger screen) | `app/src/androidTest` ||| 67 |
-| **Total** | | | **810** (+ 1 compatibility measurement harness, skipped by default) |
+| widget | Device integration tests (Glance rendering/gradients/borders/buttons, text bitmaps, widgets over 500 views, WorkManager, exact alarms, Worker, widget actions, event watching (content URI, constraints, midnight alarm)) | `widget/src/androidTest` | 70 |
+| app | Device integration tests (AppContainer + real stack, production DI wiring, permission state, Compose script UI, share/open intents, copying shared files, automation and shortcuts, app preview layout, gallery, floating tab bar and settings, drawing a widget in one pass without a session, update row, designer screen and new script picker, trigger screen, run limits (recursion and memory don't kill the process), collecting diagnostics) | `app/src/androidTest` ||| 82 |
+| **Total** | | | **891** (+ 2 compatibility measurement harnesses, skipped by default) |
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -185,6 +185,10 @@ Optional fields: `translations` (title, description and category per language), 
 
 Choose a template (Blank widget, Clock, Battery, Next event, Reminders, Weather, JSON value, Photo frame, D-day) in **+ New script** → **Build with the designer** to open the designer. The same templates are also in the gallery's **Designs** category.
 
+**From a URL (JSON)**: builds a widget from an API response without code. Enter a JSON address and tap **Load** to list the response's values by path (`main.temp`, `items.0.title`, …) with their current value (the first 3 items of arrays). Pick up to 6 and the designer opens: one value is shown big, several become "name … value" rows. Each value is a JSON value block, so the widget fetches it again on every refresh (every 30 minutes by default); values from the same address are fetched once. The screen has keyless **examples** (weather, exchange rates, Bitcoin, GitHub); the full guide is [Widgets from a URL (JSON)](docs/json-widget.md).
+
+**✨ With AI**: describe the widget; an AI writes the script, and the app runs it on the real engine to check that it draws a widget, then shows the preview and what it uses (network, location, …). **Copy a prompt (free)** works with any AI chat app: paste the prompt there and the answer back. **In the app** generates with a Gemini, Claude or OpenAI API key and sends errors back to the AI for up to 3 fixes. The prompt carries the list of APIs this app really supports; keys are kept encrypted in a store separate from scripts' `Keychain`. Guide: [Widgets with AI](docs/ai-widget.md)
+
 - **Screen**: preview at the top (S, M, L), with **Outline** (element tree) and **Properties** (selected element) below. Tapping an element in the preview also selects it.
 - **Elements**: text, time (live), symbol (SF Symbols name), image (URL or file bookmark photo), spacer, horizontal and vertical stacks. The selected element can be wrapped in a stack or deleted. Undo (↶) and redo (↷).
 - **Reordering**: drag the **≡** handle in the outline list. Dropping on the upper/lower part of a row places it before/after that row; dropping in the middle of a stack row puts it inside that stack. The up/down buttons are still there.
@@ -244,6 +248,7 @@ Choose a template (Blank widget, Clock, Battery, Next event, Reminders, Weather,
 ### Editor, run history and help
 - **Editor**: line numbers, syntax highlighting (keywords, strings, numbers, comments, API names), autocomplete above the keyboard (static members after `Font.`, that class's methods after a variable created with `new ListWidget()`, otherwise APIs, keywords and names declared in the script), **find/replace** (case-insensitive, replace all).
 - **Run history**: the **History** tab. Keeps up to the latest 200 runs from the app, widgets, notifications, share and automation (time, where it ran, duration, errors and logs). **Failures only** filter.
+- **Diagnostics**: **Settings** tab → **Export diagnostics**. Saves the device, Android version, launcher, permissions and settings, recent crashes (exceptions the app logged, and native crashes, ANRs and low-memory kills Android recorded) and recent failed runs as a text file to attach to a GitHub issue. Script code and logs are left out, and URL query strings (often API keys) are hidden.
 - **API reference**: the **Help** tab or the editor's **API** button. The list is built by inspecting the prelude directly with QuickJS (constructors, method arguments, properties, async or not), so it always matches the implementation. Each entry links to the official docs.
 
 ## Supported JS API
@@ -310,6 +315,7 @@ Choose a template (Blank widget, Clock, Battery, Next event, Reminders, Weather,
   - The WorkManager periodic work is a **60-minute safety net** for when alarms are lost due to a reboot etc., and finishes immediately if the screen is off. Non-waking alarms aren't paired with a WorkManager schedule (because the work could wake the phone while the screen is off).
   - Android's own restrictions (Doze, Samsung "app power saving") can delay refreshes further, independently of this. **Battery optimization exemption** under Settings tab → Permissions is recommended.
 - **Preventing duplicate runs**: the same widget runs only one at a time, and scheduled/periodic refreshes of a widget that was just refreshed are skipped. Resizing a widget within the same size class (small/medium/large) only redraws it without running the script.
+- **Run limits**: each script gets 30 seconds (widgets), 64MB of memory and a call depth of about 8,000. Going past them ends only that run with an error (`timed out`, `out of memory`, `stack overflow`); other widgets keep working. Logs keep the latest 1,000 lines per run, 16KB per line.
 - **Offline**: without a network, background refreshes of scripts using `Request`, `WebView` or `importModule` are skipped and the last screen is kept. Responses are limited to 10MB, and the HTTP cache (10MB) follows the server's cache headers.
 - **Location**: a recent location matching the requested accuracy (precise 1 minute, 100m 5 minutes, 1–3km within 15 minutes) is reused without turning on GPS again. A new fix is attempted only within 15 seconds in total.
 - **Storage and memory**: deleting a widget also deletes its image cache, and `tmp` (shared files, camera photos, picked documents) is cleaned up after a day. Opaque images are saved as JPEG and transparent ones as PNG. Widgets with many images decode them smaller to stay within a total bitmap budget (6MB), and long text images are limited to 2048px in height. Run history is appended line by line (JSONL) and trimmed to 200 lines when it reaches 400.
@@ -330,6 +336,7 @@ Choose a template (Blank widget, Clock, Battery, Next event, Reminders, Weather,
 - **`Color.dynamic(lightColor, darkColor)`**: both colors are passed to the widget, so it switches immediately when the system light/dark mode changes, without re-running the script.
 - **Space distribution in horizontal stacks**: like SwiftUI, children that want to stretch (e.g. left and right columns with a Spacer in each row) split the width equally. In a row like `[rank, title (lineLimit 1), Spacer, publisher]`, the title takes the leftover space and shrinks with an ellipsis, so trailing elements aren't pushed out.
 - **10-child limit**: RemoteViews draws only up to 10 children per row/column and drops the rest. The renderer groups overflowing children into inner containers so all are drawn (gaps created by `spacing` count too).
+- **500-view limit**: Glance draws a widget with at most 500 views and doesn't draw it at all past that. Big widgets such as a dot-per-day grid (365 for a year) get their largest stacks made only of text, fixed spacers and solid-color stacks drawn as one image each until they fit (stacks with taps, images or flexible spacers stay as they are).
 - **Text rendering**: text Glance can't draw is drawn as a bitmap: weights outside the 3 levels (regular/medium/bold), shadows, `minimumScaleFactor` (truncated with an ellipsis if it still overflows at the minimum scale), and fonts placed in `Documents/fonts/<name>.ttf|otf` (`new Font("name", size)`). Names like `Menlo` and `Courier` fall back to the monospace system font, and the `Georgia` and `Times` families to the serif system font.
 - **Intl**: not available in QuickJS, so it's implemented with `java.text`/`java.time`. Individual component options like `year`/`month` aren't supported. Output can differ slightly between the JVM (CLDR) and Android (ICU).
 
@@ -342,8 +349,24 @@ Runs community widget scripts and measures the share that draw a widget without 
 cat data/build/compat-report.txt
 ```
 
-- Network responses are replaced in the harness with "a Proxy that proceeds whatever property is accessed". So it measures missing APIs, not data shapes.
+- Network responses are chosen with `-PcompatNetwork`:
+  - `proxy` (default): replaced with "a Proxy that proceeds whatever property is accessed". It measures missing APIs, not data shapes.
+  - `record`: uses the real network and saves each script's traffic to `<corpus>/_http/<script>.json` (failures such as bad URLs too).
+  - `replay`: serves the saved responses, with the clock set to the recording time and a seeded `Math.random`, so every run gives the same widget. Requests that weren't recorded get a 404 (a network error for images) and show up as `not recorded` in the report.
+- **Result snapshots**: each script's result (widget tree JSON, or the error) is written to `data/build/compat-trees/` and reported as `[changed]` when it differs from `<corpus>/_golden/`. `-PcompatUpdateGolden` saves the current results as `_golden`.
 - If `<corpus>/_docs/<script name>/` exists, its contents are put in the Documents folder before running. This measures in the same state (modules, config files) as a user who downloaded the whole repository into Scriptable.
+
+To compare **what gets drawn** after a renderer change, the `_golden` widget trees are drawn on a device as real RemoteViews (Scriptable's medium size, 329×155pt) and pulled as PNGs. Compare PNGs from the same device only (fonts and density differ). Live dates (`relative`, `timer`) are drawn as a fixed label.
+
+```bash
+# 1) record (once) -> 2) replay and save the baseline -> 3) draw on a device and save the baseline PNGs
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=record --rerun
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=replay -PcompatUpdateGolden --rerun
+scripts/compat-snapshots.sh $CORPUS --update
+# after changing the renderer: which widget trees and PNGs changed
+./gradlew :data:test --tests '*CompatibilityReport*' -PcompatCorpus=$CORPUS -PcompatNetwork=replay --rerun
+scripts/compat-snapshots.sh $CORPUS      # compares <corpus>/_snapshots/ with _snapshots_golden/, lists widgets it couldn't draw
+```
 
 **Measured set**: 33 scripts listed in [awesome-scriptable](https://github.com/dersvenhesse/awesome-scriptable), plus 143 collected on 2026-10-30 from 71 Scriptable widget repositories on GitHub (files using `ListWidget`, up to 4 per repository, deduplicated), for **176** in total.
 
@@ -354,6 +377,9 @@ cat data/build/compat-report.txt
 | After implementing app UI, WebView, system integration, personal data | 33 | 23 (70%) |
 | Measured set expanded (2026-10-30) | 176 | 80 (45%) |
 | `module` global, `arguments`, `atob`/`btoa`, Documents modules + providing repository files | 176 | **101 (57%)** |
+| Same point, measured with **real responses** (recorded and replayed 2026-11-02) | 176 | 81 (46%) |
+
+The Proxy measurement lets any data shape through, so it's more generous than reality. All 81 drawn with real responses render on a device (including 2 dot-grid widgets that used to hit the 500-view limit).
 
 What was found and added while expanding the measured set:
 - **`module` global**: Scriptable gives every script `module.filename` and `module.exports`. Scripts use them to check whether iCloud is used or to compute module paths (13 scripts).
